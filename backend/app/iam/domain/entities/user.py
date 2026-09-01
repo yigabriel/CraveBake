@@ -13,8 +13,8 @@ from app.iam.domain.value_objects.email import Email
 from app.iam.domain.value_objects.hashed_password import HashedPassword
 from app.iam.domain.value_objects.unit_system_preference import UnitSystemPreference
 from app.iam.domain.value_objects.user_id import UserId
-from backend.app.iam.domain.value_objects.language_preference import LanguagePreference
-from backend.app.shared.domain.base_entity import BaseEntity
+from app.iam.domain.value_objects.language_preference import LanguagePreference
+from app.shared.domain.base_entity import BaseEntity
 
 @dataclass
 class User(BaseEntity[UserId]):
@@ -61,7 +61,7 @@ class User(BaseEntity[UserId]):
         self._touch()
 
     def change_language_preference(self, language: str) -> None:
-        self.preferred_language = language
+        self.preferred_language = LanguagePreference(language)
         self._touch()
 
     def deactivate(self) -> None:

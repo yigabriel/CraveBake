@@ -14,3 +14,21 @@ class UserResponse(BaseModel):
 
 class UpdateUnitPreferenceRequest(BaseModel):
     preferred_unit_system: str
+
+
+class UpdateUnitPreferenceRequest(BaseModel):
+    preferred_unit_system: str
+
+
+class UpdateLanguageRequest(BaseModel):
+    preferred_language: str
+
+
+class UpdateProfileRequest(BaseModel):
+    full_name: str | None = None
+    avatar_url: str | None = None
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str

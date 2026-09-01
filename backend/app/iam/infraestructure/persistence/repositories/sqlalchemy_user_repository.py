@@ -17,7 +17,7 @@ from app.iam.domain.value_objects.hashed_password import HashedPassword
 from app.iam.domain.value_objects.unit_system_preference import UnitSystemPreference
 from app.iam.domain.value_objects.user_id import UserId
 from app.iam.infraestructure.persistence.models.user_model import UserModel
-from backend.app.iam.domain.value_objects.language_preference import LanguagePreference
+from app.iam.domain.value_objects.language_preference import LanguagePreference
 
 
 

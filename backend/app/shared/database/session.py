@@ -14,7 +14,15 @@ from app.shared.config.settings import get_settings
 
 settings = get_settings()
 
-engine = create_async_engine(settings.database_url, echo=settings.debug, future=True)
+engine = create_async_engine(
+    settings.database_url,
+    echo=settings.debug,
+    future=True,
+    connect_args={
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,
+    },
+)
 
 AsyncSessionFactory = async_sessionmaker(
     bind=engine,

@@ -12,6 +12,12 @@ from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.iam.application.use_cases.activate_user_use_case import ActivateUserUseCase
+from app.iam.application.use_cases.change_password_use_case import ChangePasswordUseCase
+from app.iam.application.use_cases.deactivate_user_use_case import DeactivateUserUseCase
+from app.iam.application.use_cases.update_language_use_case import UpdateLanguageUseCase
+from app.iam.application.use_cases.update_profile_use_case import UpdateProfileUseCase
+
 from app.iam.application.dto.user_dto import UserDTO
 from app.iam.application.use_cases.authenticate_user_use_case import AuthenticateUserUseCase
 from app.iam.application.use_cases.get_current_user_use_case import GetCurrentUserUseCase
@@ -74,12 +80,56 @@ def get_current_user_use_case(
 
 def get_update_unit_preference_use_case(
     user_repository: UserRepository = Depends(get_user_repository),
+    token_service: TokenService = Depends(get_token_service),
 ) -> UpdateUnitPreferenceUseCase:
-    return UpdateUnitPreferenceUseCase(user_repository)
-
+    return UpdateUnitPreferenceUseCase(
+        user_repository,
+        token_service,
+    )
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
     use_case: GetCurrentUserUseCase = Depends(get_current_user_use_case),
 ) -> UserDTO:
     return await use_case.execute(token)
+
+
+def get_activate_user_use_case(
+    user_repository: UserRepository = Depends(get_user_repository),
+) -> ActivateUserUseCase:
+    return ActivateUserUseCase(user_repository)
+
+
+def get_deactivate_user_use_case(
+    user_repository: UserRepository = Depends(get_user_repository),
+) -> DeactivateUserUseCase:
+    return DeactivateUserUseCase(user_repository)
+
+def get_update_language_use_case(
+    user_repository: UserRepository = Depends(get_user_repository),
+    token_service: TokenService = Depends(get_token_service),
+) -> UpdateLanguageUseCase:
+    return UpdateLanguageUseCase(
+        user_repository,
+        token_service,
+    )
+
+def get_update_profile_use_case(
+    user_repository: UserRepository = Depends(get_user_repository),
+    token_service: TokenService = Depends(get_token_service),
+) -> UpdateProfileUseCase:
+    return UpdateProfileUseCase(
+        user_repository,
+        token_service,
+    )
+
+def get_change_password_use_case(
+    user_repository: UserRepository = Depends(get_user_repository),
+    password_hasher: PasswordHasher = Depends(get_password_hasher),
+    token_service: TokenService = Depends(get_token_service),
+) -> ChangePasswordUseCase:
+    return ChangePasswordUseCase(
+        user_repository,
+        password_hasher,
+        token_service,
+    )

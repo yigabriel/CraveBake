@@ -30,3 +30,6 @@ class UnauthorizedError(DomainError):
 
 class ForbiddenError(DomainError):
     """Raised when an authenticated user cannot perform an action on a resource."""
+
+class InvalidCredentialsException(UnauthorizedError):
+    """Raised when the provided credentials are invalid."""
