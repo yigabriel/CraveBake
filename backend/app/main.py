@@ -6,6 +6,7 @@ bounded context's router under the `/v1` API version. Health checks stay
 unversioned, since they are for infrastructure, not API clients.
 """
 from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 #Routers
 from app.iam.module import create_iam_router
@@ -27,6 +28,14 @@ app = FastAPI(
     title=settings.app_name,
     description="CraveBake API - discover, save, personalize and cook pastry recipes.",
     debug=settings.debug,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 register_exception_handlers(app)

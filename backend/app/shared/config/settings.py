@@ -20,6 +20,14 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
 
+    # Origins allowed to call the API from a browser. In `.env` it is set as a
+    # JSON list, e.g. CORS_ALLOWED_ORIGINS=["https://cravebake.app"]
+    cors_allowed_origins: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:4200",
+    ]
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
