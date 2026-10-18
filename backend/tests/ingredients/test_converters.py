@@ -57,6 +57,20 @@ class TestMeasurementConverter:
 
         assert result == D("12.5")
 
+    def test_ratio_of_another_measure_via_conversion_unit(self, units, flour):
+        cup_of_flour = conversion(flour, units["cup"], "125")
+
+        result = MeasurementConverter().convert(
+            D("236.588"), units["ml"], units["g"], cup_of_flour, conversion_unit=units["cup"]
+        )
+
+        assert result == D("125")
+
+    def test_ratio_read_against_wrong_unit_fails_loudly(self, units, flour):
+        cup_of_flour = conversion(flour, units["cup"], "125")
+        with pytest.raises(ValueError):
+            MeasurementConverter().convert(D("1"), units["ml"], units["g"], cup_of_flour)
+
     def test_across_types_without_ratio_fails(self, units):
         with pytest.raises(ConversionNotAvailableError):
             MeasurementConverter().convert(D("1"), units["cup"], units["g"])

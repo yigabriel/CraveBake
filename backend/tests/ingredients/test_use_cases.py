@@ -147,6 +147,39 @@ class TestConvertMeasurement:
         assert result.converted_quantity == D("250")
         assert (result.from_unit.abbreviation, result.to_unit.abbreviation) == ("cup", "g")
 
+    @pytest.mark.parametrize(
+        "quantity, source, target, expected",
+        [
+            ("1", "l", "g", "528.34"),  # 1000 ml / 236.588 * 125 g
+            ("500", "g", "ml", "946.35"),
+            ("1", "tsp", "g", "2.60"),  # derived from the cup figure, no tsp figure seeded here
+        ],
+    )
+    async def test_volume_without_own_figure_derives_from_cup(self, use_case, units, flour, quantity, source, target, expected):
+        result = await use_case.execute(
+            ConvertMeasurementDTO(D(quantity), str(units[source].id), str(units[target].id), str(flour.id))
+        )
+        assert round(result.converted_quantity, 2) == D(expected)
+
+    async def test_exact_measure_figure_wins_over_cup(self, use_case, units, flour, conversions):
+        # Butter-like case: the tbsp figure is not cup/16 and must be used as is.
+        await conversions.add(conversion(flour, units["tbsp"], "10"))
+
+        result = await use_case.execute(
+            ConvertMeasurementDTO(D("2"), str(units["tbsp"].id), str(units["g"].id), str(flour.id))
+        )
+
+        assert result.converted_quantity == D("20")
+
+    async def test_derives_from_biggest_measure(self, use_case, units, flour, conversions):
+        await conversions.add(conversion(flour, units["tsp"], "3"))  # rougher figure, must not be chosen
+
+        result = await use_case.execute(
+            ConvertMeasurementDTO(D("236.588"), str(units["ml"].id), str(units["g"].id), str(flour.id))
+        )
+
+        assert result.converted_quantity == D("125")
+
     async def test_same_type_ignores_ingredient(self, use_case, units):
         result = await use_case.execute(
             ConvertMeasurementDTO(D("2"), str(units["kg"].id), str(units["g"].id), "garbage")

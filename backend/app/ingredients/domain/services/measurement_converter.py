@@ -24,14 +24,20 @@ class MeasurementConverter:
         from_unit: Unit,
         to_unit: Unit,
         ingredient_conversion: IngredientUnitConversion | None = None,
+        conversion_unit: Unit | None = None,
     ) -> Decimal:
+        """`conversion_unit`: the volume unit `ingredient_conversion` is expressed in.
+
+        Defaults to the volume unit being converted; pass it when the figure
+        belongs to another measure (e.g. converting ml with a per-cup figure).
+        """
         if from_unit.id == to_unit.id:
             return quantity
 
         if from_unit.unit_type == to_unit.unit_type:
             return self._convert_same_type(quantity, from_unit, to_unit)
 
-        return self._convert_across_types(quantity, from_unit, to_unit, ingredient_conversion)
+        return self._convert_across_types(quantity, from_unit, to_unit, ingredient_conversion, conversion_unit)
 
     def _convert_same_type(self, quantity: Decimal, from_unit: Unit, to_unit: Unit) -> Decimal:
         # base_factor = how many base units (g or ml) does 1 of this unit represent
@@ -44,6 +50,7 @@ class MeasurementConverter:
         from_unit: Unit,
         to_unit: Unit,
         ingredient_conversion: IngredientUnitConversion | None,
+        conversion_unit: Unit | None,
     ) -> Decimal:
         if from_unit.unit_type == UnitType.COUNT or to_unit.unit_type == UnitType.COUNT:
             raise ConversionNotAvailableError(from_unit.abbreviation, to_unit.abbreviation)
@@ -52,8 +59,12 @@ class MeasurementConverter:
             raise ConversionNotAvailableError(from_unit.abbreviation, to_unit.abbreviation)
 
         volume_unit = from_unit if from_unit.unit_type == UnitType.VOLUME else to_unit
-        # grams that 1 ml of this ingredient weighs, derived from "grams per 1 <volume_unit>"
-        grams_per_ml = ingredient_conversion.grams_equivalent / volume_unit.base_factor
+        reference_unit = conversion_unit or volume_unit
+        if ingredient_conversion.unit_id != reference_unit.id:
+            # A figure read against the wrong measure would be silently off by its factor (cup vs ml = 236x).
+            raise ValueError("ingredient_conversion is not expressed in the reference volume unit")
+        # grams that 1 ml of this ingredient weighs, derived from "grams per 1 <reference_unit>"
+        grams_per_ml = ingredient_conversion.grams_equivalent / reference_unit.base_factor
 
         if from_unit.unit_type == UnitType.VOLUME:
             grams = quantity * from_unit.base_factor * grams_per_ml
