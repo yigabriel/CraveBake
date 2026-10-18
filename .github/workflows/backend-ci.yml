@@ -1,0 +1,91 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  workflow_dispatch:
+
+# A newer push to the same branch/PR cancels the run still in progress.
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: backend
+
+env:
+  PYTHON_VERSION: "3.14"
+  # Dummy values: settings are required at import time, but no test talks to a real database or signs real tokens.
+  DATABASE_URL: postgresql+asyncpg://unused:unused@localhost:5432/unused
+  JWT_SECRET_KEY: ci-only-not-a-secret
+
+jobs:
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Check the app imports
+        run: python -c "import app.main"
+
+      - name: Run unit tests
+        # Integration tests skip themselves without TEST_DATABASE_URL.
+        run: pytest -m "not integration"
+
+  integration:
+    name: Integration tests (Postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cravebake
+          POSTGRES_PASSWORD: cravebake
+          POSTGRES_DB: cravebake_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cravebake -d cravebake_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://cravebake:cravebake@localhost:5432/cravebake_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run integration tests
+        # Rebuilds the schema with the real Alembic migrations, so they are checked too.
+        run: pytest -m integration
