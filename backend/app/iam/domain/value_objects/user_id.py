@@ -4,6 +4,8 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 
+from app.shared.exceptions.domain_exceptions import ValidationError
+
 
 @dataclass(frozen=True)
 class UserId:
@@ -11,7 +13,10 @@ class UserId:
 
     @classmethod
     def from_string(cls, raw: str) -> "UserId":
-        return cls(uuid.UUID(raw))
+        try:
+            return cls(uuid.UUID(raw))
+        except (ValueError, AttributeError, TypeError) as error:
+            raise ValidationError(f"'{raw}' is not a valid user id") from error
 
     def __str__(self) -> str:
         return str(self.value)

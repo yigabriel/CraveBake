@@ -8,6 +8,8 @@ Dependency Inversion is actually resolved at runtime.
 """
 from __future__ import annotations
 
+from functools import lru_cache
+
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,6 +35,7 @@ from app.iam.infraestructure.persistence.repositories.sqlalchemy_user_repository
 )
 from app.iam.infraestructure.security.bcrypt_password_hasher import BcryptPasswordHasher
 from app.iam.infraestructure.security.jwt_token_service import JwtTokenService
+from app.iam.infraestructure.security.login_rate_limiter import LoginRateLimiter
 from app.shared.config.settings import get_settings
 from app.shared.database.session import get_db_session
 
@@ -53,6 +56,16 @@ def get_token_service() -> TokenService:
         secret_key=settings.jwt_secret_key,
         algorithm=settings.jwt_algorithm,
         expire_minutes=settings.access_token_expire_minutes,
+    )
+
+
+@lru_cache
+def get_login_rate_limiter() -> LoginRateLimiter:
+    # Cached: the counters must outlive a single request.
+    settings = get_settings()
+    return LoginRateLimiter(
+        max_failures=settings.login_max_failed_attempts,
+        window_seconds=settings.login_lockout_window_seconds,
     )
 
 
@@ -80,12 +93,8 @@ def get_current_user_use_case(
 
 def get_update_unit_preference_use_case(
     user_repository: UserRepository = Depends(get_user_repository),
-    token_service: TokenService = Depends(get_token_service),
 ) -> UpdateUnitPreferenceUseCase:
-    return UpdateUnitPreferenceUseCase(
-        user_repository,
-        token_service,
-    )
+    return UpdateUnitPreferenceUseCase(user_repository)
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
@@ -94,6 +103,8 @@ async def get_current_user(
     return await use_case.execute(token)
 
 
+# Activate/deactivate are not exposed over HTTP until an admin role exists:
+# the routes were removed because anyone could toggle any account.
 def get_activate_user_use_case(
     user_repository: UserRepository = Depends(get_user_repository),
 ) -> ActivateUserUseCase:
@@ -107,29 +118,16 @@ def get_deactivate_user_use_case(
 
 def get_update_language_use_case(
     user_repository: UserRepository = Depends(get_user_repository),
-    token_service: TokenService = Depends(get_token_service),
 ) -> UpdateLanguageUseCase:
-    return UpdateLanguageUseCase(
-        user_repository,
-        token_service,
-    )
+    return UpdateLanguageUseCase(user_repository)
 
 def get_update_profile_use_case(
     user_repository: UserRepository = Depends(get_user_repository),
-    token_service: TokenService = Depends(get_token_service),
 ) -> UpdateProfileUseCase:
-    return UpdateProfileUseCase(
-        user_repository,
-        token_service,
-    )
+    return UpdateProfileUseCase(user_repository)
 
 def get_change_password_use_case(
     user_repository: UserRepository = Depends(get_user_repository),
     password_hasher: PasswordHasher = Depends(get_password_hasher),
-    token_service: TokenService = Depends(get_token_service),
 ) -> ChangePasswordUseCase:
-    return ChangePasswordUseCase(
-        user_repository,
-        password_hasher,
-        token_service,
-    )
+    return ChangePasswordUseCase(user_repository, password_hasher)

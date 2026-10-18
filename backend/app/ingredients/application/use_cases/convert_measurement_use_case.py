@@ -34,19 +34,15 @@ class ConvertMeasurementUseCase:
         self._measurement_converter = measurement_converter
 
     async def execute(self, dto: ConvertMeasurementDTO) -> ConversionResultDTO:
-        from_unit = await self._unit_repository.get_by_id(UnitId.from_string(dto.from_unit_id))
-        if from_unit is None:
-            raise UnitNotFoundError(dto.from_unit_id)
-
-        to_unit = await self._unit_repository.get_by_id(UnitId.from_string(dto.to_unit_id))
-        if to_unit is None:
-            raise UnitNotFoundError(dto.to_unit_id)
+        from_unit = await self._get_unit(dto.from_unit_id)
+        to_unit = await self._get_unit(dto.to_unit_id)
 
         ingredient_conversion = None
-        if dto.ingredient_id is not None and from_unit.unit_type != to_unit.unit_type:
+        ingredient_id = IngredientId.try_from_string(dto.ingredient_id) if dto.ingredient_id else None
+        if ingredient_id is not None and from_unit.unit_type != to_unit.unit_type:
             volume_unit_id = from_unit.id if from_unit.unit_type.value == "volume" else to_unit.id
             ingredient_conversion = await self._ingredient_unit_conversion_repository.get_by_ingredient_and_unit(
-                IngredientId.from_string(dto.ingredient_id), volume_unit_id
+                ingredient_id, volume_unit_id
             )
 
         converted = self._measurement_converter.convert(
@@ -62,3 +58,10 @@ class ConvertMeasurementUseCase:
             to_unit=unit_to_dto(to_unit),
             converted_quantity=converted,
         )
+
+    async def _get_unit(self, raw_id: str):
+        unit_id = UnitId.try_from_string(raw_id)
+        unit = await self._unit_repository.get_by_id(unit_id) if unit_id else None
+        if unit is None:
+            raise UnitNotFoundError(raw_id)
+        return unit

@@ -10,8 +10,8 @@ Every error body, whatever its origin, looks like:
     {"detail": "<human readable>", "code": "<stable machine code>", "errors": [{"field": ..., "message": ...}]}
 
 `errors` lists per-field problems (filled for request validation, empty
-otherwise), so a client parses one format for 400, 401, 403, 404, 409, 422
-and 500 alike.
+otherwise), so a client parses one format for 400, 401, 403, 404, 409, 422,
+429 and 500 alike.
 """
 import logging
 
@@ -25,6 +25,7 @@ from app.shared.exceptions.domain_exceptions import (
     DomainError,
     ForbiddenError,
     NotFoundError,
+    TooManyRequestsError,
     UnauthorizedError,
     ValidationError,
 )
@@ -37,6 +38,7 @@ _STATUS_AND_CODE_BY_EXCEPTION: dict[type[DomainError], tuple[int, str]] = {
     ValidationError: (400, "validation_error"),
     UnauthorizedError: (401, "unauthorized"),
     ForbiddenError: (403, "forbidden"),
+    TooManyRequestsError: (429, "too_many_requests"),
 }
 
 _CODE_BY_HTTP_STATUS = {
@@ -47,6 +49,7 @@ _CODE_BY_HTTP_STATUS = {
     405: "method_not_allowed",
     409: "conflict",
     422: "request_validation_error",
+    429: "too_many_requests",
 }
 
 
@@ -62,7 +65,10 @@ def register_exception_handlers(app: FastAPI) -> None:
             if isinstance(exc, exc_type):
                 status_code, code = exc_status, exc_code
                 break
-        return JSONResponse(status_code=status_code, content=error_body(str(exc), code))
+        headers = None
+        if isinstance(exc, TooManyRequestsError):
+            headers = {"Retry-After": str(exc.retry_after_seconds)}
+        return JSONResponse(status_code=status_code, content=error_body(str(exc), code), headers=headers)
 
     @app.exception_handler(RequestValidationError)
     async def handle_request_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:

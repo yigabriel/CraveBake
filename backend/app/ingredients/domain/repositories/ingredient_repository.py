@@ -38,3 +38,11 @@ class IngredientRepository(ABC):
     @abstractmethod
     async def count(self, query: str | None, category: str | None) -> int:
         """Total matches of `search` with the same filters, ignoring pagination."""
+
+    @abstractmethod
+    async def list_distinct_categories(self) -> list[tuple[str, int]]:
+        """Each `default_category` in use with how many ingredients have it.
+
+        Categories are free text set when an ingredient is created, not a
+        curated table, so this reflects whatever values exist right now.
+        """

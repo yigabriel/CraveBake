@@ -9,14 +9,8 @@ from app.iam.application.dto.update_user_dto import UpdateUserDTO
 from app.iam.application.dto.update_unit_preference_dto import UpdateUnitPreferenceDTO
 from app.iam.application.dto.user_dto import UserDTO
 
-from app.iam.application.use_cases.activate_user_use_case import (
-    ActivateUserUseCase,
-)
 from app.iam.application.use_cases.change_password_use_case import (
     ChangePasswordUseCase,
-)
-from app.iam.application.use_cases.deactivate_user_use_case import (
-    DeactivateUserUseCase,
 )
 from app.iam.application.use_cases.update_language_use_case import (
     UpdateLanguageUseCase,
@@ -28,16 +22,8 @@ from app.iam.application.use_cases.update_unit_preference_use_case import (
     UpdateUnitPreferenceUseCase,
 )
 from app.iam.presentation.http.dependencies import (
-    get_current_user,
-    get_update_unit_preference_use_case,
-    oauth2_scheme,
-)
-
-from app.iam.presentation.http.dependencies import (
-    get_activate_user_use_case,
     get_change_password_use_case,
     get_current_user,
-    get_deactivate_user_use_case,
     get_update_language_use_case,
     get_update_profile_use_case,
     get_update_unit_preference_use_case,
@@ -65,7 +51,7 @@ async def get_my_profile(
 @router.patch("/me/unit-preference", response_model=UserResponse)
 async def update_my_unit_preference(
     request: UpdateUnitPreferenceRequest,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserDTO = Depends(get_current_user),
     use_case: UpdateUnitPreferenceUseCase = Depends(
         get_update_unit_preference_use_case
     ),
@@ -75,14 +61,14 @@ async def update_my_unit_preference(
         preferred_unit_system=request.preferred_unit_system,
     )
 
-    updated_user = await use_case.execute(token, dto)
+    updated_user = await use_case.execute(current_user.id, dto)
 
     return UserResponse(**updated_user.__dict__)
 
 @router.patch("/me/language", response_model=UserResponse)
 async def update_my_language(
     request: UpdateLanguageRequest,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserDTO = Depends(get_current_user),
     use_case: UpdateLanguageUseCase = Depends(
         get_update_language_use_case
     ),
@@ -92,14 +78,14 @@ async def update_my_language(
         preferred_language=request.preferred_language,
     )
 
-    updated_user = await use_case.execute(token, dto)
+    updated_user = await use_case.execute(current_user.id, dto)
 
     return UserResponse(**updated_user.__dict__)
 
 @router.patch("/me/profile", response_model=UserResponse)
 async def update_my_profile(
     request: UpdateProfileRequest,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserDTO = Depends(get_current_user),
     use_case: UpdateProfileUseCase = Depends(
         get_update_profile_use_case
     ),
@@ -110,7 +96,7 @@ async def update_my_profile(
         avatar_url=request.avatar_url,
     )
 
-    updated_user = await use_case.execute(token, dto)
+    updated_user = await use_case.execute(current_user.id, dto)
 
     return UserResponse(**updated_user.__dict__)
 
@@ -118,7 +104,7 @@ async def update_my_profile(
 @router.patch("/me/change-password", response_model=UserResponse)
 async def change_my_password(
     request: ChangePasswordRequest,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserDTO = Depends(get_current_user),
     use_case: ChangePasswordUseCase = Depends(
         get_change_password_use_case
     ),
@@ -129,27 +115,6 @@ async def change_my_password(
         new_password=request.new_password,
     )
 
-    updated_user = await use_case.execute(token, dto)
-
-    return UserResponse(**updated_user.__dict__)
-
-
-
-@router.patch("/{user_id}/activate", response_model=UserResponse)
-async def activate_user(
-    user_id: str,
-    use_case: ActivateUserUseCase = Depends(get_activate_user_use_case),
-) -> UserResponse:
-    updated_user = await use_case.execute(user_id)
-
-    return UserResponse(**updated_user.__dict__)
-
-
-@router.patch("/{user_id}/deactivate", response_model=UserResponse)
-async def deactivate_user(
-    user_id: str,
-    use_case: DeactivateUserUseCase = Depends(get_deactivate_user_use_case),
-) -> UserResponse:
-    updated_user = await use_case.execute(user_id)
+    updated_user = await use_case.execute(current_user.id, dto)
 
     return UserResponse(**updated_user.__dict__)

@@ -10,4 +10,6 @@ class RemoveUserIngredientUseCase:
         self._user_ingredient_repository = user_ingredient_repository
 
     async def execute(self, user_id: str, ingredient_id: str) -> None:
-        await self._user_ingredient_repository.remove(user_id, IngredientId.from_string(ingredient_id))
+        parsed_id = IngredientId.try_from_string(ingredient_id)
+        if parsed_id is not None:  # a malformed id cannot be in the pantry: nothing to remove
+            await self._user_ingredient_repository.remove(user_id, parsed_id)

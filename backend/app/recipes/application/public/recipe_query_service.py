@@ -108,7 +108,10 @@ class RecipeQueryService:
             )
             for recipe, summary in zip(recipes, summaries)
         }
-        return [compositions[recipe_id] for recipe_id in dict.fromkeys(recipe_ids) if recipe_id in compositions]
+        ordered_ids = dict.fromkeys(
+            str(parsed) for raw in recipe_ids if (parsed := RecipeId.try_from_string(raw)) is not None
+        )
+        return [compositions[recipe_id] for recipe_id in ordered_ids if recipe_id in compositions]
 
     async def get_composition(self, recipe_id: str, viewer_user_id: str) -> RecipeCompositionDTO | None:
         """The composition of a recipe the viewer may see; None otherwise."""

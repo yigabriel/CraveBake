@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
 
+    # Failed logins allowed per (client IP, email) before that pair is locked out.
+    login_max_failed_attempts: int = 5
+    login_lockout_window_seconds: int = 900
+
     # Origins allowed to call the API from a browser. In `.env` it is set as a
     # JSON list, e.g. CORS_ALLOWED_ORIGINS=["https://cravebake.app"]
     cors_allowed_origins: list[str] = [

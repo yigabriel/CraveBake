@@ -3,6 +3,7 @@ from app.shared.exceptions.domain_exceptions import (
     ConflictError,
     NotFoundError,
     UnauthorizedError,
+    ValidationError,
 )
 
 
@@ -29,3 +30,9 @@ class InactiveUserError(UnauthorizedError):
 class InvalidTokenError(UnauthorizedError):
     def __init__(self) -> None:
         super().__init__("Invalid or expired authentication token")
+
+
+class IncorrectCurrentPasswordError(ValidationError):
+    # 400 instead of 401: the token is valid, so clients must not treat this as a logout.
+    def __init__(self) -> None:
+        super().__init__("Current password is incorrect")

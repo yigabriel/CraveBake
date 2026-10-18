@@ -13,7 +13,7 @@ class ActivateUserUseCase:
         self._user_repository = user_repository
 
     async def execute(self, user_id: str) -> UserDTO:
-        user_id_vo = UserId(user_id)
+        user_id_vo = UserId.from_string(user_id)
 
         user = await self._user_repository.get_by_id(user_id_vo)
 

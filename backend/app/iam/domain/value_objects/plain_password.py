@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 from app.shared.exceptions.domain_exceptions import ValidationError
 
-_MIN_LENGTH = 6
+_MIN_LENGTH = 8
 
 
 @dataclass(frozen=True)

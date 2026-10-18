@@ -26,7 +26,8 @@ class SearchPublicRecipesUseCase:
     async def execute(self, dto: SearchRecipesDTO, viewer_user_id: str) -> Page[RecipeSummaryDTO]:
         category_id = RecipeCategoryId.try_from_string(dto.category_id) if dto.category_id else None
         difficulty_id = DifficultyId.try_from_string(dto.difficulty_id) if dto.difficulty_id else None
-        ingredient_ids = [raw for raw in dto.ingredient_ids if EntityId.try_from_string(raw)]
+        # Canonical form, as stored by RecipeReferenceValidator ("ABC-..." and "abc-..." are the same id).
+        ingredient_ids = [str(parsed) for raw in dto.ingredient_ids if (parsed := EntityId.try_from_string(raw))]
         tag_ids = [parsed for raw in dto.tag_ids if (parsed := RecipeTagId.try_from_string(raw))]
 
         if (

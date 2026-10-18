@@ -40,14 +40,15 @@ class UpsertUserIngredientUseCase:
         self._unit_repository = unit_repository
 
     async def execute(self, dto: UpsertUserIngredientDTO) -> UserIngredientDTO:
-        ingredient_id = IngredientId.from_string(dto.ingredient_id)
-        ingredient = await self._ingredient_repository.get_by_id(ingredient_id)
+        ingredient_id = IngredientId.try_from_string(dto.ingredient_id)
+        ingredient = await self._ingredient_repository.get_by_id(ingredient_id) if ingredient_id else None
         if ingredient is None:
             raise IngredientNotFoundError(dto.ingredient_id)
 
         unit = None
         if dto.unit_id is not None:
-            unit = await self._unit_repository.get_by_id(UnitId.from_string(dto.unit_id))
+            unit_id = UnitId.try_from_string(dto.unit_id)
+            unit = await self._unit_repository.get_by_id(unit_id) if unit_id else None
             if unit is None:
                 raise UnitNotFoundError(dto.unit_id)
 

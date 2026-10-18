@@ -16,10 +16,6 @@ class UpdateUnitPreferenceRequest(BaseModel):
     preferred_unit_system: str
 
 
-class UpdateUnitPreferenceRequest(BaseModel):
-    preferred_unit_system: str
-
-
 class UpdateLanguageRequest(BaseModel):
     preferred_language: str
 

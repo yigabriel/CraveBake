@@ -16,5 +16,5 @@ def user_to_dto(user: User) -> UserDTO:
         avatar_url=user.avatar_url,
         preferred_unit_system=user.preferred_unit_system.value,
         is_active=user.is_active,
-        preferred_language=user.preferred_language,
+        preferred_language=user.preferred_language.value,
     )

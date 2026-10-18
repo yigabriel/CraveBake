@@ -31,5 +31,13 @@ class UnauthorizedError(DomainError):
 class ForbiddenError(DomainError):
     """Raised when an authenticated user cannot perform an action on a resource."""
 
+
+class TooManyRequestsError(DomainError):
+    """Raised when a client exceeded an attempt limit and must wait before retrying."""
+
+    def __init__(self, message: str, retry_after_seconds: int) -> None:
+        super().__init__(message)
+        self.retry_after_seconds = retry_after_seconds
+
 class InvalidCredentialsException(UnauthorizedError):
     """Raised when the provided credentials are invalid."""

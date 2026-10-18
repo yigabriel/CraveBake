@@ -7,7 +7,15 @@ from __future__ import annotations
 
 from enum import Enum
 
+from app.shared.exceptions.domain_exceptions import ValidationError
+
 
 class LanguagePreference(str, Enum):
     ENGLISH = "en"
     SPANISH = "es"
+
+    @classmethod
+    def _missing_(cls, value: object) -> None:
+        # Unknown values become a 400 instead of a bare ValueError (500).
+        allowed = ", ".join(member.value for member in cls)
+        raise ValidationError(f"'{value}' is not a valid language. Allowed: {allowed}")
