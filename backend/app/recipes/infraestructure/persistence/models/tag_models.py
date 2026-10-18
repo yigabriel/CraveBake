@@ -1,0 +1,35 @@
+"""SQLAlchemy ORM models for the `tags` catalog and the `recipe_tags` link table."""
+from __future__ import annotations
+
+import uuid
+
+from sqlalchemy import CheckConstraint, ForeignKey, String, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.shared.database.base import Base
+
+
+class TagModel(Base):
+    __tablename__ = "tags"
+    __table_args__ = (
+        CheckConstraint(
+            "tag_group IN ('sabor', 'dieta', 'tecnica', 'tiempo', 'celebraciones')", name="ck_tags_group"
+        ),
+    )
+
+    name: Mapped[str] = mapped_column(String(60), unique=True, nullable=False)
+    # `group` is a reserved word in SQL, hence the prefix.
+    tag_group: Mapped[str] = mapped_column(String(20), nullable=False)
+
+
+class RecipeTagModel(Base):
+    __tablename__ = "recipe_tags"
+    __table_args__ = (UniqueConstraint("recipe_id", "tag_id", name="uq_recipe_tag"),)
+
+    recipe_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    tag_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tags.id"), nullable=False, index=True
+    )

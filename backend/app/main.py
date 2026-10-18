@@ -2,12 +2,20 @@
 Application entry point.
 
 Wires together shared infrastructure (exception handlers) and mounts each
-bounded context's router. Bounded contexts are added here as they get
-implemented — currently only `iam`.
+bounded context's router under the `/v1` API version. Health checks stay
+unversioned, since they are for infrastructure, not API clients.
 """
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 
+#Routers
 from app.iam.module import create_iam_router
+from app.ingredients.module import create_ingredients_router
+from app.recipes.module import create_recipes_router
+from app.portfolio.module import create_portfolio_router
+from app.equipment.module import create_equipment_router
+from app.recommendations.module import create_recommendations_router
+from app.preparation.module import create_preparation_router
+
 from app.shared.config.settings import get_settings
 from app.shared.exceptions.exception_handlers import register_exception_handlers
 
@@ -17,13 +25,22 @@ settings = get_settings()
 
 app = FastAPI(
     title=settings.app_name,
-    description="Pastry API — discover, save, personalize and cook pastry recipes.",
+    description="CraveBake API - discover, save, personalize and cook pastry recipes.",
     debug=settings.debug,
 )
 
 register_exception_handlers(app)
 
-app.include_router(create_iam_router())
+api_v1 = APIRouter(prefix="/v1")
+api_v1.include_router(create_iam_router())
+api_v1.include_router(create_ingredients_router())
+api_v1.include_router(create_recipes_router())
+api_v1.include_router(create_portfolio_router())
+api_v1.include_router(create_equipment_router())
+api_v1.include_router(create_recommendations_router())
+api_v1.include_router(create_preparation_router())
+app.include_router(api_v1)
+
 
 
 @app.get("/health", tags=["Health"])

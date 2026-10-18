@@ -36,7 +36,7 @@ from app.iam.infraestructure.security.jwt_token_service import JwtTokenService
 from app.shared.config.settings import get_settings
 from app.shared.database.session import get_db_session
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login")
 
 
 def get_user_repository(session: AsyncSession = Depends(get_db_session)) -> UserRepository:
