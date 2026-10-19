@@ -27,3 +27,23 @@
     display: none !important;
   }
 }
+
+/* Auth headline: each new craving rises into place. */
+@keyframes craving {
+  from {
+    opacity: 0;
+    transform: translateY(0.35em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-craving {
+  animation: craving 450ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-craving {
+    animation: none;
+  }
+}

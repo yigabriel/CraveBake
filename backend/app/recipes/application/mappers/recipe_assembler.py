@@ -81,7 +81,8 @@ class _Context:
             "difficulty": self.difficulties.get(recipe.difficulty_id) if recipe.difficulty_id else None,
             "tags": sorted(
                 (self.tags[tag_id] for tag_id in recipe.tag_ids if tag_id in self.tags),
-                key=lambda tag: tag.name.lower(),
+                # By the name as originally written: the viewer's language is unknown here.
+                key=lambda tag: str(tag.name).lower(),
             ),
             "prep_time_minutes": recipe.prep_time_minutes,
             "servings": recipe.servings,

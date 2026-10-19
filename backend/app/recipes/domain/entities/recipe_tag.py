@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from app.recipes.domain.value_objects.recipe_tag_id import RecipeTagId
+from app.shared.domain.value_objects.localized_text import LocalizedText
 
 
 class TagGroup(str, Enum):
@@ -23,21 +24,22 @@ class TagGroup(str, Enum):
     CELEBRACIONES = "celebraciones"
 
     @property
-    def label(self) -> str:
+    def label(self) -> LocalizedText:
         return _LABELS[self]
 
 
+# Fixed by the enum (not data), so they live here rather than in a table.
 _LABELS = {
-    TagGroup.SABOR: "Sabor",
-    TagGroup.DIETA: "Dieta",
-    TagGroup.TECNICA: "Técnica y equipo",
-    TagGroup.TIEMPO: "Tiempo",
-    TagGroup.CELEBRACIONES: "Celebraciones",
+    TagGroup.SABOR: LocalizedText({"es": "Sabor", "en": "Flavor"}),
+    TagGroup.DIETA: LocalizedText({"es": "Dieta", "en": "Diet"}),
+    TagGroup.TECNICA: LocalizedText({"es": "Técnica y equipo", "en": "Technique & equipment"}),
+    TagGroup.TIEMPO: LocalizedText({"es": "Tiempo", "en": "Time"}),
+    TagGroup.CELEBRACIONES: LocalizedText({"es": "Celebraciones", "en": "Celebrations"}),
 }
 
 
 @dataclass
 class RecipeTag:
     id: RecipeTagId
-    name: str
+    name: LocalizedText
     group: TagGroup

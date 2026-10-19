@@ -90,14 +90,18 @@ class TestDomain:
             Quantity(D(raw))
 
     def test_ingredient_name_is_cleaned_and_required(self):
-        assert Ingredient.create("  Manteca ").name == "Manteca"
+        assert Ingredient.create("  Manteca ").name.text == "Manteca"
         with pytest.raises(ValidationError):
             Ingredient.create("   ")
 
-    def test_rename(self):
+    def test_name_is_written_in_the_creators_language(self):
+        item = Ingredient.create("Butter", language="en")
+        assert (item.name.original, item.name.in_("es")) == ("en", "Butter")
+
+    def test_translate_keeps_the_original(self):
         item = Ingredient.create("Manteca")
-        item.rename(" Mantequilla ")
-        assert item.name == "Mantequilla"
+        item.translate("en", " Butter ")
+        assert (item.name.in_("en"), item.name.in_("es"), item.name.original) == ("Butter", "Manteca", "es")
 
 
 class TestCatalog:
@@ -105,7 +109,16 @@ class TestCatalog:
     async def test_create_and_get(self, ingredients):
         created = await CreateIngredientUseCase(ingredients).execute(CreateIngredientDTO(name="Cacao"))
         fetched = await GetIngredientUseCase(ingredients).execute(created.id)
-        assert fetched.name == "Cacao"
+        assert fetched.name.text == "Cacao"
+
+    async def test_create_keeps_the_creators_language(self, ingredients):
+        created = await CreateIngredientUseCase(ingredients).execute(CreateIngredientDTO(name="Cardamom", language="en"))
+        assert (created.name.original, created.name.in_("es")) == ("en", "Cardamom")
+
+    async def test_duplicate_name_in_another_language(self, ingredients, flour):
+        flour.translate("en", "All-purpose flour")
+        with pytest.raises(IngredientAlreadyExistsError):
+            await CreateIngredientUseCase(ingredients).execute(CreateIngredientDTO(name="all-purpose FLOUR", language="en"))
 
     async def test_duplicate_name(self, ingredients, flour):
         with pytest.raises(IngredientAlreadyExistsError):
@@ -121,13 +134,18 @@ class TestCatalog:
         assert [i.name for i in page.items] == [flour.name]
         assert page.total == 1
 
+    async def test_search_matches_any_language(self, ingredients, flour, sugar):
+        flour.translate("en", "All-purpose flour")
+        page = await SearchIngredientsUseCase(ingredients).execute(SearchIngredientsDTO(query="FLOUR"))
+        assert [i.id for i in page.items] == [str(flour.id)]
+
     async def test_categories(self, ingredients, flour, sugar):
         await ingredients.add(Ingredient.create("Harina integral", default_category="harinas"))
         await ingredients.add(Ingredient.create("Sin categoría"))
 
         result = await ListCategoriesUseCase(ingredients).execute()
 
-        assert [(c.name, c.ingredient_count) for c in result] == [("azúcares", 1), ("harinas", 2)]
+        assert [(c.name, str(c.label), c.ingredient_count) for c in result] == [("azúcares", "azúcares", 1), ("harinas", "harinas", 2)]
 
     async def test_list_units(self, unit_repo):
         result = await ListUnitsUseCase(unit_repo).execute()

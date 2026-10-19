@@ -35,6 +35,7 @@ from app.preparation.presentation.http.schemas.preparation_schemas import (
     UnitSystemLiteral,
 )
 from app.shared.presentation.pagination import PageResponse
+from app.shared.presentation.i18n import language_context
 
 router = APIRouter(prefix="/preparations", tags=["Preparations"])
 
@@ -47,8 +48,8 @@ def _unit_system(requested: str | None, user: UserDTO) -> str:
     return requested or user.preferred_unit_system
 
 
-def _detail(preparation) -> PreparationDetailResponse:
-    return PreparationDetailResponse.model_validate(preparation, from_attributes=True)
+def _detail(preparation, user: UserDTO) -> PreparationDetailResponse:
+    return PreparationDetailResponse.model_validate(preparation, from_attributes=True, context=language_context(user))
 
 
 @router.post(
@@ -71,7 +72,7 @@ async def start_preparation(
     response.headers["Location"] = str(
         http_request.url_for("get_preparation", preparation_id=started.preparation.id)
     )
-    return _detail(started.preparation)
+    return _detail(started.preparation, current_user)
 
 
 @router.get("", response_model=PageResponse[PreparationSummaryResponse])
@@ -84,7 +85,7 @@ async def list_my_preparations(
     use_case: ListPreparationsUseCase = Depends(get_list_preparations_use_case),
 ) -> PageResponse[PreparationSummaryResponse]:
     page = await use_case.execute(current_user.id, status_filter, recipe_id, limit, offset)
-    return PageResponse[PreparationSummaryResponse].model_validate(page, from_attributes=True)
+    return PageResponse[PreparationSummaryResponse].model_validate(page, from_attributes=True, context=language_context(current_user))
 
 
 @router.get("/{preparation_id}", response_model=PreparationDetailResponse)
@@ -94,7 +95,7 @@ async def get_preparation(
     current_user: UserDTO = Depends(get_current_user),
     use_case: GetPreparationUseCase = Depends(get_get_preparation_use_case),
 ) -> PreparationDetailResponse:
-    return _detail(await use_case.execute(current_user.id, preparation_id, _unit_system(unit_system, current_user)))
+    return _detail(await use_case.execute(current_user.id, preparation_id, _unit_system(unit_system, current_user)), current_user)
 
 
 @router.put("/{preparation_id}/current-step", response_model=PreparationDetailResponse)
@@ -108,7 +109,8 @@ async def go_to_step(
     return _detail(
         await use_cases.go_to_step(
             current_user.id, preparation_id, request.step_number, _unit_system(unit_system, current_user)
-        )
+        ),
+        current_user,
     )
 
 
@@ -121,7 +123,8 @@ async def complete_step(
     use_cases: PreparationProgressUseCases = Depends(get_preparation_progress_use_cases),
 ) -> PreparationDetailResponse:
     return _detail(
-        await use_cases.complete_step(current_user.id, preparation_id, step_number, _unit_system(unit_system, current_user))
+        await use_cases.complete_step(current_user.id, preparation_id, step_number, _unit_system(unit_system, current_user)),
+        current_user,
     )
 
 
@@ -136,7 +139,8 @@ async def uncomplete_step(
     return _detail(
         await use_cases.uncomplete_step(
             current_user.id, preparation_id, step_number, _unit_system(unit_system, current_user)
-        )
+        ),
+        current_user,
     )
 
 
@@ -149,7 +153,8 @@ async def start_step_timer(
     use_cases: PreparationProgressUseCases = Depends(get_preparation_progress_use_cases),
 ) -> PreparationDetailResponse:
     return _detail(
-        await use_cases.start_timer(current_user.id, preparation_id, step_number, _unit_system(unit_system, current_user))
+        await use_cases.start_timer(current_user.id, preparation_id, step_number, _unit_system(unit_system, current_user)),
+        current_user,
     )
 
 
@@ -160,7 +165,7 @@ async def finish_preparation(
     current_user: UserDTO = Depends(get_current_user),
     use_cases: PreparationProgressUseCases = Depends(get_preparation_progress_use_cases),
 ) -> PreparationDetailResponse:
-    return _detail(await use_cases.finish(current_user.id, preparation_id, _unit_system(unit_system, current_user)))
+    return _detail(await use_cases.finish(current_user.id, preparation_id, _unit_system(unit_system, current_user)), current_user)
 
 
 @router.post("/{preparation_id}/abandon", response_model=PreparationDetailResponse)
@@ -170,4 +175,4 @@ async def abandon_preparation(
     current_user: UserDTO = Depends(get_current_user),
     use_cases: PreparationProgressUseCases = Depends(get_preparation_progress_use_cases),
 ) -> PreparationDetailResponse:
-    return _detail(await use_cases.abandon(current_user.id, preparation_id, _unit_system(unit_system, current_user)))
+    return _detail(await use_cases.abandon(current_user.id, preparation_id, _unit_system(unit_system, current_user)), current_user)

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from app.shared.domain.value_objects.localized_text import LocalizedText
 
 
 @dataclass(frozen=True)
@@ -23,9 +24,9 @@ class PortfolioItemDTO:
     title: str
     description: str | None
     cover_photo_url: str | None
-    category_name: str | None
-    tags: list[str]
-    difficulty_name: str | None
+    category_name: LocalizedText | None
+    tags: list[LocalizedText]
+    difficulty_name: LocalizedText | None
     prep_time_minutes: int | None
     servings: int | None
     is_public: bool

@@ -7,6 +7,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.shared.presentation.i18n import LocalizedStr
+
 # --- Requests -----------------------------------------------------------------------
 
 
@@ -92,20 +94,20 @@ class ReorderCoverPhotosRequest(BaseModel):
 
 class RecipeCategoryResponse(BaseModel):
     id: str
-    name: str
+    name: LocalizedStr
 
 
 class DifficultyResponse(BaseModel):
     id: str
-    name: str
+    name: LocalizedStr
     level_order: int
 
 
 class RecipeTagResponse(BaseModel):
     id: str
-    name: str
+    name: LocalizedStr
     group: str  # sabor | dieta | tecnica | tiempo | celebraciones
-    group_name: str
+    group_name: LocalizedStr
 
 
 class RecipePhotoResponse(BaseModel):
@@ -119,7 +121,7 @@ class RecipePhotoResponse(BaseModel):
 class RecipeIngredientResponse(BaseModel):
     id: str
     ingredient_id: str
-    ingredient_name: str | None
+    ingredient_name: LocalizedStr | None
     quantity: Decimal
     unit_id: str
     unit_abbreviation: str | None
@@ -133,7 +135,7 @@ class RecipeIngredientResponse(BaseModel):
 class RecipeEquipmentResponse(BaseModel):
     id: str
     equipment_id: str
-    equipment_name: str | None
+    equipment_name: LocalizedStr | None
     notes: str | None
 
 

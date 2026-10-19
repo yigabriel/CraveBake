@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from app.shared.domain.value_objects.localized_text import DEFAULT_LANGUAGE, LocalizedText
 
 
 @dataclass(frozen=True)
@@ -10,6 +11,7 @@ class CreateEquipmentDTO:
     name: str
     equipment_type: str
     description: str | None = None
+    language: str = DEFAULT_LANGUAGE  # the language `name` is written in
 
 
 @dataclass(frozen=True)
@@ -23,7 +25,7 @@ class SearchEquipmentDTO:
 @dataclass(frozen=True)
 class EquipmentDTO:
     id: str
-    name: str
+    name: LocalizedText  # every language; the HTTP layer picks the viewer's
     equipment_type: str
     description: str | None
 

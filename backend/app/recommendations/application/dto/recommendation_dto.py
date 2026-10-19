@@ -4,6 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from app.shared.domain.value_objects.localized_text import LocalizedText
+
 
 @dataclass(frozen=True)
 class StartSessionDTO:
@@ -17,7 +19,7 @@ class StartSessionDTO:
 @dataclass(frozen=True)
 class NamedRefDTO:
     id: str
-    name: str
+    name: LocalizedText
 
 
 @dataclass(frozen=True)
@@ -40,9 +42,9 @@ class RecommendationDTO:
     title: str
     description: str | None
     cover_photo_url: str | None
-    category_name: str | None
-    difficulty_name: str | None
-    tags: list[str]
+    category_name: LocalizedText | None
+    difficulty_name: LocalizedText | None
+    tags: list[LocalizedText]
     prep_time_minutes: int | None
     servings: int | None
     is_own: bool  # the user's own recipe or personalization: already in their portfolio, nothing to save

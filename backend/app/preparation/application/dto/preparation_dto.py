@@ -5,11 +5,13 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
+from app.shared.domain.value_objects.localized_text import LocalizedText
+
 
 @dataclass(frozen=True)
 class PreparedIngredientDTO:
     ingredient_id: str
-    ingredient_name: str | None
+    ingredient_name: LocalizedText | None
     quantity: Decimal  # in the requested unit system
     unit_abbreviation: str | None
     original_quantity: Decimal  # as the recipe was written

@@ -33,6 +33,7 @@ from app.ingredients.presentation.http.schemas.ingredient_schemas import (
     IngredientResponse,
 )
 from app.shared.presentation.pagination import PageResponse
+from app.shared.presentation.i18n import language_context
 
 
 router = APIRouter(prefix="/ingredients", tags=["Ingredients"])
@@ -59,7 +60,7 @@ async def search_ingredients(
 
     page = await use_case.execute(dto)
 
-    return PageResponse[IngredientResponse].model_validate(page, from_attributes=True)
+    return PageResponse[IngredientResponse].model_validate(page, from_attributes=True, context=language_context(current_user))
 
 
 @router.post(
@@ -81,12 +82,14 @@ async def create_ingredient(
         name=request.name,
         description=request.description,
         default_category=request.default_category,
+        # The name is taken as written in the creator's language.
+        language=current_user.preferred_language,
     )
 
     ingredient = await use_case.execute(dto)
 
     response.headers["Location"] = str(http_request.url_for("get_ingredient", ingredient_id=ingredient.id))
-    return IngredientResponse(**ingredient.__dict__)
+    return IngredientResponse.model_validate(ingredient, from_attributes=True, context=language_context(current_user))
 
 
 @router.get("/{ingredient_id}", response_model=IngredientResponse)
@@ -98,4 +101,4 @@ async def get_ingredient(
 
     ingredient = await use_case.execute(ingredient_id)
 
-    return IngredientResponse(**ingredient.__dict__)
+    return IngredientResponse.model_validate(ingredient, from_attributes=True, context=language_context(current_user))

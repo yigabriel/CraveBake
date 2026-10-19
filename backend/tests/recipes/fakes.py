@@ -30,6 +30,7 @@ from app.recipes.domain.services.ingredient_catalog import (
 from app.recipes.domain.value_objects.difficulty_id import DifficultyId
 from app.recipes.domain.value_objects.recipe_category_id import RecipeCategoryId
 from app.recipes.domain.value_objects.recipe_tag_id import RecipeTagId
+from app.shared.domain.value_objects.localized_text import LocalizedText
 
 
 class InMemoryRecipeRepository(RecipeRepository):
@@ -118,7 +119,7 @@ class FakeIngredientCatalog(IngredientCatalog):
         self.units = units
 
     async def get_ingredients(self, ids):
-        return {i: CatalogIngredient(i, self.ingredients[i]) for i in ids if i in self.ingredients}
+        return {i: CatalogIngredient(i, LocalizedText.of(self.ingredients[i])) for i in ids if i in self.ingredients}
 
     async def get_units(self, ids):
         return {u: CatalogUnit(u, self.units[u], self.units[u]) for u in ids if u in self.units}
@@ -136,7 +137,7 @@ class FakeEquipmentCatalog(EquipmentCatalog):
         self.equipment = equipment
 
     async def get_equipment(self, ids):
-        return {e: CatalogEquipment(e, self.equipment[e]) for e in ids if e in self.equipment}
+        return {e: CatalogEquipment(e, LocalizedText.of(self.equipment[e])) for e in ids if e in self.equipment}
 
 
 def _id() -> str:
@@ -152,11 +153,11 @@ class RecipesWorld:
     grams: str = field(default_factory=_id)
     units: str = field(default_factory=_id)
     mold: str = field(default_factory=_id)
-    cakes: RecipeCategory = field(default_factory=lambda: RecipeCategory(RecipeCategoryId(), "Tortas"))
-    easy: Difficulty = field(default_factory=lambda: Difficulty(DifficultyId(), "Fácil", 1))
-    chocolate: RecipeTag = field(default_factory=lambda: RecipeTag(RecipeTagId(), "chocolate", TagGroup.SABOR))
-    vegan: RecipeTag = field(default_factory=lambda: RecipeTag(RecipeTagId(), "vegano", TagGroup.DIETA))
-    holiday: RecipeTag = field(default_factory=lambda: RecipeTag(RecipeTagId(), "Navidad", TagGroup.CELEBRACIONES))
+    cakes: RecipeCategory = field(default_factory=lambda: RecipeCategory(RecipeCategoryId(), LocalizedText({"es": "Tortas", "en": "Cakes"})))
+    easy: Difficulty = field(default_factory=lambda: Difficulty(DifficultyId(), LocalizedText({"es": "Fácil", "en": "Easy"}), 1))
+    chocolate: RecipeTag = field(default_factory=lambda: RecipeTag(RecipeTagId(), LocalizedText.of("chocolate"), TagGroup.SABOR))
+    vegan: RecipeTag = field(default_factory=lambda: RecipeTag(RecipeTagId(), LocalizedText({"es": "vegano", "en": "vegan"}), TagGroup.DIETA))
+    holiday: RecipeTag = field(default_factory=lambda: RecipeTag(RecipeTagId(), LocalizedText({"es": "Navidad", "en": "Christmas"}), TagGroup.CELEBRACIONES))
 
     def __post_init__(self) -> None:
         self.recipes = InMemoryRecipeRepository()

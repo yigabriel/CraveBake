@@ -2,13 +2,14 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, NavLink, Outlet, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/AuthContext";
+import { Logo, LogoMark } from "./Logo";
 import { Icon } from "./ui";
 
 const NAV = [
   { to: "/", key: "nav.explore", icon: "explore", end: true },
   { to: "/discover", key: "nav.discover", icon: "style" },
   { to: "/portfolio", key: "nav.portfolio", icon: "menu_book" },
-  { to: "/tools/converter", key: "nav.tools", icon: "handyman" },
+  { to: "/tools/converter", key: "nav.converter", icon: "calculate" },
   { to: "/profile", key: "nav.profile", icon: "person" },
 ] as const;
 
@@ -63,11 +64,8 @@ function HeaderSearch() {
         onChange={(event) => setValue(event.target.value)}
         placeholder={t("nav.searchPlaceholder")}
         aria-label={t("nav.searchPlaceholder")}
-        className="w-72 rounded bg-surface-container-low py-xs pl-[40px] pr-[44px] text-label-md outline-none transition-all focus:bg-surface-container focus:ring-1 focus:ring-primary-container"
+        className="w-72 rounded bg-surface-container-low py-xs pl-[40px] pr-sm text-label-md outline-none transition-all focus:bg-surface-container focus:ring-1 focus:ring-primary-container"
       />
-      <kbd className="pointer-events-none absolute right-xs rounded bg-surface-container-highest px-xs py-0.5 text-label-sm text-on-surface-variant">
-        ⌘K
-      </kbd>
     </form>
   );
 }
@@ -75,13 +73,12 @@ function HeaderSearch() {
 export function AppShell() {
   const { t } = useTranslation();
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-50 bg-surface/90 shadow-[0_1px_8px_rgba(0,0,0,0.04)] backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-gutter px-margin-mobile lg:h-20 lg:px-margin-desktop">
           <div className="flex items-center gap-lg">
-            <Link to="/" className="flex items-center gap-xs">
-              <Icon name="bakery_dining" className="text-[28px] text-primary" />
-              <span className="text-title-lg tracking-tight text-primary">Crave Bake</span>
+            <Link to="/" aria-label="Crave Bake">
+              <Logo size={36} />
             </Link>
             <nav className="hidden items-center gap-xs lg:flex">
               {NAV.map((item) => (
@@ -111,18 +108,18 @@ export function AppShell() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1440px] px-margin-mobile pb-[120px] pt-md lg:px-margin-desktop lg:pb-xl">
+      <main className="mx-auto w-full max-w-[1440px] flex-1 px-margin-mobile pb-[120px] pt-md lg:px-margin-desktop lg:pb-xl">
         <Outlet />
       </main>
 
       <footer className="hidden border-t border-outline-variant/40 bg-surface-container-low lg:block">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-margin-desktop py-md text-label-md text-on-surface-variant">
           <span className="flex items-center gap-xs">
-            <Icon name="bakery_dining" className="text-primary" /> Crave Bake — {t("nav.tagline")}
+            <LogoMark size={22} /> Crave Bake — {t("nav.tagline")}
           </span>
           <span className="flex gap-md">
             <Link to="/">{t("nav.explore")}</Link>
-            <Link to="/tools/converter">{t("nav.tools")}</Link>
+            <Link to="/tools/converter">{t("nav.converter")}</Link>
           </span>
         </div>
       </footer>
@@ -161,7 +158,7 @@ function BottomNav() {
             {({ isActive }) => (
               <>
                 <Icon name={item.icon} filled={isActive} className="text-[24px]" />
-                {t(item.key)}
+                {t(item.key === "nav.converter" ? "nav.converterShort" : item.key)}
               </>
             )}
           </NavLink>

@@ -26,10 +26,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setUser = useCallback(
     (next: User) => {
       setUserState(next);
-      // The API never translates: the UI follows the user's preference.
-      if (i18n.language !== next.preferred_language) void i18n.changeLanguage(next.preferred_language);
+      // UI texts follow the user's preference...
+      if (i18n.language !== next.preferred_language) {
+        void i18n.changeLanguage(next.preferred_language);
+        // ...and so do catalog names, which the API returns already translated: refetch what is cached.
+        void queryClient.invalidateQueries();
+      }
     },
-    [i18n],
+    [i18n, queryClient],
   );
 
   const logout = useCallback(() => {

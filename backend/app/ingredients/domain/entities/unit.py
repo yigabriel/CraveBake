@@ -13,6 +13,7 @@ from decimal import Decimal
 from enum import Enum
 
 from app.ingredients.domain.value_objects.unit_id import UnitId
+from app.shared.domain.value_objects.localized_text import LocalizedText
 
 
 class UnitType(str, Enum):
@@ -32,7 +33,7 @@ class UnitSystem(str, Enum):
 @dataclass
 class Unit:
     id: UnitId
-    name: str
+    name: LocalizedText
     abbreviation: str
     unit_type: UnitType
     base_factor: Decimal  # how many base units (g for weight, ml for volume) one of this unit represents

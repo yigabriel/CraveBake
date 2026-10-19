@@ -8,6 +8,9 @@ from app.ingredients.domain.entities.ingredient import Ingredient
 from app.ingredients.domain.repositories.ingredient_repository import IngredientRepository
 from app.ingredients.domain.value_objects.ingredient_id import IngredientId
 from app.ingredients.infrastructure.persistence.models.ingredient_model import IngredientModel
+from app.shared.database.localized_name import name_columns, name_contains, name_equals, original_name
+from app.ingredients.infrastructure.persistence.models.ingredient_category_model import IngredientCategoryModel
+from app.shared.domain.value_objects.localized_text import LocalizedText
 
 
 class SqlAlchemyIngredientRepository(IngredientRepository):
@@ -30,16 +33,14 @@ class SqlAlchemyIngredientRepository(IngredientRepository):
         return [_to_entity(model) for model in result.scalars().all()]
 
     async def exists_by_name(self, name: str) -> bool:
-        result = await self._session.execute(
-            select(IngredientModel.id).where(func.lower(IngredientModel.name) == name.lower())
-        )
+        result = await self._session.execute(select(IngredientModel.id).where(name_equals(IngredientModel, name)).limit(1))
         return result.scalar_one_or_none() is not None
 
     async def search(
         self, query: str | None, category: str | None, limit: int, offset: int
     ) -> list[Ingredient]:
         statement = _filtered(select(IngredientModel), query, category)
-        statement = statement.order_by(IngredientModel.name).limit(limit).offset(offset)
+        statement = statement.order_by(original_name(IngredientModel)).limit(limit).offset(offset)
 
         result = await self._session.execute(statement)
         return [_to_entity(model) for model in result.scalars().all()]
@@ -48,31 +49,40 @@ class SqlAlchemyIngredientRepository(IngredientRepository):
         statement = _filtered(select(func.count()).select_from(IngredientModel), query, category)
         return (await self._session.execute(statement)).scalar_one()
 
-    async def list_distinct_categories(self) -> list[tuple[str, int]]:
+    async def list_distinct_categories(self) -> list[tuple[str, LocalizedText, int]]:
         statement = (
-            select(IngredientModel.default_category, func.count(IngredientModel.id))
+            select(IngredientModel.default_category, IngredientCategoryModel, func.count(IngredientModel.id))
+            .outerjoin(IngredientCategoryModel, IngredientCategoryModel.code == IngredientModel.default_category)
             .where(IngredientModel.default_category.isnot(None))
-            .group_by(IngredientModel.default_category)
+            .group_by(IngredientModel.default_category, IngredientCategoryModel.id)
             .order_by(IngredientModel.default_category)
         )
         result = await self._session.execute(statement)
-        return [(name, count) for name, count in result.all()]
+        return [(code, _category_name(code, category), count) for code, category, count in result.all()]
 
 
 def _filtered(statement, query: str | None, category: str | None):
     if query:
-        statement = statement.where(IngredientModel.name.ilike(f"%{query}%"))
+        statement = statement.where(name_contains(IngredientModel, query))
     if category:
         statement = statement.where(IngredientModel.default_category == category)
     return statement
 
 
+def _category_name(code: str | None, category: IngredientCategoryModel | None) -> LocalizedText | None:
+    """A known code has its localized name; an unknown one (old free text) is shown as written."""
+    if code is None:
+        return None
+    return category.localized_name if category else LocalizedText.of(code)
+
+
 def _to_entity(model: IngredientModel) -> Ingredient:
     return Ingredient(
         id=IngredientId(model.id),
-        name=model.name,
+        name=model.localized_name,
         description=model.description,
         default_category=model.default_category,
+        category_name=_category_name(model.default_category, model.category),
         created_at=model.created_at,
     )
 
@@ -80,7 +90,7 @@ def _to_entity(model: IngredientModel) -> Ingredient:
 def _to_model(ingredient: Ingredient) -> IngredientModel:
     return IngredientModel(
         id=ingredient.id.value,
-        name=ingredient.name,
+        **name_columns(ingredient.name),
         description=ingredient.description,
         default_category=ingredient.default_category,
     )

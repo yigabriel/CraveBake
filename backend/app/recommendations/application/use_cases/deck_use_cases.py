@@ -87,10 +87,11 @@ class GetRecommendationDeckUseCase:
         equipment_names = await self._kitchen.equipment_names(list(equipment_ids))
         saved = await self._favorites.saved_among(user_id, [recipe.id for recipe, _ in page])
 
-        def refs(ids: frozenset[str], names: dict[str, str]) -> list[NamedRefDTO]:
+        def refs(ids: frozenset[str], names: dict) -> list[NamedRefDTO]:
             return sorted(
                 (NamedRefDTO(id=item_id, name=names[item_id]) for item_id in ids if item_id in names),
-                key=lambda ref: ref.name.lower(),
+                # By the name as originally written: the viewer's language is unknown here.
+                key=lambda ref: str(ref.name).lower(),
             )
 
         return [

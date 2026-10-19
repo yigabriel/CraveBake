@@ -2,6 +2,7 @@
 from datetime import datetime
 
 from pydantic import BaseModel
+from app.shared.presentation.i18n import LocalizedStr
 
 
 class PortfolioItemResponse(BaseModel):
@@ -10,9 +11,9 @@ class PortfolioItemResponse(BaseModel):
     title: str
     description: str | None
     cover_photo_url: str | None
-    category_name: str | None
-    tags: list[str]
-    difficulty_name: str | None
+    category_name: LocalizedStr | None
+    tags: list[LocalizedStr]
+    difficulty_name: LocalizedStr | None
     prep_time_minutes: int | None
     servings: int | None
     is_public: bool

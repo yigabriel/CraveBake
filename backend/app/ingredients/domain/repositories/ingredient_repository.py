@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 
 from app.ingredients.domain.entities.ingredient import Ingredient
 from app.ingredients.domain.value_objects.ingredient_id import IngredientId
+from app.shared.domain.value_objects.localized_text import LocalizedText
 
 
 class IngredientRepository(ABC):
@@ -27,10 +28,10 @@ class IngredientRepository(ABC):
 
     @abstractmethod
     async def exists_by_name(self, name: str) -> bool:
-        ...
+        """True if any ingredient is called `name` in any language, ignoring case."""
 
     @abstractmethod
-    async def search(
+    async def search(  # `query` matches the name in any language
         self, query: str | None, category: str | None, limit: int, offset: int
     ) -> list[Ingredient]:
         ...
@@ -40,9 +41,9 @@ class IngredientRepository(ABC):
         """Total matches of `search` with the same filters, ignoring pagination."""
 
     @abstractmethod
-    async def list_distinct_categories(self) -> list[tuple[str, int]]:
-        """Each `default_category` in use with how many ingredients have it.
+    async def list_distinct_categories(self) -> list[tuple[str, LocalizedText, int]]:
+        """Each `default_category` code in use, its display name, and how many ingredients have it.
 
-        Categories are free text set when an ingredient is created, not a
-        curated table, so this reflects whatever values exist right now.
+        Codes are set when an ingredient is created; the seeded ones have a
+        localized name, any other code is named as written.
         """

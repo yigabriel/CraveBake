@@ -25,17 +25,18 @@ class InMemoryEquipmentRepository(EquipmentRepository):
         return [self.items[i] for i in ids if i in self.items]
 
     async def exists_by_name(self, name: str) -> bool:
-        return any(item.name.lower() == name.lower() for item in self.items.values())
+        # Any language counts, like the real repository.
+        return any(name.strip().lower() == text.lower() for item in self.items.values() for text in item.name.all_texts())
 
     def _matches(self, query: str | None, equipment_type: EquipmentType | None) -> list[Equipment]:
         return sorted(
             (
                 item
                 for item in self.items.values()
-                if (not query or query.lower() in item.name.lower())
+                if (not query or any(query.lower() in text.lower() for text in item.name.all_texts()))
                 and (equipment_type is None or item.equipment_type is equipment_type)
             ),
-            key=lambda item: item.name,
+            key=lambda item: item.name.text.lower(),
         )
 
     async def search(self, query, equipment_type, limit, offset) -> list[Equipment]:

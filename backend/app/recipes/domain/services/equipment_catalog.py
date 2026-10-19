@@ -9,12 +9,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from app.shared.domain.value_objects.localized_text import LocalizedText
 
 
 @dataclass(frozen=True)
 class CatalogEquipment:
     id: str
-    name: str
+    name: LocalizedText
 
 
 class EquipmentCatalog(ABC):

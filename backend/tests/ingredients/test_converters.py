@@ -118,7 +118,7 @@ class TestUnitSystemConverter:
 
     @pytest.mark.parametrize(
         "ml, expected",
-        [("240", (D("1.00"), "cup")), ("60", (D("0.25"), "cup")), ("30", (D("2.00"), "tbsp")), ("5", (D("1.00"), "tsp"))],
+        [("240", (D("1.01"), "cup")), ("60", (D("0.25"), "cup")), ("30", (D("2.03"), "tbsp")), ("5", (D("1.01"), "tsp"))],
     )
     def test_metric_volume_picks_natural_us_measure(self, units, ml, expected):
         shown = self._show(units, ml, "ml", UnitSystem.US)
@@ -126,7 +126,12 @@ class TestUnitSystemConverter:
 
     def test_tiny_amounts_never_round_to_zero(self, units):
         shown = self._show(units, "0.1", "ml", UnitSystem.US)
-        assert (shown.quantity, shown.unit.abbreviation) == (D("0.25"), "tsp")
+        assert (shown.quantity, shown.unit.abbreviation) == (D("0.125"), "tsp")
+
+    def test_cups_keep_precision_for_the_client_to_round(self, units):
+        # 100 g of flour is 0.8 cup: rounding to a quarter here (0.75) would lose 6 g before scaling.
+        shown = self._show(units, "100", "g", UnitSystem.US, {units["cup"].id: D("125")})
+        assert (shown.quantity, shown.unit.abbreviation) == (D("0.80"), "cup")
 
     def test_grams_with_volume_figure_become_cups(self, units):
         shown = self._show(units, "250", "g", UnitSystem.US, {units["cup"].id: D("125")})

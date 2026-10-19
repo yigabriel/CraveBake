@@ -62,6 +62,7 @@ from app.recipes.presentation.http.schemas.recipe_schemas import (
 )
 from app.shared.exceptions.domain_exceptions import ValidationError
 from app.shared.presentation.pagination import PageResponse
+from app.shared.presentation.i18n import language_context
 
 router = APIRouter(prefix="/recipes", tags=["Recipes"])
 
@@ -106,7 +107,7 @@ async def search_public_recipes(
         offset=offset,
     )
     page = await use_case.execute(dto, current_user.id)
-    return PageResponse[RecipeSummaryResponse].model_validate(page, from_attributes=True)
+    return PageResponse[RecipeSummaryResponse].model_validate(page, from_attributes=True, context=language_context(current_user))
 
 
 @router.post("", response_model=RecipeDetailResponse, status_code=status.HTTP_201_CREATED)
@@ -134,7 +135,7 @@ async def create_recipe(
     )
     recipe = await use_case.execute(dto)
     _set_location(http_request, response, recipe.id)
-    return RecipeDetailResponse.model_validate(recipe, from_attributes=True)
+    return RecipeDetailResponse.model_validate(recipe, from_attributes=True, context=language_context(current_user))
 
 
 @router.get("/mine", response_model=PageResponse[RecipeSummaryResponse])
@@ -148,7 +149,7 @@ async def list_my_recipes(
     use_case: ListMyRecipesUseCase = Depends(get_list_my_recipes_use_case),
 ) -> PageResponse[RecipeSummaryResponse]:
     page = await use_case.execute(current_user.id, kind, limit=limit, offset=offset)
-    return PageResponse[RecipeSummaryResponse].model_validate(page, from_attributes=True)
+    return PageResponse[RecipeSummaryResponse].model_validate(page, from_attributes=True, context=language_context(current_user))
 
 
 @router.get("/{recipe_id}", response_model=RecipeDetailResponse)
@@ -162,7 +163,7 @@ async def get_recipe(
     use_case: GetRecipeUseCase = Depends(get_get_recipe_use_case),
 ) -> RecipeDetailResponse:
     recipe = await use_case.execute(recipe_id, current_user.id, unit_system or current_user.preferred_unit_system)
-    return RecipeDetailResponse.model_validate(recipe, from_attributes=True)
+    return RecipeDetailResponse.model_validate(recipe, from_attributes=True, context=language_context(current_user))
 
 
 @router.patch("/{recipe_id}", response_model=RecipeDetailResponse)
@@ -177,7 +178,7 @@ async def update_recipe(
         if non_nullable in changes and changes[non_nullable] is None:
             raise ValidationError(f"'{non_nullable}' cannot be null")
     recipe = await use_case.execute(UpdateRecipeDTO(user_id=current_user.id, recipe_id=recipe_id, changes=changes))
-    return RecipeDetailResponse.model_validate(recipe, from_attributes=True)
+    return RecipeDetailResponse.model_validate(recipe, from_attributes=True, context=language_context(current_user))
 
 
 @router.put("/{recipe_id}/ingredients", response_model=RecipeDetailResponse)
@@ -188,7 +189,7 @@ async def replace_recipe_ingredients(
     use_case: ReplaceRecipeIngredientsUseCase = Depends(get_replace_recipe_ingredients_use_case),
 ) -> RecipeDetailResponse:
     recipe = await use_case.execute(current_user.id, recipe_id, _ingredient_inputs(request.ingredients))
-    return RecipeDetailResponse.model_validate(recipe, from_attributes=True)
+    return RecipeDetailResponse.model_validate(recipe, from_attributes=True, context=language_context(current_user))
 
 
 @router.put("/{recipe_id}/equipment", response_model=RecipeDetailResponse)
@@ -199,7 +200,7 @@ async def replace_recipe_equipment(
     use_case: ReplaceRecipeEquipmentUseCase = Depends(get_replace_recipe_equipment_use_case),
 ) -> RecipeDetailResponse:
     recipe = await use_case.execute(current_user.id, recipe_id, _equipment_inputs(request.equipment))
-    return RecipeDetailResponse.model_validate(recipe, from_attributes=True)
+    return RecipeDetailResponse.model_validate(recipe, from_attributes=True, context=language_context(current_user))
 
 
 @router.put("/{recipe_id}/tags", response_model=RecipeDetailResponse)
@@ -210,7 +211,7 @@ async def replace_recipe_tags(
     use_case: ReplaceRecipeTagsUseCase = Depends(get_replace_recipe_tags_use_case),
 ) -> RecipeDetailResponse:
     recipe = await use_case.execute(current_user.id, recipe_id, request.tag_ids)
-    return RecipeDetailResponse.model_validate(recipe, from_attributes=True)
+    return RecipeDetailResponse.model_validate(recipe, from_attributes=True, context=language_context(current_user))
 
 
 @router.put("/{recipe_id}/steps", response_model=RecipeDetailResponse)
@@ -221,7 +222,7 @@ async def replace_recipe_steps(
     use_case: ReplaceRecipeStepsUseCase = Depends(get_replace_recipe_steps_use_case),
 ) -> RecipeDetailResponse:
     recipe = await use_case.execute(current_user.id, recipe_id, _step_inputs(request.steps))
-    return RecipeDetailResponse.model_validate(recipe, from_attributes=True)
+    return RecipeDetailResponse.model_validate(recipe, from_attributes=True, context=language_context(current_user))
 
 
 @router.delete("/{recipe_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -246,7 +247,7 @@ async def personalize_recipe(
 ) -> RecipeDetailResponse:
     recipe = await use_case.execute(current_user.id, recipe_id, title=request.title if request else None)
     _set_location(http_request, response, recipe.id)
-    return RecipeDetailResponse.model_validate(recipe, from_attributes=True)
+    return RecipeDetailResponse.model_validate(recipe, from_attributes=True, context=language_context(current_user))
 
 
 @router.get("/{recipe_id}/personalizations", response_model=PageResponse[RecipeSummaryResponse])
@@ -258,4 +259,4 @@ async def list_my_personalizations(
     use_case: ListPersonalizationsUseCase = Depends(get_list_personalizations_use_case),
 ) -> PageResponse[RecipeSummaryResponse]:
     page = await use_case.execute(current_user.id, recipe_id, limit=limit, offset=offset)
-    return PageResponse[RecipeSummaryResponse].model_validate(page, from_attributes=True)
+    return PageResponse[RecipeSummaryResponse].model_validate(page, from_attributes=True, context=language_context(current_user))

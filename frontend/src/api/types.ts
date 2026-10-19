@@ -51,11 +51,13 @@ export interface Ingredient {
   id: string;
   name: string;
   description: string | null;
-  default_category: string | null;
+  default_category: string | null; // stable code, e.g. "harina"
+  category_name: string | null; // its name in the user's language
 }
 
 export interface IngredientCategory {
-  name: string;
+  name: string; // stable code
+  label: string;
   ingredient_count: number;
 }
 

@@ -2,7 +2,7 @@ import { useRef, type ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "./auth/AuthContext";
 import { AppShell } from "./components/AppShell";
-import { Icon } from "./components/ui";
+import { LogoMark } from "./components/Logo";
 import { LoginPage, RegisterPage } from "./pages/AuthPages";
 import { ConverterPage } from "./pages/ConverterPage";
 import { CookPage } from "./pages/CookPage";
@@ -19,7 +19,7 @@ import { RecipeEditorPage } from "./pages/RecipeEditorPage";
 function Splash() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <Icon name="bakery_dining" className="animate-pulse text-[64px] text-primary" />
+      <LogoMark size={72} className="animate-pulse" />
     </div>
   );
 }

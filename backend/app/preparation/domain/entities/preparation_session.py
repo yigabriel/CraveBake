@@ -34,6 +34,7 @@ from app.preparation.domain.exceptions import (
 )
 from app.preparation.domain.services.ports import RecipeToPrepare
 from app.preparation.domain.value_objects.preparation_session_id import PreparationSessionId
+from app.shared.domain.value_objects.localized_text import LocalizedText
 
 
 def utc_now() -> datetime:
@@ -51,7 +52,7 @@ class PreparedIngredient:
     """Copy of an ingredient line, in the recipe's original units (conversion is display-only)."""
 
     ingredient_id: str
-    ingredient_name: str | None
+    ingredient_name: LocalizedText | None  # every language, snapshotted when cooking starts
     quantity: Decimal
     unit_id: str
     unit_abbreviation: str | None

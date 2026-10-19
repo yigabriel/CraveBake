@@ -8,9 +8,10 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.shared.database.base import Base
+from app.shared.database.localized_name import LocalizedNameMixin
 
 
-class TagModel(Base):
+class TagModel(LocalizedNameMixin, Base):
     __tablename__ = "tags"
     __table_args__ = (
         CheckConstraint(
@@ -18,7 +19,7 @@ class TagModel(Base):
         ),
     )
 
-    name: Mapped[str] = mapped_column(String(60), unique=True, nullable=False)
+    # names / name_language: see LocalizedNameMixin (unique per language, migration 0017).
     # `group` is a reserved word in SQL, hence the prefix.
     tag_group: Mapped[str] = mapped_column(String(20), nullable=False)
 

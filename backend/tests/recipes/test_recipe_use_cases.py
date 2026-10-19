@@ -89,15 +89,15 @@ class TestCreateAndGet:
         detail = await create(world)
 
         assert detail.is_owner is True
-        assert detail.category.name == "Tortas"
-        assert detail.difficulty.name == "Fácil"
-        assert [t.name for t in detail.tags] == ["chocolate"]
-        assert [(i.ingredient_name, i.unit_abbreviation, i.position) for i in detail.ingredients] == [
+        assert str(detail.category.name) == "Tortas"
+        assert str(detail.difficulty.name) == "Fácil"
+        assert [str(t.name) for t in detail.tags] == ["chocolate"]
+        assert [(str(i.ingredient_name), i.unit_abbreviation, i.position) for i in detail.ingredients] == [
             ("Harina", "g", 1),
             ("Huevo", "u", 2),
         ]
         assert detail.ingredients[0].ingredient_id == world.flour  # stored in canonical form
-        assert [e.equipment_name for e in detail.equipment] == ["Molde"]
+        assert [str(e.equipment_name) for e in detail.equipment] == ["Molde"]
         assert [(s.step_number, s.timer_seconds) for s in detail.steps] == [(1, None), (2, 1800)]
 
     @pytest.mark.parametrize(
@@ -212,9 +212,9 @@ class TestOwnership:
             AUTHOR, recipe.id, [str(world.vegan.id), str(world.chocolate.id)]
         )
 
-        assert [(i.ingredient_name, i.quantity) for i in ingredients.ingredients] == [("Huevo", Decimal("6"))]
+        assert [(str(i.ingredient_name), i.quantity) for i in ingredients.ingredients] == [("Huevo", Decimal("6"))]
         assert equipment.equipment == []
-        assert [t.name for t in tags.tags] == ["chocolate", "vegano"]
+        assert [str(t.name) for t in tags.tags] == ["chocolate", "vegano"]
 
     async def test_replace_steps_keeps_identified_step(self, world, recipe):
         bake_id = recipe.steps[1].id
@@ -373,10 +373,10 @@ class TestCatalogs:
 
     async def test_tags_grouped_then_alphabetical(self, world):
         tags = await ListRecipeTagsUseCase(world.tags).execute()
-        assert [(t.group, t.name) for t in tags] == [("sabor", "chocolate"), ("dieta", "vegano"), ("celebraciones", "Navidad")]
+        assert [(t.group, str(t.name)) for t in tags] == [("sabor", "chocolate"), ("dieta", "vegano"), ("celebraciones", "Navidad")]
 
     async def test_tags_of_one_group(self, world):
-        assert [t.name for t in await ListRecipeTagsUseCase(world.tags).execute("dieta")] == ["vegano"]
+        assert [str(t.name) for t in await ListRecipeTagsUseCase(world.tags).execute("dieta")] == ["vegano"]
 
 
 class TestRecipeQueryService:

@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.shared.presentation.i18n import LocalizedStr
+
 
 class StartSessionRequest(BaseModel):
     ingredient_ids: list[str] = Field(
@@ -19,7 +21,7 @@ class StartSessionRequest(BaseModel):
 
 class NamedRefResponse(BaseModel):
     id: str
-    name: str
+    name: LocalizedStr
 
 
 class DiscoverySessionResponse(BaseModel):
@@ -40,9 +42,9 @@ class RecommendationResponse(BaseModel):
     title: str
     description: str | None
     cover_photo_url: str | None
-    category_name: str | None
-    difficulty_name: str | None
-    tags: list[str]
+    category_name: LocalizedStr | None
+    difficulty_name: LocalizedStr | None
+    tags: list[LocalizedStr]
     prep_time_minutes: int | None
     servings: int | None
     is_own: bool = Field(description="The user's own recipe or personalization: already in their portfolio")

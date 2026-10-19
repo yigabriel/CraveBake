@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ApiError } from "../api/client";
 import { recipesApi } from "../api/endpoints";
 import { useDifficulties, useErrorMessage, useRecipeCategories, useTags, useUnits } from "../api/queries";
-import type { Language, RecipeBasics, RecipeDetail, RecipeStepInput } from "../api/types";
+import type { RecipeBasics, RecipeDetail, RecipePhoto, RecipeStepInput } from "../api/types";
 import { EquipmentPicker, IngredientPicker } from "../components/Pickers";
 import { useToast } from "../components/Toast";
 import {
@@ -22,8 +22,9 @@ import {
   Modal,
   PageHeader,
   Skeleton,
+  Switch,
 } from "../components/ui";
-import { unitOptionLabel } from "../lib/quantities";
+import { EquipmentIcon } from "../lib/equipment";
 
 const MAX_TAGS = 10;
 const MAX_COVERS = 3;
@@ -241,20 +242,29 @@ function BasicsSection({
           <Icon name="lock" className="text-[18px]" /> {t("editor.personalizationPrivate")}
         </p>
       ) : (
-        <label className="flex cursor-pointer items-center justify-between gap-sm rounded-lg bg-surface-container-low p-sm">
-          <span>
-            <span className="block text-label-md font-semibold">{t("editor.public")}</span>
-            <span className="text-label-sm font-normal text-on-surface-variant">{t("editor.publicHint")}</span>
+        <div
+          className={`flex items-center justify-between gap-md rounded-xl border-2 p-sm transition-colors ${
+            basics.is_public ? "border-tertiary/40 bg-tertiary-fixed/40" : "border-outline-variant/60 bg-surface-container-low"
+          }`}
+        >
+          <span className="flex items-center gap-sm">
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${basics.is_public ? "bg-tertiary text-on-tertiary" : "bg-surface-container-high text-outline"}`}>
+              <Icon name={basics.is_public ? "public" : "lock"} className="text-[20px]" />
+            </span>
+            <span>
+              <span className="block text-label-md font-semibold">{basics.is_public ? t("editor.public") : t("editor.private")}</span>
+              <span className="text-label-sm font-normal text-on-surface-variant">{basics.is_public ? t("editor.publicHint") : t("editor.privateHint")}</span>
+            </span>
           </span>
-          <input type="checkbox" checked={basics.is_public} onChange={(e) => set("is_public", e.target.checked)} className="h-6 w-6 accent-primary" />
-        </label>
+          <Switch checked={basics.is_public} onChange={(value) => set("is_public", value)} label={t("editor.public")} />
+        </div>
       )}
     </div>
   );
 }
 
 function IngredientsSection({ rows, onChange, errors }: { rows: IngredientRow[]; onChange: (rows: IngredientRow[]) => void; errors: Errors }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const units = useUnits();
   const update = (key: string, changes: Partial<IngredientRow>) => onChange(rows.map((row) => (row.key === key ? { ...row, ...changes } : row)));
   return (
@@ -282,7 +292,7 @@ function IngredientsSection({ rows, onChange, errors }: { rows: IngredientRow[];
               <option value="">{t("pantry.unit")}</option>
               {units.data?.map((unit) => (
                 <option key={unit.id} value={unit.id}>
-                  {unitOptionLabel(unit, i18n.language as Language)}
+                  {unit.name}
                 </option>
               ))}
             </select>
@@ -309,7 +319,7 @@ function EquipmentSection({ rows, onChange }: { rows: EquipmentRow[]; onChange: 
       {rows.length === 0 && <p className="text-label-md text-on-surface-variant">{t("editor.noEquipment")}</p>}
       {rows.map((row, index) => (
         <Card key={row.key} className="flex items-center gap-sm p-sm">
-          <Icon name="kitchen" className="text-secondary" />
+          <EquipmentIcon name={row.name} className="text-[22px] text-secondary" />
           <span className="w-40 shrink-0 text-label-md font-semibold">{row.name}</span>
           <Input maxLength={500} placeholder={t("editor.notesPlaceholder")} value={row.notes} onChange={(e) => onChange(rows.map((r) => (r.key === row.key ? { ...r, notes: e.target.value } : r)))} />
           <RowControls index={index} length={rows.length} onMove={(delta) => onChange(move(rows, index, delta))} onRemove={() => onChange(rows.filter((r) => r.key !== row.key))} />
@@ -319,28 +329,122 @@ function EquipmentSection({ rows, onChange }: { rows: EquipmentRow[]; onChange: 
   );
 }
 
-function StepsSection({ rows, onChange, errors }: { rows: StepRow[]; onChange: (rows: StepRow[]) => void; errors: Errors }) {
+/**
+ * The photo of ONE step, shown inside that step's card so the link is obvious.
+ * Saved immediately (its own endpoint); the step must exist (have an id) first.
+ */
+function StepPhotoSlot({ recipeId, stepId, photo }: { recipeId: string; stepId: string; photo: RecipePhoto | null }) {
+  const { t } = useTranslation();
+  const toast = useToast();
+  const errorMessage = useErrorMessage();
+  const queryClient = useQueryClient();
+  const [url, setUrl] = useState("");
+  const [broken, setBroken] = useState(false);
+  const run = useMutation({
+    mutationFn: (action: () => Promise<unknown>) => action(),
+    onSuccess: () => {
+      setUrl("");
+      void queryClient.invalidateQueries({ queryKey: ["recipe", recipeId] });
+    },
+    onError: (error) => toast(errorMessage(error), "error"),
+  });
+  const valid = /^https?:\/\/\S+$/.test(url.trim());
+
+  if (photo)
+    return (
+      <div className="flex items-center gap-sm rounded-lg bg-surface-container-low p-xs">
+        <img src={photo.photo_url} alt="" className="h-16 w-16 rounded object-cover" />
+        <span className="flex-1 text-label-md text-tertiary">
+          <Icon name="check_circle" className="mr-xs align-middle text-[16px]" />
+          {t("editor.stepHasPhoto")}
+        </span>
+        {/* One photo per step (409 otherwise): replacing = delete, then add. */}
+        <Button variant="ghost" icon="delete" className="px-sm py-xs text-error" loading={run.isPending} onClick={() => run.mutate(() => recipesApi.removePhoto(recipeId, photo.id))}>
+          {t("editor.removePhoto")}
+        </Button>
+      </div>
+    );
+
+  return (
+    <div className="flex items-center gap-xs rounded-lg border border-dashed border-outline-variant p-xs">
+      {valid && !broken ? (
+        <img src={url.trim()} alt="" onError={() => setBroken(true)} className="h-12 w-12 shrink-0 rounded object-cover" />
+      ) : (
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-surface-container-high text-outline">
+          <Icon name="add_photo_alternate" className="text-[22px]" />
+        </span>
+      )}
+      <Input
+        type="url"
+        placeholder={t("editor.stepPhotoPlaceholder")}
+        aria-label={t("editor.stepPhotoPlaceholder")}
+        value={url}
+        onChange={(e) => {
+          setUrl(e.target.value);
+          setBroken(false);
+        }}
+      />
+      <Button
+        icon="add_a_photo"
+        className="shrink-0 px-sm py-xs"
+        disabled={!valid || run.isPending}
+        loading={run.isPending}
+        onClick={() => run.mutate(() => recipesApi.addPhoto(recipeId, { photo_type: "step", photo_url: url.trim(), step_id: stepId }))}
+      >
+        <span className="hidden sm:inline">{t("common.add")}</span>
+      </Button>
+    </div>
+  );
+}
+
+function StepsSection({
+  rows,
+  onChange,
+  errors,
+  recipe,
+}: {
+  rows: StepRow[];
+  onChange: (rows: StepRow[]) => void;
+  errors: Errors;
+  /** Present when editing: steps that are saved can get their photo right here. */
+  recipe?: RecipeDetail;
+}) {
   const { t } = useTranslation();
   const [confirmRemove, setConfirmRemove] = useState<StepRow | null>(null);
   const update = (key: string, changes: Partial<StepRow>) => onChange(rows.map((row) => (row.key === key ? { ...row, ...changes } : row)));
   const remove = (row: StepRow) => onChange(rows.filter((r) => r.key !== row.key));
+  const photoOf = (row: StepRow) => recipe?.steps.find((step) => step.id === row.id)?.photo ?? null;
   return (
     <div className="flex flex-col gap-sm">
+      {!recipe && (
+        <p className="flex items-start gap-xs rounded bg-secondary-container/50 p-sm text-label-md">
+          <Icon name="photo_camera" className="text-[18px]" /> {t("editor.stepPhotosLater")}
+        </p>
+      )}
       {rows.map((row, index) => (
         <Card key={row.key} className={`flex flex-col gap-xs p-sm ${errors[row.key] ? "ring-1 ring-error" : ""}`}>
           <div className="flex items-center gap-xs">
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-container text-label-md text-on-primary">{index + 1}</span>
             <Input className="flex-1" maxLength={200} placeholder={t("editor.stepTitle")} value={row.title} onChange={(e) => update(row.key, { title: e.target.value })} />
-            {row.hasPhoto && <Icon name="photo_camera" className="text-secondary" />}
             {/* A step that is not sent is deleted along with its photo: ask first (§8). */}
-            <RowControls index={index} length={rows.length} onMove={(delta) => onChange(move(rows, index, delta))} onRemove={() => (row.hasPhoto ? setConfirmRemove(row) : remove(row))} />
+            <RowControls index={index} length={rows.length} onMove={(delta) => onChange(move(rows, index, delta))} onRemove={() => (photoOf(row) || row.hasPhoto ? setConfirmRemove(row) : remove(row))} />
           </div>
           <textarea rows={3} placeholder={t("editor.instructions")} value={row.instructions} onChange={(e) => update(row.key, { instructions: e.target.value })} className={inputClass} />
           <label className="flex items-center gap-xs text-label-md text-on-surface-variant">
             <Icon name="timer" className="text-[18px]" /> {t("editor.timer")}
-            <Input type="number" min="0" step="any" className="w-24" value={row.timerMinutes} onChange={(e) => update(row.key, { timerMinutes: e.target.value })} />
+            <span className="w-24">
+              <Input type="number" min="0" step="any" value={row.timerMinutes} onChange={(e) => update(row.key, { timerMinutes: e.target.value })} />
+            </span>
             {t("editor.minutes")}
           </label>
+          {recipe &&
+            (row.id ? (
+              <StepPhotoSlot recipeId={recipe.id} stepId={row.id} photo={photoOf(row)} />
+            ) : (
+              <p className="flex items-center gap-xs text-label-sm font-normal text-on-surface-variant">
+                <Icon name="photo_camera" className="text-[16px]" /> {t("editor.saveStepForPhoto")}
+              </p>
+            ))}
           {errors[row.key] && <span className="text-label-sm font-normal text-error">{errors[row.key]}</span>}
         </Card>
       ))}
@@ -413,7 +517,6 @@ function PhotosSection({ recipe }: { recipe: RecipeDetail }) {
   const errorMessage = useErrorMessage();
   const queryClient = useQueryClient();
   const [coverUrl, setCoverUrl] = useState("");
-  const [stepUrls, setStepUrls] = useState<Record<string, string>>({});
   const refresh = () => void queryClient.invalidateQueries({ queryKey: ["recipe", recipe.id] });
   const run = useMutation({
     mutationFn: (action: () => Promise<unknown>) => action(),
@@ -478,26 +581,17 @@ function PhotosSection({ recipe }: { recipe: RecipeDetail }) {
       </section>
       <section className="flex flex-col gap-sm">
         <h3 className="text-title-lg">{t("editor.stepPhotos")}</h3>
+        <p className="text-label-md text-on-surface-variant">{t("editor.stepPhotosHint")}</p>
         {recipe.steps.map((step) => (
-          <Card key={step.id} className="flex items-center gap-sm p-sm">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-container text-label-md text-on-primary">{step.step_number}</span>
-            {step.photo ? (
-              <>
-                <img src={step.photo.photo_url} alt="" className="h-14 w-14 rounded object-cover" />
-                <span className="flex-1 truncate text-label-md">{step.title ?? step.instructions}</span>
-                <IconButton icon="delete" label={t("common.delete")} className="text-error" onClick={() => run.mutate(() => recipesApi.removePhoto(recipe.id, step.photo!.id))} />
-              </>
-            ) : (
-              <>
-                <Input type="url" placeholder="https://…" value={stepUrls[step.id] ?? ""} onChange={(e) => setStepUrls({ ...stepUrls, [step.id]: e.target.value })} />
-                <IconButton
-                  icon="add_a_photo"
-                  label={t("common.add")}
-                  disabled={!isUrl(stepUrls[step.id] ?? "") || run.isPending}
-                  onClick={() => run.mutate(() => recipesApi.addPhoto(recipe.id, { photo_type: "step", photo_url: stepUrls[step.id].trim(), step_id: step.id }))}
-                />
-              </>
-            )}
+          <Card key={step.id} className="flex flex-col gap-xs p-sm">
+            <div className="flex items-start gap-xs">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-container text-label-md text-on-primary">{step.step_number}</span>
+              <div className="min-w-0">
+                <p className="text-label-md font-semibold">{step.title || t("cook.step", { n: step.step_number })}</p>
+                <p className="line-clamp-1 text-label-sm font-normal text-on-surface-variant">{step.instructions}</p>
+              </div>
+            </div>
+            <StepPhotoSlot recipeId={recipe.id} stepId={step.id} photo={step.photo} />
           </Card>
         ))}
         {recipe.steps.length === 0 && <p className="text-label-md text-on-surface-variant">{t("recipe.noSteps")}</p>}
@@ -647,7 +741,7 @@ export function RecipeEditorPage() {
     basics: <BasicsSection basics={draft.basics} onChange={(basics) => setDraft({ ...draft, basics })} errors={errors} isPersonalization={isPersonalization} />,
     ingredients: <IngredientsSection rows={draft.ingredients} onChange={(ingredients) => setDraft({ ...draft, ingredients })} errors={errors} />,
     equipment: <EquipmentSection rows={draft.equipment} onChange={(equipment) => setDraft({ ...draft, equipment })} />,
-    steps: <StepsSection rows={draft.steps} onChange={(steps) => setDraft({ ...draft, steps })} errors={errors} />,
+    steps: <StepsSection rows={draft.steps} onChange={(steps) => setDraft({ ...draft, steps })} errors={errors} recipe={recipe.data} />,
     tags: <TagsSection selected={draft.tagIds} onChange={(tagIds) => setDraft({ ...draft, tagIds })} />,
     photos: recipe.data ? <PhotosSection recipe={recipe.data} /> : null,
   }[section];

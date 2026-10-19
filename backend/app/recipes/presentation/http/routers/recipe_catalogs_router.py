@@ -24,6 +24,7 @@ from app.recipes.presentation.http.schemas.recipe_schemas import (
     RecipeCategoryResponse,
     RecipeTagResponse,
 )
+from app.shared.presentation.i18n import language_context
 
 router = APIRouter()
 
@@ -33,7 +34,7 @@ async def list_recipe_categories(
     current_user: UserDTO = Depends(get_current_user),
     use_case: ListRecipeCategoriesUseCase = Depends(get_list_recipe_categories_use_case),
 ) -> list[RecipeCategoryResponse]:
-    return [RecipeCategoryResponse(**category.__dict__) for category in await use_case.execute()]
+    return [RecipeCategoryResponse.model_validate(category, from_attributes=True, context=language_context(current_user)) for category in await use_case.execute()]
 
 
 @router.get("/difficulties", response_model=list[DifficultyResponse], tags=["Difficulties"])
@@ -41,7 +42,7 @@ async def list_difficulties(
     current_user: UserDTO = Depends(get_current_user),
     use_case: ListDifficultiesUseCase = Depends(get_list_difficulties_use_case),
 ) -> list[DifficultyResponse]:
-    return [DifficultyResponse(**difficulty.__dict__) for difficulty in await use_case.execute()]
+    return [DifficultyResponse.model_validate(difficulty, from_attributes=True, context=language_context(current_user)) for difficulty in await use_case.execute()]
 
 
 @router.get("/recipe-tags", response_model=list[RecipeTagResponse], tags=["Recipe tags"])
@@ -52,4 +53,4 @@ async def list_recipe_tags(
     current_user: UserDTO = Depends(get_current_user),
     use_case: ListRecipeTagsUseCase = Depends(get_list_recipe_tags_use_case),
 ) -> list[RecipeTagResponse]:
-    return [RecipeTagResponse(**tag.__dict__) for tag in await use_case.execute(group)]
+    return [RecipeTagResponse.model_validate(tag, from_attributes=True, context=language_context(current_user)) for tag in await use_case.execute(group)]

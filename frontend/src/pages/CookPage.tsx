@@ -9,7 +9,7 @@ import { useUser } from "../auth/AuthContext";
 import { useToast } from "../components/Toast";
 import { Button, ErrorState, Icon, IconButton, Modal, Skeleton } from "../components/ui";
 import { askNotificationPermission, keepScreenOn, ringAlarm } from "../lib/alarm";
-import { formatQuantity, scale, unitLabel } from "../lib/quantities";
+import { formatMeasure, scale } from "../lib/quantities";
 import { formatClock, formatDate } from "../lib/time";
 import { UnitSystemToggle } from "./RecipeDetailPage";
 
@@ -115,13 +115,12 @@ function IngredientsPanel({
                 />
                 <span className={done ? "line-through" : ""}>
                   <strong className="text-primary">
-                    {formatQuantity(quantity, line.unit_abbreviation, language)} {unitLabel(line.unit_abbreviation, language)}
+                    {formatMeasure(quantity, line.unit_abbreviation, language)}
                   </strong>{" "}
                   {line.ingredient_name}
                   {line.converted && (
                     <span className="ml-xs text-label-md text-on-surface-variant">
-                      · {formatQuantity(scale(line.original_quantity, preparation.servings, servings), line.original_unit_abbreviation, language)}{" "}
-                      {unitLabel(line.original_unit_abbreviation, language)}
+                      · {formatMeasure(scale(line.original_quantity, preparation.servings, servings), line.original_unit_abbreviation, language)}
                     </span>
                   )}
                   {line.notes && <span className="block text-label-md italic text-on-surface-variant">{line.notes}</span>}

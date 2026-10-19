@@ -30,6 +30,7 @@ from app.portfolio.presentation.http.schemas.portfolio_schemas import (
     PortfolioSummaryResponse,
 )
 from app.shared.presentation.pagination import PageResponse
+from app.shared.presentation.i18n import language_context
 
 router = APIRouter(prefix="/portfolio", tags=["Portfolio"])
 
@@ -57,7 +58,7 @@ async def get_my_portfolio(
         offset=offset,
     )
     page = await use_case.execute(dto)
-    return PageResponse[PortfolioItemResponse].model_validate(page, from_attributes=True)
+    return PageResponse[PortfolioItemResponse].model_validate(page, from_attributes=True, context=language_context(current_user))
 
 
 @router.get("/summary", response_model=PortfolioSummaryResponse)
@@ -89,7 +90,7 @@ async def list_my_favorites(
         offset=offset,
     )
     page = await use_case.execute(dto)
-    return PageResponse[PortfolioItemResponse].model_validate(page, from_attributes=True)
+    return PageResponse[PortfolioItemResponse].model_validate(page, from_attributes=True, context=language_context(current_user))
 
 
 @router.get("/favorites/status", response_model=list[FavoriteStatusResponse])
@@ -109,7 +110,7 @@ async def save_recipe(
     use_case: SaveRecipeUseCase = Depends(get_save_recipe_use_case),
 ) -> PortfolioItemResponse:
     item = await use_case.execute(current_user.id, recipe_id)
-    return PortfolioItemResponse(**item.__dict__)
+    return PortfolioItemResponse.model_validate(item, from_attributes=True, context=language_context(current_user))
 
 
 @router.delete("/favorites/{recipe_id}", status_code=status.HTTP_204_NO_CONTENT)

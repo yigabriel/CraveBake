@@ -1,5 +1,6 @@
 import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { LogoMark } from "./Logo";
 
 export function Icon({ name, filled = false, className = "" }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -280,7 +281,7 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
 export function Placeholder({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center justify-center bg-gradient-to-br from-secondary-container to-primary-fixed ${className}`}>
-      <Icon name="bakery_dining" className="text-[48px] text-primary/60" />
+      <LogoMark size={56} className="opacity-50" />
     </div>
   );
 }
@@ -288,4 +289,28 @@ export function Placeholder({ className = "" }: { className?: string }) {
 export function Cover({ url, alt, className = "" }: { url: string | null | undefined; alt: string; className?: string }) {
   if (!url) return <Placeholder className={className} />;
   return <img src={url} alt={alt} loading="lazy" className={`object-cover ${className}`} />;
+}
+
+/** On/off switch (role="switch"), for settings that apply at once or on save. */
+export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors duration-200 ${
+        checked ? "bg-tertiary" : "bg-outline-variant"
+      }`}
+    >
+      <span
+        className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-card transition-transform duration-200 ${
+          checked ? "translate-x-7" : "translate-x-1"
+        }`}
+      >
+        <Icon name={checked ? "public" : "lock"} className={`text-[14px] ${checked ? "text-tertiary" : "text-outline"}`} />
+      </span>
+    </button>
+  );
 }

@@ -39,7 +39,11 @@ export default {
         "on-error-container": "#93000a",
         background: "#fff8f6",
       },
-      fontFamily: { sans: ["'Be Vietnam Pro'", "system-ui", "sans-serif"] },
+      fontFamily: {
+        sans: ["'Be Vietnam Pro'", "system-ui", "sans-serif"],
+        // Editorial accent only (the rotating craving on the auth screens).
+        serif: ["Fraunces", "Georgia", "serif"],
+      },
       fontSize: {
         "display-lg": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
         "display-sm": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "700" }],

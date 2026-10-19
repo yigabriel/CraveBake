@@ -12,6 +12,7 @@ from app.ingredients.presentation.http.dependencies import (
     get_list_units_use_case,
 )
 from app.ingredients.presentation.http.schemas.unit_schemas import UnitResponse
+from app.shared.presentation.i18n import language_context
 
 
 router = APIRouter(prefix="/units", tags=["Units"])
@@ -26,6 +27,6 @@ async def list_units(
     units = await use_case.execute()
 
     return [
-        UnitResponse(**unit.__dict__)
+        UnitResponse.model_validate(unit, from_attributes=True, context=language_context(current_user))
         for unit in units
     ]

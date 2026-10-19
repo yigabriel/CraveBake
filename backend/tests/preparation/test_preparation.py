@@ -30,6 +30,7 @@ from app.preparation.domain.services.ports import (
     ShownQuantity,
     StepToPrepare,
 )
+from app.shared.domain.value_objects.localized_text import LocalizedText
 
 ME = "me"
 NOW = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
@@ -42,8 +43,8 @@ def make_recipe(recipe_id: str = "recipe-1", steps: int = 3, timer_on: int | Non
         cover_photo_url=None,
         servings=8,
         ingredients=[
-            IngredientToPrepare("sugar", "Azúcar", Decimal("1"), "cup-id", "cup", None, position=2),
-            IngredientToPrepare("flour", "Harina", Decimal("2"), "cup-id", "cup", "tamizada", position=1),
+            IngredientToPrepare("sugar", LocalizedText({"es": "Azúcar", "en": "Sugar"}), Decimal("1"), "cup-id", "cup", None, position=2),
+            IngredientToPrepare("flour", LocalizedText({"es": "Harina", "en": "Flour"}), Decimal("2"), "cup-id", "cup", "tamizada", position=1),
         ],
         # Given out of order on purpose: the session must sort them.
         steps=[

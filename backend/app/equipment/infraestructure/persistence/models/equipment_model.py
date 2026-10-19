@@ -5,9 +5,10 @@ from sqlalchemy import CheckConstraint, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.shared.database.base import Base
+from app.shared.database.localized_name import LocalizedNameMixin
 
 
-class EquipmentModel(Base):
+class EquipmentModel(LocalizedNameMixin, Base):
     __tablename__ = "equipment"
     __table_args__ = (
         CheckConstraint(
@@ -15,6 +16,6 @@ class EquipmentModel(Base):
         ),
     )
 
-    name: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
+    # names / name_language: see LocalizedNameMixin (unique per language, migration 0017).
     equipment_type: Mapped[str] = mapped_column(String(20), nullable=False)
     description: Mapped[str | None] = mapped_column(String(1024), nullable=True)

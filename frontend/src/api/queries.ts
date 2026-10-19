@@ -8,8 +8,13 @@ import type { FavoriteStatus } from "./types";
 const forever = { staleTime: Infinity, gcTime: Infinity } as const;
 
 export const useUnits = () => useQuery({ queryKey: ["units"], queryFn: catalogApi.units, ...forever });
+// The API orders by the name as originally written (Spanish); sort by what this user reads.
 export const useRecipeCategories = () =>
-  useQuery({ queryKey: ["recipe-categories"], queryFn: catalogApi.recipeCategories, ...forever });
+  useQuery({
+    queryKey: ["recipe-categories"],
+    queryFn: async () => (await catalogApi.recipeCategories()).sort((a, b) => a.name.localeCompare(b.name)),
+    ...forever,
+  });
 export const useDifficulties = () =>
   useQuery({
     queryKey: ["difficulties"],

@@ -9,9 +9,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.recipes.domain.value_objects.recipe_category_id import RecipeCategoryId
+from app.shared.domain.value_objects.localized_text import LocalizedText
 
 
 @dataclass
 class RecipeCategory:
     id: RecipeCategoryId
-    name: str
+    name: LocalizedText

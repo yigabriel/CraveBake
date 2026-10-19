@@ -7,6 +7,7 @@ import { discoveryApi, pantryApi, recipesApi } from "../api/endpoints";
 import { useErrorMessage, useRecipeCategories, useTags } from "../api/queries";
 import type { DiscoverySession, Ingredient, Recommendation, SwipeAction } from "../api/types";
 import { useStartCooking } from "../components/CookButton";
+import { LogoMark } from "../components/Logo";
 import { IngredientPicker } from "../components/Pickers";
 import { useToast } from "../components/Toast";
 import {
@@ -38,8 +39,8 @@ function Intro({ onStart }: { onStart: () => void }) {
   const { t } = useTranslation();
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-md py-lg text-center">
-      <span className="flex h-28 w-28 items-center justify-center rounded-full bg-primary-container shadow-lift">
-        <Icon name="bakery_dining" className="text-[56px] text-on-primary" />
+      <span className="flex h-28 w-28 items-center justify-center rounded-full bg-secondary-container shadow-lift">
+        <LogoMark size={76} />
       </span>
       <h1 className="text-display-sm">{t("discover.introTitle")}</h1>
       <p className="text-body-lg text-on-surface-variant">{t("discover.introText")}</p>

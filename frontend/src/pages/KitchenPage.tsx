@@ -22,40 +22,79 @@ import {
   PageHeader,
   Skeleton,
 } from "../components/ui";
+import { EquipmentIcon } from "../lib/equipment";
 
 const TYPES: EquipmentType[] = ["molde", "utensilio", "electrodomestico", "otro"];
-export const TYPE_ICONS: Record<EquipmentType, string> = {
+const TYPE_ICONS: Record<EquipmentType, string> = {
   molde: "cake",
   utensilio: "flatware",
-  electrodomestico: "blender",
+  electrodomestico: "kitchen",
   otro: "category",
 };
+const KEY = ["kitchen"];
 
-function useUpsert() {
+/**
+ * Optimistic kitchen edits: the list changes on screen at once and the request
+ * runs behind it (Render can take a while). A failure puts the list back.
+ */
+function useKitchenMutations() {
   const queryClient = useQueryClient();
   const toast = useToast();
   const errorMessage = useErrorMessage();
-  return useMutation({
-    mutationFn: kitchenApi.upsert,
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["kitchen"] }),
-    onError: (error) => toast(errorMessage(error), "error"),
+
+  const rollback = (previous: UserEquipment[] | undefined, error: unknown) => {
+    queryClient.setQueryData(KEY, previous);
+    toast(errorMessage(error), "error");
+  };
+
+  const upsert = useMutation({
+    mutationFn: (input: { equipment: Equipment; quantity: number; notes: string | null }) =>
+      kitchenApi.upsert({ equipment_id: input.equipment.id, quantity: input.quantity, notes: input.notes }),
+    onMutate: async ({ equipment, quantity, notes }) => {
+      await queryClient.cancelQueries({ queryKey: KEY });
+      const previous = queryClient.getQueryData<UserEquipment[]>(KEY);
+      const optimistic: UserEquipment = {
+        id: `optimistic-${equipment.id}`,
+        equipment,
+        quantity,
+        notes,
+        updated_at: new Date().toISOString(),
+      };
+      queryClient.setQueryData<UserEquipment[]>(KEY, (list = []) =>
+        list.some((item) => item.equipment.id === equipment.id)
+          ? list.map((item) => (item.equipment.id === equipment.id ? { ...item, quantity, notes } : item))
+          : [...list, optimistic],
+      );
+      return { previous };
+    },
+    // The server's row replaces the optimistic one: no list refetch per click.
+    onSuccess: (saved) =>
+      queryClient.setQueryData<UserEquipment[]>(KEY, (list = []) =>
+        list.map((item) => (item.equipment.id === saved.equipment.id ? saved : item)),
+      ),
+    onError: (error, _input, context) => rollback(context?.previous, error),
   });
+
+  const remove = useMutation({
+    mutationFn: (equipmentId: string) => kitchenApi.remove(equipmentId),
+    onMutate: async (equipmentId) => {
+      await queryClient.cancelQueries({ queryKey: KEY });
+      const previous = queryClient.getQueryData<UserEquipment[]>(KEY);
+      queryClient.setQueryData<UserEquipment[]>(KEY, (list = []) => list.filter((item) => item.equipment.id !== equipmentId));
+      return { previous };
+    },
+    onError: (error, _id, context) => rollback(context?.previous, error),
+  });
+
+  return { upsert, remove };
 }
 
 /** Register a piece of equipment: new to the catalog (name unique) and/or into my kitchen. */
-function EquipmentModal({
-  open,
-  onClose,
-  existing,
-}: {
-  open: boolean;
-  onClose: () => void;
-  existing: UserEquipment | null;
-}) {
+function EquipmentModal({ onClose, existing }: { onClose: () => void; existing: UserEquipment | null }) {
   const { t } = useTranslation();
   const toast = useToast();
   const errorMessage = useErrorMessage();
-  const upsert = useUpsert();
+  const { upsert } = useKitchenMutations();
   const [picked, setPicked] = useState<Equipment | null>(existing?.equipment ?? null);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
@@ -69,9 +108,11 @@ function EquipmentModal({
     setSaving(true);
     try {
       // 409 if the name already exists: the user should pick it from the search instead.
-      const equipment = creating ? await catalogApi.createEquipment({ name: name.trim(), equipment_type: type, description: description.trim() || null }) : picked;
+      const equipment = creating
+        ? await catalogApi.createEquipment({ name: name.trim(), equipment_type: type, description: description.trim() || null })
+        : picked;
       if (!equipment) return;
-      await upsert.mutateAsync({ equipment_id: equipment.id, quantity, notes: notes.trim() || null });
+      upsert.mutate({ equipment, quantity, notes: notes.trim() || null });
       toast(existing ? t("kitchen.updated") : t("kitchen.added", { name: equipment.name }));
       onClose();
     } catch (error) {
@@ -83,7 +124,7 @@ function EquipmentModal({
 
   return (
     <Modal
-      open={open}
+      open
       onClose={onClose}
       title={existing ? existing.equipment.name : t("kitchen.register")}
       footer={
@@ -121,9 +162,11 @@ function EquipmentModal({
               </button>
             </>
           ) : picked ? (
-            <Chip tone="success" icon={TYPE_ICONS[picked.equipment_type]} onRemove={() => setPicked(null)}>
+            <span className="inline-flex items-center gap-xs self-start rounded-full bg-tertiary-fixed py-[6px] pl-sm pr-xs text-label-md text-on-tertiary-fixed-variant">
+              <EquipmentIcon name={picked.name} type={picked.equipment_type} className="text-[18px]" />
               {picked.name}
-            </Chip>
+              <IconButton icon="close" label={t("common.close")} className="h-7 w-7" onClick={() => setPicked(null)} />
+            </span>
           ) : (
             <>
               <EquipmentPicker onPick={setPicked} />
@@ -145,19 +188,19 @@ function EquipmentModal({
   );
 }
 
-/** Suggested onboarding after sign-up: tick what you have (§12). */
+/** Suggested onboarding after sign-up: tick what you have (§12). Every tick is instant. */
 function Onboarding({ mine, onDone }: { mine: UserEquipment[]; onDone: () => void }) {
   const { t } = useTranslation();
-  const upsert = useUpsert();
-  const remove = useMutation({ mutationFn: kitchenApi.remove });
-  const queryClient = useQueryClient();
-  const common = useQuery({ queryKey: ["equipment", "common"], queryFn: () => catalogApi.searchEquipment("", undefined, 24) });
+  const { upsert, remove } = useKitchenMutations();
+  const common = useQuery({
+    queryKey: ["equipment", "common"],
+    queryFn: () => catalogApi.searchEquipment("", undefined, 24),
+    staleTime: Infinity,
+  });
   const owned = new Set(mine.map((item) => item.equipment.id));
-  const toggle = async (equipment: Equipment) => {
-    if (owned.has(equipment.id)) await remove.mutateAsync(equipment.id);
-    else await upsert.mutateAsync({ equipment_id: equipment.id, quantity: 1 });
-    void queryClient.invalidateQueries({ queryKey: ["kitchen"] });
-  };
+  const toggle = (equipment: Equipment) =>
+    owned.has(equipment.id) ? remove.mutate(equipment.id) : upsert.mutate({ equipment, quantity: 1, notes: null });
+
   return (
     <Card className="mb-md p-md">
       <h2 className="text-headline-md">{t("kitchen.welcomeTitle")}</h2>
@@ -173,12 +216,13 @@ function Onboarding({ mine, onDone }: { mine: UserEquipment[]; onDone: () => voi
                 key={equipment.id}
                 type="button"
                 aria-pressed={has}
-                onClick={() => void toggle(equipment)}
-                className={`flex flex-col items-center gap-xs rounded-lg border-2 p-sm text-center text-label-md transition-colors ${
+                onClick={() => toggle(equipment)}
+                className={`relative flex flex-col items-center gap-xs rounded-lg border-2 p-sm text-center text-label-md transition-colors ${
                   has ? "border-tertiary bg-tertiary-fixed/50" : "border-outline-variant hover:bg-surface-container-high"
                 }`}
               >
-                <Icon name={has ? "check_circle" : TYPE_ICONS[equipment.equipment_type]} filled={has} className={has ? "text-tertiary" : "text-secondary"} />
+                {has && <Icon name="check_circle" filled className="absolute right-xs top-xs text-[18px] text-tertiary" />}
+                <EquipmentIcon name={equipment.name} type={equipment.equipment_type} className={`text-[30px] ${has ? "text-tertiary" : "text-secondary"}`} />
                 {equipment.name}
               </button>
             );
@@ -201,16 +245,10 @@ export function KitchenPage() {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
   const errorMessage = useErrorMessage();
-  const toast = useToast();
-  const queryClient = useQueryClient();
   const [type, setType] = useState<EquipmentType | null>(null);
   const [modal, setModal] = useState<{ existing: UserEquipment | null } | null>(null);
-  const kitchen = useQuery({ queryKey: ["kitchen"], queryFn: kitchenApi.list });
-  const remove = useMutation({
-    mutationFn: kitchenApi.remove,
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["kitchen"] }),
-    onError: (error) => toast(errorMessage(error), "error"),
-  });
+  const kitchen = useQuery({ queryKey: KEY, queryFn: kitchenApi.list });
+  const { remove } = useKitchenMutations();
   const items = kitchen.data ?? [];
   const shown = type ? items.filter((item) => item.equipment.equipment_type === type) : items;
   const welcome = params.get("welcome") === "1";
@@ -256,14 +294,15 @@ export function KitchenPage() {
           </div>
           <div className="grid gap-gutter sm:grid-cols-2">
             {shown.map((item) => (
-              <Card key={item.id} className="flex items-start gap-sm p-sm">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary-container">
-                  <Icon name={TYPE_ICONS[item.equipment.equipment_type]} className="text-primary" />
+              <Card key={item.equipment.id} className="flex items-start gap-sm p-sm">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary-container text-primary">
+                  <EquipmentIcon name={item.equipment.name} type={item.equipment.equipment_type} className="text-[26px]" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-label-sm uppercase text-on-surface-variant">{t(`kitchen.types.${item.equipment.equipment_type}`)}</p>
                   <p className="text-title-lg">
-                    {item.equipment.name} {item.quantity > 1 && <span className="text-label-md text-on-surface-variant">×{item.quantity}</span>}
+                    {item.equipment.name}{" "}
+                    {item.quantity > 1 && <span className="text-label-md text-on-surface-variant">×{item.quantity}</span>}
                   </p>
                   {(item.notes || item.equipment.description) && (
                     <p className="text-label-md font-normal text-on-surface-variant">{item.notes || item.equipment.description}</p>
@@ -277,7 +316,7 @@ export function KitchenPage() {
           <p className="mt-md text-center text-label-sm text-on-surface-variant">{t("kitchen.usedFor")}</p>
         </>
       )}
-      {modal && <EquipmentModal open onClose={() => setModal(null)} existing={modal.existing} />}
+      {modal && <EquipmentModal onClose={() => setModal(null)} existing={modal.existing} />}
     </div>
   );
 }

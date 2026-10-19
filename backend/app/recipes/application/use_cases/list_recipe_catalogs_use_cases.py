@@ -36,5 +36,5 @@ class ListRecipeTagsUseCase:
     async def execute(self, group: str | None = None) -> list[RecipeTagDTO]:
         group_order = {tag_group: index for index, tag_group in enumerate(TagGroup)}
         tags = [tag for tag in await self._tag_repository.list_all() if group is None or tag.group.value == group]
-        tags.sort(key=lambda tag: (group_order[tag.group], tag.name.lower()))
+        tags.sort(key=lambda tag: (group_order[tag.group], str(tag.name).lower()))
         return [tag_to_dto(tag) for tag in tags]

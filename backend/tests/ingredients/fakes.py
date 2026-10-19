@@ -16,6 +16,7 @@ from app.ingredients.domain.repositories.user_ingredient_repository import UserI
 from app.ingredients.domain.value_objects.ingredient_id import IngredientId
 from app.ingredients.domain.value_objects.ingredient_unit_conversion_id import IngredientUnitConversionId
 from app.ingredients.domain.value_objects.unit_id import UnitId
+from app.shared.domain.value_objects.localized_text import LocalizedText
 
 # Same rows as alembic 0002 (factors) + 0013 (unit systems).
 _SEED_UNITS = [
@@ -58,17 +59,18 @@ class InMemoryIngredientRepository(IngredientRepository):
         return [self.items[i] for i in ids if i in self.items]
 
     async def exists_by_name(self, name: str) -> bool:
-        return any(i.name.lower() == name.lower() for i in self.items.values())
+        # Any language counts, like the real repository.
+        return any(name.strip().lower() == text.lower() for i in self.items.values() for text in i.name.all_texts())
 
     def _matches(self, query, category):
         return sorted(
             (
                 i
                 for i in self.items.values()
-                if (not query or query.lower() in i.name.lower())
+                if (not query or any(query.lower() in text.lower() for text in i.name.all_texts()))
                 and (not category or i.default_category == category)
             ),
-            key=lambda i: i.name,
+            key=lambda i: i.name.text.lower(),
         )
 
     async def search(self, query, category, limit, offset):
@@ -82,7 +84,8 @@ class InMemoryIngredientRepository(IngredientRepository):
         for i in self.items.values():
             if i.default_category is not None:
                 counts[i.default_category] = counts.get(i.default_category, 0) + 1
-        return sorted(counts.items())
+        # Codes are named as written here; the real repository joins ingredient_categories.
+        return [(code, LocalizedText.of(code), count) for code, count in sorted(counts.items())]
 
 
 class InMemoryUnitRepository(UnitRepository):

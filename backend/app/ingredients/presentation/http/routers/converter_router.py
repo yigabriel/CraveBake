@@ -18,6 +18,7 @@ from app.ingredients.presentation.http.schemas.converter_schemas import (
     ConvertMeasurementRequest,
     ConvertMeasurementResponse,
 )
+from app.shared.presentation.i18n import language_context
 
 
 router = APIRouter(prefix="/converter", tags=["Converter"])
@@ -44,4 +45,5 @@ async def convert_measurement(
     return ConvertMeasurementResponse.model_validate(
         result,
         from_attributes=True,
+        context=language_context(current_user),
     )

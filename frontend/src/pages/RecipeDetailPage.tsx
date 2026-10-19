@@ -25,10 +25,11 @@ import {
   Segmented,
   Skeleton,
 } from "../components/ui";
-import { formatQuantity, isFractionalCount, scale, unitLabel } from "../lib/quantities";
+import { formatMeasure, isFractionalCount, scale } from "../lib/quantities";
 import { diffRecipes, isEmptyDiff } from "../lib/recipeDiff";
 import { formatMinutes, formatSeconds } from "../lib/time";
 import { embedUrl } from "../lib/video";
+import { EquipmentIcon } from "../lib/equipment";
 
 export function UnitSystemToggle({ value, onChange }: { value: DisplayUnitSystem; onChange: (value: DisplayUnitSystem) => void }) {
   const { t } = useTranslation();
@@ -40,7 +41,6 @@ export function UnitSystemToggle({ value, onChange }: { value: DisplayUnitSystem
       options={[
         { value: "metric", label: t("units.metric") },
         { value: "us", label: t("units.us") },
-        { value: "original", label: t("units.original") },
       ]}
     />
   );
@@ -272,14 +272,13 @@ function Ingredients({ recipe, servings, language }: { recipe: RecipeDetail; ser
                 <span className="flex-1">
                   <span className={`text-body-md ${done ? "line-through" : ""}`}>
                     <strong className="text-primary">
-                      {formatQuantity(quantity, unit, language)} {unitLabel(unit, language)}
+                      {formatMeasure(quantity, unit, language)}
                     </strong>{" "}
                     {line.ingredient_name}
                   </span>
                   {line.converted && (
                     <span className="ml-xs text-label-md text-on-surface-variant">
-                      · {formatQuantity(scale(line.quantity, recipe.servings, servings), line.unit_abbreviation, language)}{" "}
-                      {unitLabel(line.unit_abbreviation, language)}
+                      · {formatMeasure(scale(line.quantity, recipe.servings, servings), line.unit_abbreviation, language)}
                     </span>
                   )}
                   {line.notes && <span className="block text-label-md font-normal italic text-on-surface-variant">{line.notes}</span>}
@@ -535,7 +534,7 @@ export function RecipeDetailPage() {
               <div className="grid grid-cols-2 gap-sm sm:grid-cols-3">
                 {recipe.equipment.map((item) => (
                   <Card key={item.id} className="flex flex-col items-center gap-xs p-sm text-center">
-                    <Icon name="kitchen" className="text-[28px] text-secondary" />
+                    <EquipmentIcon name={item.equipment_name} className="text-[30px] text-secondary" />
                     <span className="text-label-md font-semibold">{item.equipment_name}</span>
                     {item.notes && <span className="text-label-sm font-normal text-on-surface-variant">{item.notes}</span>}
                   </Card>

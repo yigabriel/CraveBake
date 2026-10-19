@@ -25,7 +25,7 @@ from sqlalchemy import (
     UniqueConstraint,
     text,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.shared.database.base import Base
@@ -83,7 +83,9 @@ class PreparationIngredientModel(Base):
         UUID(as_uuid=True), ForeignKey("preparation_sessions.id", ondelete="CASCADE"), nullable=False, index=True
     )
     ingredient_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
-    ingredient_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Snapshot of the ingredient's name in every language (+ the one it was written in).
+    ingredient_names: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    ingredient_name_language: Mapped[str | None] = mapped_column(String(2), nullable=True)
     quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
     unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     unit_abbreviation: Mapped[str | None] = mapped_column(String(10), nullable=True)

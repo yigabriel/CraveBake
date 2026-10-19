@@ -16,6 +16,7 @@ from app.equipment.domain.value_objects.equipment_id import EquipmentId
 from app.equipment.domain.value_objects.user_equipment_id import UserEquipmentId
 from app.equipment.infraestructure.persistence.models.equipment_model import EquipmentModel
 from app.equipment.infraestructure.persistence.models.user_equipment_model import UserEquipmentModel
+from app.shared.database.localized_name import name_columns, name_contains, name_equals, original_name
 
 
 class SqlAlchemyEquipmentRepository(EquipmentRepository):
@@ -26,7 +27,7 @@ class SqlAlchemyEquipmentRepository(EquipmentRepository):
         self._session.add(
             EquipmentModel(
                 id=equipment.id.value,
-                name=equipment.name,
+                **name_columns(equipment.name),
                 equipment_type=equipment.equipment_type.value,
                 description=equipment.description,
             )
@@ -46,16 +47,14 @@ class SqlAlchemyEquipmentRepository(EquipmentRepository):
         return [_to_equipment(model) for model in result.scalars().all()]
 
     async def exists_by_name(self, name: str) -> bool:
-        result = await self._session.execute(
-            select(EquipmentModel.id).where(func.lower(EquipmentModel.name) == name.lower())
-        )
+        result = await self._session.execute(select(EquipmentModel.id).where(name_equals(EquipmentModel, name)).limit(1))
         return result.scalar_one_or_none() is not None
 
     async def search(
         self, query: str | None, equipment_type: EquipmentType | None, limit: int, offset: int
     ) -> list[Equipment]:
         statement = _filtered(select(EquipmentModel), query, equipment_type)
-        statement = statement.order_by(EquipmentModel.name).limit(limit).offset(offset)
+        statement = statement.order_by(original_name(EquipmentModel)).limit(limit).offset(offset)
         result = await self._session.execute(statement)
         return [_to_equipment(model) for model in result.scalars().all()]
 
@@ -118,7 +117,7 @@ class SqlAlchemyUserEquipmentRepository(UserEquipmentRepository):
 
 def _filtered(statement, query: str | None, equipment_type: EquipmentType | None):
     if query:
-        statement = statement.where(EquipmentModel.name.ilike(f"%{query}%"))
+        statement = statement.where(name_contains(EquipmentModel, query))
     if equipment_type:
         statement = statement.where(EquipmentModel.equipment_type == equipment_type.value)
     return statement
@@ -127,7 +126,7 @@ def _filtered(statement, query: str | None, equipment_type: EquipmentType | None
 def _to_equipment(model: EquipmentModel) -> Equipment:
     return Equipment(
         id=EquipmentId(model.id),
-        name=model.name,
+        name=model.localized_name,
         equipment_type=EquipmentType(model.equipment_type),
         description=model.description,
     )

@@ -42,6 +42,7 @@ from app.recommendations.presentation.http.schemas.recommendation_schemas import
     SwipeResponse,
 )
 from app.shared.presentation.pagination import PageResponse
+from app.shared.presentation.i18n import language_context
 
 router = APIRouter(prefix="/recommendations/sessions", tags=["Recommendations"])
 
@@ -63,7 +64,7 @@ async def start_discovery_session(
     )
     session = await use_case.execute(dto)
     response.headers["Location"] = str(http_request.url_for("get_discovery_session", session_id=session.id))
-    return DiscoverySessionResponse.model_validate(session, from_attributes=True)
+    return DiscoverySessionResponse.model_validate(session, from_attributes=True, context=language_context(current_user))
 
 
 @router.get("/{session_id}", response_model=DiscoverySessionResponse)
@@ -73,7 +74,7 @@ async def get_discovery_session(
     use_case: GetDiscoverySessionUseCase = Depends(get_get_discovery_session_use_case),
 ) -> DiscoverySessionResponse:
     session = await use_case.execute(current_user.id, session_id)
-    return DiscoverySessionResponse.model_validate(session, from_attributes=True)
+    return DiscoverySessionResponse.model_validate(session, from_attributes=True, context=language_context(current_user))
 
 
 @router.get("/{session_id}/deck", response_model=PageResponse[RecommendationResponse])
@@ -85,7 +86,7 @@ async def get_recommendation_deck(
     use_case: GetRecommendationDeckUseCase = Depends(get_recommendation_deck_use_case),
 ) -> PageResponse[RecommendationResponse]:
     page = await use_case.execute(current_user.id, session_id, limit=limit, offset=offset)
-    return PageResponse[RecommendationResponse].model_validate(page, from_attributes=True)
+    return PageResponse[RecommendationResponse].model_validate(page, from_attributes=True, context=language_context(current_user))
 
 
 @router.post("/{session_id}/swipes", response_model=SwipeResponse, status_code=status.HTTP_201_CREATED)
@@ -109,4 +110,4 @@ async def list_session_swipes(
     use_case: ListSwipesUseCase = Depends(get_list_swipes_use_case),
 ) -> PageResponse[SwipeResponse]:
     page = await use_case.execute(current_user.id, session_id, action=action, limit=limit, offset=offset)
-    return PageResponse[SwipeResponse].model_validate(page, from_attributes=True)
+    return PageResponse[SwipeResponse].model_validate(page, from_attributes=True, context=language_context(current_user))

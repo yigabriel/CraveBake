@@ -10,6 +10,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
+from app.shared.domain.value_objects.localized_text import LocalizedText
+
 
 @dataclass(frozen=True)
 class CandidateRecipe:
@@ -19,14 +21,14 @@ class CandidateRecipe:
     title: str
     description: str | None
     cover_photo_url: str | None
-    category_name: str | None
-    difficulty_name: str | None
+    category_name: LocalizedText | None
+    difficulty_name: LocalizedText | None
     prep_time_minutes: int | None
     servings: int | None
     created_by_user_id: str
     is_personalization: bool
     source_recipe_title: str | None
-    tag_names: tuple[str, ...]
+    tag_names: tuple[LocalizedText, ...]
     ingredient_ids: frozenset[str]
     equipment_ids: frozenset[str]
 
@@ -75,11 +77,11 @@ class RecipeCandidateSource(ABC):
         ...
 
     @abstractmethod
-    async def category_names(self) -> dict[str, str]:
+    async def category_names(self) -> dict[str, LocalizedText]:
         """Every recipe category, id -> name."""
 
     @abstractmethod
-    async def tag_names(self) -> dict[str, str]:
+    async def tag_names(self) -> dict[str, LocalizedText]:
         """Every recipe tag, id -> name."""
 
 
@@ -95,11 +97,11 @@ class KitchenCatalog(ABC):
         ...
 
     @abstractmethod
-    async def ingredient_names(self, ids: list[str]) -> dict[str, str]:
+    async def ingredient_names(self, ids: list[str]) -> dict[str, LocalizedText]:
         """Existing ingredients keyed by id; unknown ids are omitted."""
 
     @abstractmethod
-    async def equipment_names(self, ids: list[str]) -> dict[str, str]:
+    async def equipment_names(self, ids: list[str]) -> dict[str, LocalizedText]:
         """Existing equipment keyed by id; unknown ids are omitted."""
 
 

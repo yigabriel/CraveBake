@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
+from app.shared.presentation.i18n import LocalizedStr
 
 EquipmentTypeLiteral = Literal["molde", "utensilio", "electrodomestico", "otro"]
 
@@ -15,7 +16,7 @@ class CreateEquipmentRequest(BaseModel):
 
 class EquipmentResponse(BaseModel):
     id: str
-    name: str
+    name: LocalizedStr
     equipment_type: str
     description: str | None
 

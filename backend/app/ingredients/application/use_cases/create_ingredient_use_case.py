@@ -3,8 +3,9 @@ CreateIngredientUseCase.
 
 Adds a new item to the shared ingredients catalog. Any authenticated user
 can contribute new ingredients (there is no admin role yet), but uniqueness
-of the name is enforced so recipes and pantries always reference the same
-underlying `Ingredient` row instead of accumulating near-duplicates.
+of the name is enforced — against every language's name — so recipes and
+pantries always reference the same underlying `Ingredient` row instead of
+accumulating near-duplicates. The name is stored in the creator's language.
 """
 from __future__ import annotations
 
@@ -24,7 +25,7 @@ class CreateIngredientUseCase:
             raise IngredientAlreadyExistsError(dto.name)
 
         ingredient = Ingredient.create(
-            name=dto.name, description=dto.description, default_category=dto.default_category
+            name=dto.name, language=dto.language, description=dto.description, default_category=dto.default_category
         )
         await self._ingredient_repository.add(ingredient)
 

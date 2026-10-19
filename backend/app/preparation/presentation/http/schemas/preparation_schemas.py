@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.shared.presentation.i18n import LocalizedStr
+
 UnitSystemLiteral = Literal["metric", "us", "original"]
 PreparationStatusLiteral = Literal["in_progress", "completed", "abandoned"]
 
@@ -19,7 +21,7 @@ class GoToStepRequest(BaseModel):
 
 class PreparedIngredientResponse(BaseModel):
     ingredient_id: str
-    ingredient_name: str | None
+    ingredient_name: LocalizedStr | None
     quantity: Decimal = Field(description="In the requested unit system")
     unit_abbreviation: str | None
     original_quantity: Decimal = Field(description="As the recipe was written")

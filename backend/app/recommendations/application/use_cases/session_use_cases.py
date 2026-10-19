@@ -147,10 +147,11 @@ class ListSwipesUseCase:
         )
 
 
-def _named_refs(ids: list[str], names: dict[str, str]) -> list[NamedRefDTO]:
+def _named_refs(ids: list[str], names: dict) -> list[NamedRefDTO]:
     return sorted(
         (NamedRefDTO(id=item_id, name=names[item_id]) for item_id in ids if item_id in names),
-        key=lambda ref: ref.name.lower(),
+        # By the name as originally written: the viewer's language is unknown here.
+        key=lambda ref: str(ref.name).lower(),
     )
 
 

@@ -8,7 +8,7 @@ import type { Ingredient, Language, Unit } from "../api/types";
 import { IngredientPicker, useDebounced } from "../components/Pickers";
 import { useToast } from "../components/Toast";
 import { Card, Chip, Field, Icon, IconButton, Input, inputClass, PageHeader, Skeleton } from "../components/ui";
-import { formatQuantity, unitLabel, unitOptionLabel } from "../lib/quantities";
+import { formatMeasure } from "../lib/quantities";
 
 export function ConverterPage() {
   const { t, i18n } = useTranslation();
@@ -40,7 +40,7 @@ export function ConverterPage() {
 
   const unitOption = (unit: Unit) => (
     <option key={unit.id} value={unit.id}>
-      {unitOptionLabel(unit, language)}
+      {unit.name}
     </option>
   );
   const grouped = (["weight", "volume", "count"] as const).map((type) => (
@@ -49,7 +49,7 @@ export function ConverterPage() {
     </optgroup>
   ));
   const noDensity = result.error instanceof ApiError && result.error.status === 400;
-  const shown = result.data ? `${formatQuantity(result.data.converted_quantity, to?.abbreviation, language)} ${unitLabel(to?.abbreviation, language)}` : null;
+  const shown = result.data ? formatMeasure(result.data.converted_quantity, to?.abbreviation, language) : null;
 
   return (
     <div className="mx-auto max-w-xl">

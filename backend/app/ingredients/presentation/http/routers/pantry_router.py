@@ -6,6 +6,7 @@ user's own pantry rows.
 """
 
 from fastapi import APIRouter, Depends, status
+from app.shared.presentation.i18n import language_context
 
 from app.iam.application.dto.user_dto import UserDTO
 from app.ingredients.application.dto.user_ingredient_dto import (
@@ -49,6 +50,7 @@ async def list_my_pantry(
         UserIngredientResponse.model_validate(
             item,
             from_attributes=True,
+            context=language_context(current_user),
         )
         for item in pantry_items
     ]
@@ -75,6 +77,7 @@ async def upsert_pantry_item(
     return UserIngredientResponse.model_validate(
         pantry_item,
         from_attributes=True,
+        context=language_context(current_user),
     )
 
 

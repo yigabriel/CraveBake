@@ -18,6 +18,7 @@ from app.recipes.domain.value_objects.recipe_tag_id import RecipeTagId
 from app.recipes.infraestructure.persistence.models.difficulty_model import DifficultyModel
 from app.recipes.infraestructure.persistence.models.recipe_category_model import RecipeCategoryModel
 from app.recipes.infraestructure.persistence.models.tag_models import TagModel
+from app.shared.database.localized_name import original_name
 
 
 class SqlAlchemyRecipeCategoryRepository(RecipeCategoryRepository):
@@ -26,11 +27,11 @@ class SqlAlchemyRecipeCategoryRepository(RecipeCategoryRepository):
 
     async def get_by_id(self, category_id: RecipeCategoryId) -> RecipeCategory | None:
         model = await self._session.get(RecipeCategoryModel, category_id.value)
-        return RecipeCategory(id=RecipeCategoryId(model.id), name=model.name) if model else None
+        return RecipeCategory(id=RecipeCategoryId(model.id), name=model.localized_name) if model else None
 
     async def list_all(self) -> list[RecipeCategory]:
-        result = await self._session.execute(select(RecipeCategoryModel).order_by(RecipeCategoryModel.name))
-        return [RecipeCategory(id=RecipeCategoryId(model.id), name=model.name) for model in result.scalars().all()]
+        result = await self._session.execute(select(RecipeCategoryModel).order_by(original_name(RecipeCategoryModel)))
+        return [RecipeCategory(id=RecipeCategoryId(model.id), name=model.localized_name) for model in result.scalars().all()]
 
 
 class SqlAlchemyDifficultyRepository(DifficultyRepository):
@@ -47,7 +48,7 @@ class SqlAlchemyDifficultyRepository(DifficultyRepository):
 
 
 def _to_difficulty(model: DifficultyModel) -> Difficulty:
-    return Difficulty(id=DifficultyId(model.id), name=model.name, level_order=model.level_order)
+    return Difficulty(id=DifficultyId(model.id), name=model.localized_name, level_order=model.level_order)
 
 
 class SqlAlchemyRecipeTagRepository(RecipeTagRepository):
@@ -63,9 +64,9 @@ class SqlAlchemyRecipeTagRepository(RecipeTagRepository):
         return [_to_tag(model) for model in result.scalars().all()]
 
     async def list_all(self) -> list[RecipeTag]:
-        result = await self._session.execute(select(TagModel).order_by(TagModel.tag_group, TagModel.name))
+        result = await self._session.execute(select(TagModel).order_by(TagModel.tag_group, original_name(TagModel)))
         return [_to_tag(model) for model in result.scalars().all()]
 
 
 def _to_tag(model: TagModel) -> RecipeTag:
-    return RecipeTag(id=RecipeTagId(model.id), name=model.name, group=TagGroup(model.tag_group))
+    return RecipeTag(id=RecipeTagId(model.id), name=model.localized_name, group=TagGroup(model.tag_group))

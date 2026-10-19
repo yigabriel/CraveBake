@@ -36,6 +36,7 @@ from app.recommendations.domain.services.ports import (
     RecipeCandidateSource,
 )
 from app.shared.exceptions.domain_exceptions import ValidationError
+from app.shared.domain.value_objects.localized_text import LocalizedText
 
 ME = "me"
 
@@ -97,10 +98,11 @@ class FakeKitchen(KitchenCatalog):
         return self.equipment
 
     async def ingredient_names(self, ids):
-        return {i: self.names[i] for i in ids if i in self.names}
+        # Localized, like the real ingredients context.
+        return {i: LocalizedText({"es": self.names[i], "en": f"{self.names[i]} (en)"}) for i in ids if i in self.names}
 
     async def equipment_names(self, ids):
-        return {i: self.names[i] for i in ids if i in self.names}
+        return {i: LocalizedText.of(self.names[i]) for i in ids if i in self.names}
 
 
 class FakeRecipeSource(RecipeCandidateSource):
@@ -136,10 +138,10 @@ class FakeRecipeSource(RecipeCandidateSource):
         return recipe if self._visible(recipe, viewer_user_id) else None
 
     async def category_names(self):
-        return {CATEGORY: "Tortas"}
+        return {CATEGORY: LocalizedText({"es": "Tortas", "en": "Cakes"})}
 
     async def tag_names(self):
-        return {TAG_VEGAN: "Vegano"}
+        return {TAG_VEGAN: LocalizedText({"es": "Vegano", "en": "Vegan"})}
 
 
 class FakeFavorites(FavoritesGateway):
@@ -272,14 +274,14 @@ class TestSessionUseCases:
         )
 
         assert result.ingredient_source == "selection"
-        assert [i.name for i in result.ingredients] == ["Harina", "Huevo"]
-        assert result.category.name == "Tortas"
-        assert [t.name for t in result.tags] == ["Vegano"]
+        assert [str(i.name) for i in result.ingredients] == ["Harina", "Huevo"]
+        assert str(result.category.name) == "Tortas"
+        assert [str(t.name) for t in result.tags] == ["Vegano"]
 
     async def test_start_from_pantry(self, start):
         result = await start.execute(StartSessionDTO(ME, []))
         assert result.ingredient_source == "pantry"
-        assert [i.name for i in result.ingredients] == ["Azúcar"]
+        assert [str(i.name) for i in result.ingredients] == ["Azúcar"]
 
     async def test_empty_pantry_and_no_selection(self, sessions, recipes):
         with pytest.raises(NoIngredientsAvailableError):
@@ -326,8 +328,8 @@ class TestDeck:
         card = next(c for c in (await deck.execute(ME, session_id)).items if c.title == "Brownie")
 
         assert card.compatibility_score == 0.6667
-        assert [i.name for i in card.matched_ingredients] == ["Harina", "Huevo"]
-        assert [i.name for i in card.missing_ingredients] == ["Cacao"]
+        assert [str(i.name) for i in card.matched_ingredients] == ["Harina", "Huevo"]
+        assert [str(i.name) for i in card.missing_ingredients] == ["Cacao"]
         assert card.has_all_equipment is True
         assert card.is_own is False
 

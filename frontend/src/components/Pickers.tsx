@@ -21,6 +21,8 @@ export { useDebounced };
 interface Option {
   id: string;
   name: string;
+  /** Shown instead of `name` (e.g. a translated catalog name). */
+  label?: string;
   hint?: string | null;
 }
 
@@ -49,8 +51,12 @@ function SearchPicker<T extends Option>({
   const [creating, setCreating] = useState(false);
   const q = useDebounced(text.trim());
   const results = useQuery({ queryKey: [queryKey, "search", q], queryFn: () => search(q), enabled: open });
-  const options = (results.data ?? []).filter((item) => !excludeIds.includes(item.id));
-  const exact = results.data?.some((item) => item.name.toLowerCase() === q.toLowerCase());
+  // While the debounced search catches up with what is typed, old results would be
+  // clickable and "Create" would use the previous text: show neither until it settles.
+  const settled = text.trim() === q;
+  const options = settled ? (results.data ?? []).filter((item) => !excludeIds.includes(item.id)) : [];
+  const exact = settled && results.data?.some((item) => item.name.toLowerCase() === q.toLowerCase());
+  const loading = results.isLoading || !settled;
 
   const pick = (item: T) => {
     onPick(item);
@@ -76,7 +82,7 @@ function SearchPicker<T extends Option>({
       />
       {open && (
         <ul className="absolute z-30 mt-xs max-h-72 w-full overflow-y-auto rounded-lg border border-outline-variant bg-surface-container-lowest py-xs shadow-lift">
-          {results.isLoading && <li className="px-sm py-xs text-label-md text-on-surface-variant">{t("common.loading")}</li>}
+          {loading && <li className="px-sm py-xs text-label-md text-on-surface-variant">{t("common.loading")}</li>}
           {options.map((item) => (
             <li key={item.id}>
               <button
@@ -85,15 +91,15 @@ function SearchPicker<T extends Option>({
                 onClick={() => pick(item)}
                 className="flex w-full items-center justify-between gap-sm px-sm py-xs text-left text-body-md hover:bg-surface-container-high"
               >
-                {item.name}
+                {item.label ?? item.name}
                 {item.hint && <span className="text-label-sm text-on-surface-variant">{item.hint}</span>}
               </button>
             </li>
           ))}
-          {!results.isLoading && options.length === 0 && !onCreate && (
+          {!loading && options.length === 0 && !onCreate && (
             <li className="px-sm py-xs text-label-md text-on-surface-variant">{t("common.noResults")}</li>
           )}
-          {onCreate && q && !exact && (
+          {onCreate && !loading && q && !exact && (
             <li>
               <button
                 type="button"
@@ -140,7 +146,7 @@ export function IngredientPicker({
       placeholder={placeholder ?? t("ingredients.searchPlaceholder")}
       queryKey="ingredients"
       search={async (q) =>
-        (await catalogApi.searchIngredients(q, 10)).items.map((item) => ({ ...item, hint: item.default_category }))
+        (await catalogApi.searchIngredients(q, 10)).items.map((item) => ({ ...item, hint: item.category_name }))
       }
       onPick={onPick}
       onCreate={allowCreate ? (name) => catalogApi.createIngredient({ name }) : undefined}
@@ -168,7 +174,10 @@ export function EquipmentPicker({
       placeholder={placeholder ?? t("kitchen.searchPlaceholder")}
       queryKey="equipment"
       search={async (q) =>
-        (await catalogApi.searchEquipment(q)).items.map((item) => ({ ...item, hint: t(`kitchen.types.${item.equipment_type}`) }))
+        (await catalogApi.searchEquipment(q)).items.map((item) => ({
+          ...item,
+          hint: t(`kitchen.types.${item.equipment_type}`),
+        }))
       }
       onPick={onPick}
       onCreate={allowCreateAs ? (name) => catalogApi.createEquipment({ name, equipment_type: allowCreateAs }) : undefined}

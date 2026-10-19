@@ -2,11 +2,12 @@
 from decimal import Decimal
 
 from pydantic import BaseModel
+from app.shared.presentation.i18n import LocalizedStr
 
 
 class UnitResponse(BaseModel):
     id: str
-    name: str
+    name: LocalizedStr
     abbreviation: str
     unit_type: str
     base_factor: Decimal

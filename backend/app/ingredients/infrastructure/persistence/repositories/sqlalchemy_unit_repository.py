@@ -8,6 +8,7 @@ from app.ingredients.domain.entities.unit import Unit, UnitSystem, UnitType
 from app.ingredients.domain.repositories.unit_repository import UnitRepository
 from app.ingredients.domain.value_objects.unit_id import UnitId
 from app.ingredients.infrastructure.persistence.models.unit_model import UnitModel
+from app.shared.database.localized_name import original_name
 
 
 class SqlAlchemyUnitRepository(UnitRepository):
@@ -26,14 +27,14 @@ class SqlAlchemyUnitRepository(UnitRepository):
         return [_to_entity(model) for model in result.scalars().all()]
 
     async def list_all(self) -> list[Unit]:
-        result = await self._session.execute(select(UnitModel).order_by(UnitModel.unit_type, UnitModel.name))
+        result = await self._session.execute(select(UnitModel).order_by(UnitModel.unit_type, original_name(UnitModel)))
         return [_to_entity(model) for model in result.scalars().all()]
 
 
 def _to_entity(model: UnitModel) -> Unit:
     return Unit(
         id=UnitId(model.id),
-        name=model.name,
+        name=model.localized_name,
         abbreviation=model.abbreviation,
         unit_type=UnitType(model.unit_type),
         base_factor=model.base_factor,

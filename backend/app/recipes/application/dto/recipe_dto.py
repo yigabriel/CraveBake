@@ -6,6 +6,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
+from app.shared.domain.value_objects.localized_text import LocalizedText
+
 # --- Inputs ---------------------------------------------------------------------
 
 
@@ -84,29 +86,29 @@ class AddRecipePhotoDTO:
 @dataclass(frozen=True)
 class RecipeCategoryDTO:
     id: str
-    name: str
+    name: LocalizedText
 
 
 @dataclass(frozen=True)
 class DifficultyDTO:
     id: str
-    name: str
+    name: LocalizedText
     level_order: int
 
 
 @dataclass(frozen=True)
 class RecipeTagDTO:
     id: str
-    name: str
+    name: LocalizedText
     group: str  # stable code: sabor, dieta, tecnica, tiempo, celebraciones
-    group_name: str  # display label
+    group_name: LocalizedText  # display label
 
 
 @dataclass(frozen=True)
 class RecipeIngredientDTO:
     id: str
     ingredient_id: str
-    ingredient_name: str | None
+    ingredient_name: LocalizedText | None
     quantity: Decimal
     unit_id: str
     unit_abbreviation: str | None
@@ -122,7 +124,7 @@ class RecipeIngredientDTO:
 class RecipeEquipmentDTO:
     id: str
     equipment_id: str
-    equipment_name: str | None
+    equipment_name: LocalizedText | None
     notes: str | None
 
 

@@ -54,7 +54,7 @@ class TestEquipmentEntity:
 
     def test_create_cleans_fields(self):
         item = Equipment.create("  Espátula  ", EquipmentType.UTENSILIO, description="   ")
-        assert item.name == "Espátula"
+        assert item.name.text == "Espátula"
         assert item.description is None
 
     @pytest.mark.parametrize("name", ["", "   ", None])
@@ -93,7 +93,7 @@ class TestCatalogUseCases:
         result = await CreateEquipmentUseCase(catalog).execute(
             CreateEquipmentDTO(name="Rodillo", equipment_type="utensilio")
         )
-        assert result.name == "Rodillo"
+        assert result.name.text == "Rodillo"
         assert result.equipment_type == "utensilio"
         assert len(catalog.items) == 1
 
@@ -114,7 +114,7 @@ class TestCatalogUseCases:
 
     async def test_search_filters_by_type_and_paginates(self, catalog, mixer, mold):
         page = await SearchEquipmentUseCase(catalog).execute(SearchEquipmentDTO(equipment_type="molde"))
-        assert [item.name for item in page.items] == ["Molde redondo 20cm"]
+        assert [item.name.text for item in page.items] == ["Molde redondo 20cm"]
         assert page.total == 1
 
         page = await SearchEquipmentUseCase(catalog).execute(SearchEquipmentDTO(limit=1, offset=1))
@@ -135,7 +135,7 @@ class TestKitchenUseCases:
 
         assert len(kitchen.items) == 1
         assert (result.quantity, result.notes) == (2, "roja")
-        assert result.equipment.name == "Batidora planetaria"
+        assert result.equipment.name.text == "Batidora planetaria"
 
     async def test_upsert_unknown_equipment(self, catalog, kitchen):
         with pytest.raises(EquipmentNotFoundError):

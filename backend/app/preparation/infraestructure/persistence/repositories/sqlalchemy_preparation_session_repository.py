@@ -24,6 +24,7 @@ from app.preparation.infraestructure.persistence.models.preparation_models impor
     PreparationStepModel,
 )
 from app.shared.domain.value_objects.entity_id import EntityId
+from app.shared.domain.value_objects.localized_text import LocalizedText
 
 
 class SqlAlchemyPreparationSessionRepository(PreparationSessionRepository):
@@ -67,7 +68,8 @@ class SqlAlchemyPreparationSessionRepository(PreparationSessionRepository):
                     id=uuid.uuid4(),
                     session_id=preparation.id.value,
                     ingredient_id=uuid.UUID(line.ingredient_id),
-                    ingredient_name=line.ingredient_name,
+                    ingredient_names=line.ingredient_name.as_dict() if line.ingredient_name else None,
+                    ingredient_name_language=line.ingredient_name.original if line.ingredient_name else None,
                     quantity=line.quantity,
                     unit_id=uuid.UUID(line.unit_id),
                     unit_abbreviation=line.unit_abbreviation,
@@ -176,7 +178,11 @@ class SqlAlchemyPreparationSessionRepository(PreparationSessionRepository):
                 ingredients=[
                     PreparedIngredient(
                         ingredient_id=str(line.ingredient_id),
-                        ingredient_name=line.ingredient_name,
+                        ingredient_name=(
+                            LocalizedText(line.ingredient_names, original=line.ingredient_name_language or "es")
+                            if line.ingredient_names
+                            else None
+                        ),
                         quantity=line.quantity,
                         unit_id=str(line.unit_id),
                         unit_abbreviation=line.unit_abbreviation,

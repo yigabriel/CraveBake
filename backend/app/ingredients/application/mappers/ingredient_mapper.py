@@ -9,4 +9,5 @@ def ingredient_to_dto(ingredient: Ingredient) -> IngredientDTO:
         name=ingredient.name,
         description=ingredient.description,
         default_category=ingredient.default_category,
+        category_name=ingredient.category_name,
     )

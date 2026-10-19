@@ -48,6 +48,8 @@ async def ok(response, status: int = 200):
 async def catalog(client):
     """Ids of seeded rows, looked up through the public API."""
     headers = await sign_up(client, "catalog@example.com")
+    # Lookups below use the seeded Spanish names.
+    await ok(await client.patch("/v1/users/me/language", json={"preferred_language": "es"}, headers=headers))
     units = {u["abbreviation"]: u["id"] for u in await ok(await client.get("/v1/units", headers=headers))}
 
     async def ingredient(name):
@@ -378,3 +380,95 @@ class TestPreparation:
         prep = await ok(await client.post("/v1/preparations", json={"recipe_id": recipe["id"]}, headers=owner), 201)
 
         assert (await client.get(f"/v1/preparations/{prep['id']}", headers=other)).status_code == 404
+
+
+class TestLocalizedIngredients:
+    """Catalog names follow the viewer's preferred language; the domain keeps every language."""
+
+    async def speaker(self, client, email, language):
+        headers = await sign_up(client, email)
+        await ok(await client.patch("/v1/users/me/language", json={"preferred_language": language}, headers=headers))
+        return headers
+
+    async def test_search_and_names_follow_the_viewer(self, client, catalog):
+        english = await self.speaker(client, "en-search@example.com", "en")
+        spanish = await self.speaker(client, "es-search@example.com", "es")
+
+        for query, headers, expected in [
+            ("flour", english, "All-purpose flour"),
+            ("harina todo", english, "All-purpose flour"),  # any language matches
+            ("all-purpose", spanish, "Harina todo uso (0000)"),
+        ]:
+            page = await ok(await client.get("/v1/ingredients", params={"q": query}, headers=headers))
+            assert expected in [item["name"] for item in page["items"] if item["id"] == catalog["flour"]], query
+
+    async def test_created_names_fall_back_and_stay_unique_across_languages(self, client, catalog):
+        english = await self.speaker(client, "en-create@example.com", "en")
+        spanish = await self.speaker(client, "es-create@example.com", "es")
+
+        created = await ok(await client.post("/v1/ingredients", json={"name": "Cardamom pods"}, headers=english), 201)
+        seen = await ok(await client.get(f"/v1/ingredients/{created['id']}", headers=spanish))
+        assert seen["name"] == "Cardamom pods"  # untranslated: shown as written
+
+        for name in ("butter", "MANTECA", "Cardamom Pods"):
+            response = await client.post("/v1/ingredients", json={"name": name}, headers=spanish)
+            assert response.status_code == 409, name
+
+    async def test_recipe_pantry_and_cooking_follow_the_viewer(self, client, catalog):
+        author = await self.speaker(client, "es-author@example.com", "es")
+        english = await self.speaker(client, "en-cook@example.com", "en")
+        recipe = await ok(await client.post("/v1/recipes", json=recipe_body(catalog), headers=author), 201)
+
+        names = lambda lines: {line.get("ingredient_name") for line in lines}
+        detail = await ok(await client.get(f"/v1/recipes/{recipe['id']}", headers=english))
+        assert {"All-purpose flour", "Butter"} <= names(detail["ingredients"])
+        assert {"Harina todo uso (0000)", "Manteca"} <= names((await ok(await client.get(f"/v1/recipes/{recipe['id']}", headers=author)))["ingredients"])
+
+        await ok(await client.put("/v1/pantry", json={"ingredient_id": catalog["butter"]}, headers=english))
+        assert [item["ingredient"]["name"] for item in await ok(await client.get("/v1/pantry", headers=english))] == ["Butter"]
+
+        cooking = await ok(await client.post("/v1/preparations", json={"recipe_id": recipe["id"]}, headers=english), 201)
+        assert {"All-purpose flour", "Butter"} <= names(cooking["ingredients"])
+        # The snapshot keeps every language: switching language translates the history too.
+        await ok(await client.patch("/v1/users/me/language", json={"preferred_language": "es"}, headers=english))
+        again = await ok(await client.get(f"/v1/preparations/{cooking['id']}", headers=english))
+        assert "Manteca" in names(again["ingredients"])
+
+    async def test_every_catalog_follows_the_viewer(self, client, catalog):
+        english = await self.speaker(client, "en-catalogs@example.com", "en")
+        spanish = await self.speaker(client, "es-catalogs@example.com", "es")
+
+        async def names(path, headers, key="name"):
+            body = await ok(await client.get(path, params={"limit": 100}, headers=headers))
+            return {item[key] for item in (body["items"] if isinstance(body, dict) else body)}
+
+        assert {"Oven", "Stand mixer"} <= await names("/v1/equipment", english)
+        assert {"Horno", "Batidora planetaria"} <= await names("/v1/equipment", spanish)
+        assert {"Cakes", "Cookies"} <= await names("/v1/recipe-categories", english)
+        assert {"Easy", "Hard"} <= await names("/v1/difficulties", english)
+        assert {"Christmas", "Gluten-free"} <= await names("/v1/recipe-tags", english)
+        assert {"Flavor", "Diet"} <= await names("/v1/recipe-tags", english, key="group_name")
+        assert {"cup", "gram"} <= await names("/v1/units", english)
+        assert {"Flours & starches", "Dairy & eggs"} <= await names("/v1/categories", english, key="label")
+        # The category code stays stable whatever the language: it is what clients filter by.
+        assert "harina" in await names("/v1/categories", english)
+
+        flour = await ok(await client.get(f"/v1/ingredients/{catalog['flour']}", headers=english))
+        assert (flour["default_category"], flour["category_name"]) == ("harina", "Flours & starches")
+
+        # Names that travel inside other modules' responses are translated too.
+        recipe = await ok(await client.post("/v1/recipes", json=recipe_body(catalog), headers=spanish), 201)
+        await ok(await client.put(f"/v1/portfolio/favorites/{recipe['id']}", headers=english))
+        saved = await ok(await client.get("/v1/portfolio", params={"kind": "saved"}, headers=english))
+        assert saved["items"][0]["difficulty_name"] in {"Easy", "Intermediate", "Hard"}
+
+        session = await ok(
+            await client.post("/v1/recommendations/sessions", json={"ingredient_ids": [catalog["flour"]]}, headers=english), 201
+        )
+        assert [i["name"] for i in session["ingredients"]] == ["All-purpose flour"]
+
+    async def test_new_equipment_is_unique_across_languages(self, client, catalog):
+        spanish = await self.speaker(client, "es-equipment@example.com", "es")
+        for name in ("oven", "HORNO"):
+            response = await client.post("/v1/equipment", json={"name": name, "equipment_type": "otro"}, headers=spanish)
+            assert response.status_code == 409, name

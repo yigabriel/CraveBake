@@ -32,6 +32,7 @@ from app.ingredients.presentation.http.schemas.ingredient_schemas import (
     IngredientResponse,
 )
 from app.shared.presentation.pagination import PageResponse
+from app.shared.presentation.i18n import language_context
 
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
@@ -45,7 +46,7 @@ async def list_categories(
     categories = await use_case.execute()
 
     return [
-        CategoryResponse(**category.__dict__)
+        CategoryResponse.model_validate(category, from_attributes=True, context=language_context(current_user))
         for category in categories
     ]
 
@@ -73,4 +74,4 @@ async def list_ingredients_by_category(
 
     page = await use_case.execute(dto)
 
-    return PageResponse[IngredientResponse].model_validate(page, from_attributes=True)
+    return PageResponse[IngredientResponse].model_validate(page, from_attributes=True, context=language_context(current_user))

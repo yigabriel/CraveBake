@@ -1,10 +1,6 @@
 """
-ListCategoriesUseCase — returns every distinct `default_category` currently
-in use across the ingredients catalog, with how many ingredients use each.
-
-Categories are free text (see `IngredientRepository.list_distinct_categories`
-docstring for why), so this reflects whatever values `POST /ingredients`
-has been given so far rather than a fixed, curated list.
+ListCategoriesUseCase — every `default_category` code in use across the
+ingredients catalog, with its display name and how many ingredients use it.
 """
 from __future__ import annotations
 
@@ -18,4 +14,4 @@ class ListCategoriesUseCase:
 
     async def execute(self) -> list[CategoryDTO]:
         rows = await self._ingredient_repository.list_distinct_categories()
-        return [CategoryDTO(name=name, ingredient_count=count) for name, count in rows]
+        return [CategoryDTO(name=code, label=label, ingredient_count=count) for code, label, count in rows]

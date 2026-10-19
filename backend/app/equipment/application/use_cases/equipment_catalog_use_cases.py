@@ -47,7 +47,7 @@ class CreateEquipmentUseCase:
         if await self._equipment_repository.exists_by_name(dto.name.strip()):
             raise EquipmentAlreadyExistsError(dto.name)
         equipment = Equipment.create(
-            name=dto.name, equipment_type=EquipmentType(dto.equipment_type), description=dto.description
+            name=dto.name, equipment_type=EquipmentType(dto.equipment_type), description=dto.description, language=dto.language
         )
         await self._equipment_repository.add(equipment)
         return equipment_to_dto(equipment)

@@ -13,6 +13,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
+from app.shared.domain.value_objects.localized_text import LocalizedText
 
 
 @dataclass(frozen=True)
@@ -22,10 +23,10 @@ class RecipeSnapshot:
     description: str | None
     cover_photo_url: str | None
     category_id: str | None
-    category_name: str | None
+    category_name: LocalizedText | None
     tag_ids: frozenset[str]
-    tag_names: tuple[str, ...]
-    difficulty_name: str | None
+    tag_names: tuple[LocalizedText, ...]
+    difficulty_name: LocalizedText | None
     prep_time_minutes: int | None
     servings: int | None
     is_public: bool

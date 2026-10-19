@@ -14,8 +14,11 @@ for how people actually measure when baking:
 - Counted units ("unidad") and quantities already in the target system are
   left as they are.
 
-Quantities are rounded the way a kitchen reads them: whole g/ml, quarters of
-cups and spoons, one decimal for oz.
+Metric quantities are rounded the way a kitchen reads them (whole g/ml, one
+decimal for oz). Cups and spoons are NOT rounded to fractions here: they keep
+two decimals, and the client turns them into measurable amounts (¾ cup + 1 tbsp,
+⅓ cup...) after scaling servings. Rounding here first would compound the error
+when scaling and hide thirds, which US measuring cups have.
 
 The measures of the ladder are identified by their seeded abbreviations
 (cup, tbsp, tsp, g, kg, ml, l, oz).
@@ -28,7 +31,9 @@ from decimal import ROUND_HALF_UP, Decimal
 from app.ingredients.domain.entities.unit import Unit, UnitSystem, UnitType
 from app.ingredients.domain.value_objects.unit_id import UnitId
 
-_QUARTER = Decimal("0.25")
+# Smallest US measuring spoon (1/8 tsp): nothing real is shown as zero.
+_SMALLEST_SPOON = Decimal("0.125")
+_HUNDREDTH = Decimal("0.01")
 # US volume ladder, biggest first, with the smallest amount worth expressing in each measure.
 _US_VOLUME_LADDER = (("cup", Decimal("0.25")), ("tbsp", Decimal("1")), ("tsp", Decimal("0")))
 
@@ -92,7 +97,7 @@ class UnitSystemConverter:
             amount = amount_in(measure)
             if amount >= minimum:
                 rounded = _round(amount, measure)
-                return DisplayQuantity(rounded if rounded > 0 else _QUARTER, measure, converted=True)
+                return DisplayQuantity(max(rounded, _SMALLEST_SPOON) if abbreviation == "tsp" else rounded, measure, converted=True)
         raise AssertionError("unreachable: the last measure of the ladder accepts any amount")
 
 
@@ -109,7 +114,7 @@ def _round(quantity: Decimal, unit: Unit) -> Decimal:
     if abbreviation in ("g", "ml"):
         step = Decimal("0.1") if quantity < 10 else Decimal("1")
     elif abbreviation in ("cup", "tbsp", "tsp"):
-        return (quantity / _QUARTER).quantize(Decimal("1"), rounding=ROUND_HALF_UP) * _QUARTER
+        step = _HUNDREDTH
     elif abbreviation in ("kg", "l"):
         step = Decimal("0.01")
     elif abbreviation == "oz":

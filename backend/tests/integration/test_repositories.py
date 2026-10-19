@@ -20,7 +20,7 @@ AUTHOR = str(uuid.uuid4())
 
 async def seeded_ids(db_session) -> dict[str, str]:
     rows = await db_session.execute(
-        text("SELECT name, id FROM ingredients WHERE name IN ('Harina todo uso (0000)', 'Manteca', 'Huevo, clara')")
+        text("SELECT names->>'es', id FROM ingredients WHERE names->>'es' IN ('Harina todo uso (0000)', 'Manteca', 'Huevo, clara')")
     )
     ids = {name: str(row_id) for name, row_id in rows.all()}
     gram = (await db_session.execute(text("SELECT id FROM units WHERE abbreviation = 'g'"))).scalar_one()

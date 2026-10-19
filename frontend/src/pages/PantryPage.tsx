@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { pantryApi } from "../api/endpoints";
 import { useErrorMessage, useUnits } from "../api/queries";
-import type { Language, PantryItem } from "../api/types";
+import type { Ingredient, Language, PantryItem } from "../api/types";
 import { IngredientPicker } from "../components/Pickers";
 import { useToast } from "../components/Toast";
 import {
@@ -22,12 +22,12 @@ import {
   PageHeader,
   Skeleton,
 } from "../components/ui";
-import { formatQuantity, unitLabel, unitOptionLabel } from "../lib/quantities";
+import { formatMeasure } from "../lib/quantities";
 
 const OTHER = "__other__";
 
 function EditModal({ item, onClose }: { item: PantryItem | null; onClose: () => void }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const units = useUnits();
   const toast = useToast();
   const errorMessage = useErrorMessage();
@@ -72,7 +72,7 @@ function EditModal({ item, onClose }: { item: PantryItem | null; onClose: () => 
             <option value="">—</option>
             {units.data?.map((unit) => (
               <option key={unit.id} value={unit.id}>
-                {unitOptionLabel(unit, i18n.language as Language)}
+                {unit.name}
               </option>
             ))}
           </select>
@@ -92,18 +92,38 @@ export function PantryPage() {
   const [editing, setEditing] = useState<PantryItem | null>(null);
   const pantry = useQuery({ queryKey: ["pantry"], queryFn: pantryApi.list });
 
+  // Optimistic: the list changes at once, the request runs behind it; a failure puts it back.
   const add = useMutation({
-    mutationFn: (ingredientId: string) => pantryApi.upsert({ ingredient_id: ingredientId }),
-    onSuccess: (item) => {
-      void queryClient.invalidateQueries({ queryKey: ["pantry"] });
-      toast(t("pantry.added", { name: item.ingredient.name }));
+    mutationFn: (ingredient: Ingredient) => pantryApi.upsert({ ingredient_id: ingredient.id }),
+    onMutate: async (ingredient) => {
+      await queryClient.cancelQueries({ queryKey: ["pantry"] });
+      const previous = queryClient.getQueryData<PantryItem[]>(["pantry"]);
+      const optimistic: PantryItem = { id: `optimistic-${ingredient.id}`, ingredient, quantity: null, unit: null, updated_at: new Date().toISOString() };
+      queryClient.setQueryData<PantryItem[]>(["pantry"], (list = []) => [...list, optimistic]);
+      toast(t("pantry.added", { name: ingredient.name }));
+      return { previous };
     },
-    onError: (error) => toast(errorMessage(error), "error"),
+    onSuccess: (saved) =>
+      queryClient.setQueryData<PantryItem[]>(["pantry"], (list = []) =>
+        list.map((item) => (item.ingredient.id === saved.ingredient.id ? saved : item)),
+      ),
+    onError: (error, _ingredient, context) => {
+      queryClient.setQueryData(["pantry"], context?.previous);
+      toast(errorMessage(error), "error");
+    },
   });
   const remove = useMutation({
     mutationFn: (ingredientId: string) => pantryApi.remove(ingredientId),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["pantry"] }),
-    onError: (error) => toast(errorMessage(error), "error"),
+    onMutate: async (ingredientId) => {
+      await queryClient.cancelQueries({ queryKey: ["pantry"] });
+      const previous = queryClient.getQueryData<PantryItem[]>(["pantry"]);
+      queryClient.setQueryData<PantryItem[]>(["pantry"], (list = []) => list.filter((item) => item.ingredient.id !== ingredientId));
+      return { previous };
+    },
+    onError: (error, _id, context) => {
+      queryClient.setQueryData(["pantry"], context?.previous);
+      toast(errorMessage(error), "error");
+    },
   });
 
   const items = pantry.data ?? [];
@@ -115,7 +135,8 @@ export function PantryPage() {
     }
     return [...map.entries()].sort(([a], [b]) => (a === OTHER ? 1 : b === OTHER ? -1 : a.localeCompare(b)));
   }, [items]);
-  const label = (key: string) => (key === OTHER ? t("pantry.otherCategory") : key.charAt(0).toUpperCase() + key.slice(1));
+  const categoryNames = new Map(items.map((item) => [item.ingredient.default_category ?? OTHER, item.ingredient.category_name]));
+  const label = (key: string) => (key === OTHER ? t("pantry.otherCategory") : categoryNames.get(key) ?? key);
   const shown = category ? groups.filter(([key]) => key === category) : groups;
 
   return (
@@ -130,7 +151,7 @@ export function PantryPage() {
           allowCreate
           placeholder={t("pantry.addPlaceholder")}
           excludeIds={items.map((item) => item.ingredient.id)}
-          onPick={(ingredient) => add.mutate(ingredient.id)}
+          onPick={(ingredient) => add.mutate(ingredient)}
         />
       </Card>
 
@@ -163,14 +184,13 @@ export function PantryPage() {
                       <span className="flex-1 text-body-md">{item.ingredient.name}</span>
                       <span className="text-label-md text-on-surface-variant">
                         {item.quantity
-                          ? `${formatQuantity(item.quantity, item.unit?.abbreviation, language)} ${unitLabel(item.unit?.abbreviation, language)}`
+                          ? formatMeasure(item.quantity, item.unit?.abbreviation, language)
                           : t("pantry.inStock")}
                       </span>
                       <IconButton icon="edit" label={t("common.edit")} onClick={() => setEditing(item)} />
                       <IconButton
                         icon="delete"
                         label={t("common.delete")}
-                        disabled={remove.isPending}
                         onClick={() => remove.mutate(item.ingredient.id)}
                         className="text-error"
                       />
