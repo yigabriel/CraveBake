@@ -1,0 +1,336 @@
+<!DOCTYPE html><html class="h-full" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Pastry - ¿Qué quiero cocinar? / Swipe</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#002115",
+                        "inverse-primary": "#ffb4a1",
+                        "inverse-surface": "#382e2b",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#ffdcc6",
+                        "on-primary-container": "#5b1604",
+                        "secondary": "#795741",
+                        "surface-container-low": "#fff1ed",
+                        "tertiary-fixed-dim": "#9fd1b8",
+                        "on-tertiary-container": "#003725",
+                        "on-surface": "#221917",
+                        "surface-container": "#fceae6",
+                        "on-secondary-container": "#795842",
+                        "surface-bright": "#fff8f6",
+                        "surface-container-high": "#f6e4e0",
+                        "on-primary": "#ffffff",
+                        "surface": "#fff8f6",
+                        "outline-variant": "#dbc1ba",
+                        "tertiary-fixed": "#bbeed4",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#2d1605",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#1f4f3c",
+                        "on-secondary-fixed-variant": "#5e402b",
+                        "surface-dim": "#e8d6d2",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#e9bea2",
+                        "on-surface-variant": "#55423e",
+                        "on-primary-fixed-variant": "#7c2e19",
+                        "primary-container": "#e07a5f",
+                        "primary-fixed": "#ffdbd2",
+                        "background": "#fff8f6",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#ffede9",
+                        "tertiary-container": "#70a18a",
+                        "secondary-container": "#fed1b5",
+                        "surface-container-highest": "#f0dfda",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#88726d",
+                        "tertiary": "#386753",
+                        "primary": "#9a442d",
+                        "on-primary-fixed": "#3c0800",
+                        "on-background": "#221917",
+                        "primary-fixed-dim": "#ffb4a1",
+                        "surface-tint": "#9a442d",
+                        "surface-variant": "#f0dfda"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "3xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-mobile": "20px",
+                        "base": "8px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "margin-desktop": "64px",
+                        "md": "24px",
+                        "lg": "48px",
+                        "xl": "80px"
+                    },
+                    "fontFamily": {
+                        "display-lg-mobile": ["Be Vietnam Pro", "sans-serif"],
+                        "label-md": ["Be Vietnam Pro", "sans-serif"],
+                        "body-lg": ["Be Vietnam Pro", "sans-serif"],
+                        "headline-md": ["Be Vietnam Pro", "sans-serif"],
+                        "title-lg": ["Be Vietnam Pro", "sans-serif"],
+                        "body-md": ["Be Vietnam Pro", "sans-serif"],
+                        "display-lg": ["Be Vietnam Pro", "sans-serif"],
+                        "label-sm": ["Be Vietnam Pro", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
+        
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .swipe-card {
+            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+            will-change: transform;
+        }
+
+        /* Custom scrollbar hide for horizontal pill bar */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-[#F4F1DE] h-full flex flex-col font-body-md text-on-surface overflow-hidden select-none">
+<!-- Header Superior: Resumen de Sesión Activa & Filtros Rápidos -->
+<header class="w-full pt-3 pb-2 px-4 flex flex-col gap-2 z-20 shrink-0 bg-[#F4F1DE]/90 backdrop-blur-sm border-b border-[#2d1605]/5">
+<!-- Fila 1: Título & Estado de Búsqueda -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]" data-icon="cookie">cookie</span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-md text-sm font-bold text-on-surface leading-tight">¿Qué cocinar hoy?</span>
+<span class="bg-[#70a18a]/20 text-tertiary text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Activo
+                    </span>
+</div>
+<p class="text-[11px] text-[#5e402b] truncate font-medium">
+                    Buscando con: <span class="text-primary font-semibold">Harina, Huevos, Manteca</span> <span class="text-outline text-[10px]">(Usando tu despensa)</span>
+</p>
+</div>
+</div>
+<!-- Botón editar ingredientes / despensa -->
+<button class="shrink-0 text-primary bg-surface border border-outline-variant/60 rounded-full p-1.5 shadow-sm hover:bg-surface-container transition-transform active:scale-95 flex items-center justify-center" title="Ajustar ingredientes">
+<span class="material-symbols-outlined text-[18px]" data-icon="tune">tune</span>
+</button>
+</div>
+<!-- Fila 2: Barra de filtro sutil (Compatibilidad mínima y categoría) -->
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 text-[11px]">
+<div class="inline-flex items-center gap-1 bg-surface px-2.5 py-1 rounded-full border border-outline-variant/60 text-[#2d1605] shadow-xs shrink-0">
+<span class="material-symbols-outlined text-[14px] text-tertiary" data-icon="filter_alt">filter_alt</span>
+<span class="font-medium">&gt; 50% ingredientes</span>
+<span class="material-symbols-outlined text-[14px] text-outline cursor-pointer" data-icon="expand_more">expand_more</span>
+</div>
+<div class="inline-flex items-center gap-1 bg-primary/10 text-primary px-2.5 py-1 rounded-full font-medium shrink-0">
+<span class="material-symbols-outlined text-[14px]" data-icon="bakery_dining">bakery_dining</span>
+<span>Panadería Artesanal</span>
+<span class="material-symbols-outlined text-[12px] opacity-70" data-icon="close">close</span>
+</div>
+<div class="inline-flex items-center gap-1 bg-surface/80 px-2.5 py-1 rounded-full border border-outline-variant/40 text-[#5e402b] hover:bg-surface shrink-0">
+<span class="material-symbols-outlined text-[14px]" data-icon="timer">timer</span>
+<span>&lt; 2h</span>
+</div>
+</div>
+</header>
+<!-- Main Swipe Area -->
+<main class="flex-1 relative w-full flex flex-col items-center justify-between px-4 pb-24 pt-1 overflow-hidden">
+<!-- Deck Container -->
+<div class="relative w-full max-w-[360px] h-full max-h-[500px] flex items-center justify-center">
+<!-- Card 2 (Underneath Card for 3D depth) -->
+<div class="absolute inset-0 bg-[#fceae6] rounded-3xl shadow-sm scale-[0.93] translate-y-3 opacity-60 border border-outline-variant/40 pointer-events-none"></div>
+<!-- Card 1 (Active Discovery Card) -->
+<div class="swipe-card absolute inset-0 bg-surface rounded-3xl shadow-[0_10px_30px_rgba(45,22,5,0.12)] border border-[#2d1605]/10 flex flex-col overflow-hidden cursor-grab active:cursor-grabbing touch-none" id="activeCard">
+<!-- Image Area (Top ~44%) -->
+<div class="relative h-[44%] w-full bg-surface-container-high overflow-hidden shrink-0">
+<img class="w-full h-full object-cover pointer-events-none" data-alt="Hogaza de pan de masa madre artesanal recién horneada" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrg8QcUHOutBrm5X5FJYAw_CG9GFYah68LCCz4aaGUxkEOYNy6Opq4aPGUYqZUG_DMMq5sHnbjRmQEONt8Nun0S-w_7d0uaNSYn0RrZpCnE_Lxmrl1qCaEpPRpDC8lTY0ZKZwza6V_BrrgxSSvPSWp7M22GmJZe-yrd74mZj1N4oncajYPlu3nM1vbkfcQ_7NwsX6upYbpObVNwkmfWMWaJ-xChdtyfsITHbNm9zr74UVEOvog-KQn">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none"></div>
+<!-- Badge 1: Tu versión personalizada -->
+<div class="absolute top-3 left-3 bg-[#e07a5f]/95 text-white backdrop-blur-md px-2.5 py-1 rounded-full font-label-sm text-[10px] tracking-wide font-semibold shadow-md flex items-center gap-1 border border-white/20">
+<span class="material-symbols-outlined text-[13px]" data-icon="auto_awesome">auto_awesome</span>
+                    Tu versión personalizada
+                </div>
+<!-- Badge 2: Anillo / Badge circular destacado de compatibilidad (85%) -->
+<div class="absolute top-3 right-3 bg-surface/95 dark:bg-inverse-surface/90 backdrop-blur-md rounded-2xl px-2.5 py-1.5 shadow-lg border border-primary/20 flex items-center gap-1.5">
+<!-- Mini circular ring gauge visual -->
+<div class="relative w-6 h-6 flex items-center justify-center">
+<svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"></path>
+<path class="text-tertiary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="85, 100" stroke-linecap="round" stroke-width="4.2"></path>
+</svg>
+<span class="absolute text-[8px] font-bold text-tertiary">85%</span>
+</div>
+<div class="flex flex-col text-left leading-none">
+<span class="text-[9px] font-bold text-tertiary uppercase tracking-tight">Compatible</span>
+<span class="text-[8px] text-[#5e402b]">de tu despensa</span>
+</div>
+</div>
+<!-- Título flotante sobre imagen para maximizar espacio vertical -->
+<div class="absolute bottom-2.5 left-3.5 right-3.5 text-white">
+<h2 class="font-title-lg text-lg font-bold leading-tight drop-shadow-sm">Artisanal Sourdough Boule</h2>
+<div class="flex items-center gap-3 text-white/90 text-[11px] font-medium mt-0.5">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-tertiary-fixed" data-icon="schedule">schedule</span>
+                            24 hrs
+                        </span>
+<span class="inline-block w-1 h-1 rounded-full bg-white/40"></span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-tertiary-fixed" data-icon="signal_cellular_alt">signal_cellular_alt</span>
+                            Nivel Medio
+                        </span>
+</div>
+</div>
+</div>
+<!-- Content Area (Desglose de Ingredientes & Equipamiento) -->
+<div class="flex-1 p-3.5 flex flex-col justify-between bg-surface-container-lowest overflow-y-auto no-scrollbar">
+<!-- Descripción breve -->
+<p class="text-xs text-[#5e402b] leading-relaxed line-clamp-2">
+                    Corteza crujiente caramelizada y miga aireada con fermentación lenta. Adaptada a tus tiempos.
+                </p>
+<!-- Desglose de Ingredientes (Matched & Missing) -->
+<div class="mt-2 space-y-1.5">
+<!-- Tienes (5) -->
+<div class="bg-surface-container-low/70 rounded-xl p-2 border border-outline-variant/30">
+<div class="flex items-center gap-1.5 text-tertiary font-semibold text-[11px] mb-1">
+<span class="material-symbols-outlined text-[15px]" data-icon="check_circle">check_circle</span>
+<span>Tienes (5 ingredientes)</span>
+</div>
+<p class="text-[11px] text-[#5e402b] pl-5 leading-snug">
+                            Harina de trigo, Azúcar, Mantequilla, Huevos, Leche entera
+                        </p>
+</div>
+<!-- Te falta (1) con botón a lista rápida -->
+<div class="bg-error-container/40 rounded-xl p-2 border border-error/20 flex items-center justify-between gap-2">
+<div class="min-w-0">
+<div class="flex items-center gap-1.5 text-error font-semibold text-[11px]">
+<span class="material-symbols-outlined text-[15px]" data-icon="cancel">cancel</span>
+<span>Te falta (1)</span>
+</div>
+<p class="text-[11px] text-[#2d1605] pl-5 leading-snug truncate">
+                                Extracto de vainilla natural
+                            </p>
+</div>
+<button class="shrink-0 bg-white hover:bg-error-container text-error text-[10px] font-bold px-2 py-1 rounded-lg border border-error/30 flex items-center gap-0.5 shadow-xs transition-all active:scale-95" title="Agregar a lista de compras">
+<span class="material-symbols-outlined text-[13px]" data-icon="add_shopping_cart">add_shopping_cart</span>
+                            + Lista
+                        </button>
+</div>
+</div>
+<!-- Equipamiento Requerido -->
+<div class="mt-2 pt-2 border-t border-[#795741]/10 flex items-center justify-between text-[11px]">
+<div class="flex items-center gap-1.5 text-[#5e402b]">
+<span class="material-symbols-outlined text-[16px] text-tertiary" data-icon="inventory_2">inventory_2</span>
+<span class="font-medium text-[11px]">Equipamiento:</span>
+<span class="text-tertiary font-semibold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]" data-icon="check">check</span> Tienes todo el equipo
+                        </span>
+</div>
+<span class="text-[10px] text-outline">(Horno, Banneton)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. Botones de Acción Ergonómicos Táctiles -->
+<div class="flex justify-center items-center gap-5 mt-2 z-20 shrink-0">
+<!-- Botón Izquierda / Descartar -->
+<button aria-label="Descartar receta" class="w-14 h-14 rounded-full bg-surface border border-[#2d1605]/15 flex items-center justify-center text-[#55423e] shadow-sm hover:shadow-md hover:bg-surface-container-high transition-all active:scale-90">
+<span class="material-symbols-outlined text-[28px]" data-icon="close">close</span>
+</button>
+<!-- Botón Central / Guardar en Favoritos (Burnt Peach Primario) -->
+<button aria-label="Guardar en Favoritos" class="w-[70px] h-[70px] rounded-full bg-primary flex items-center justify-center text-white shadow-[0_6px_22px_rgba(154,68,45,0.4)] hover:shadow-[0_8px_28px_rgba(154,68,45,0.5)] transition-all active:scale-90">
+<span class="material-symbols-outlined text-[36px]" data-icon="favorite" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</button>
+<!-- Botón Derecha / ¡Esta quiero cocinar! (Chef hat / check hacia Preparación) -->
+<button aria-label="¡Esta quiero cocinar! Iniciar preparación" class="w-14 h-14 rounded-full bg-tertiary text-white border border-tertiary/20 flex flex-col items-center justify-center shadow-[0_4px_16px_rgba(56,103,83,0.35)] hover:shadow-md hover:bg-[#2d5544] transition-all active:scale-90">
+<span class="material-symbols-outlined text-[26px]" data-icon="cooking" style="font-variation-settings: 'FILL' 1;">cooking</span>
+<span class="text-[8px] font-bold uppercase tracking-wider leading-none mt-0.5">Cocinar</span>
+</button>
+</div>
+</main>
+<!-- 4. Navegación Inferior Flotante Pill de Pastry -->
+<nav class="fixed bottom-3 inset-x-0 mx-auto w-[92%] max-w-md z-50 bg-surface/95 dark:bg-surface-container-lowest/95 backdrop-blur-md rounded-full px-3 py-1.5 shadow-[0_8px_30px_rgba(154,68,45,0.15)] border border-outline-variant flex items-center justify-between">
+<button class="flex flex-col items-center justify-center flex-1 text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-150 py-1">
+<span class="material-symbols-outlined text-[22px]" data-icon="explore">explore</span>
+<span class="font-label-sm text-[11px] leading-tight mt-0.5">Explorar</span>
+</button>
+<button class="flex flex-col items-center justify-center flex-1 text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-150 py-1">
+<span class="material-symbols-outlined text-[22px]" data-icon="menu_book">menu_book</span>
+<span class="font-label-sm text-[11px] leading-tight mt-0.5">Portafolio</span>
+</button>
+<!-- Botón Central Sobreelevado: Swipe Activo -->
+<div class="flex-1 flex justify-center -mt-6">
+<button class="w-14 h-14 rounded-full bg-primary-container text-white shadow-[0_6px_20px_rgba(224,122,95,0.45)] flex flex-col items-center justify-center transition-all active:scale-90 hover:shadow-lg duration-150 border-4 border-[#F4F1DE]">
+<span class="material-symbols-outlined text-[26px]" data-icon="style" style="font-variation-settings: 'FILL' 1;">style</span>
+<span class="font-label-sm text-[10px] font-bold leading-none -mt-0.5">Swipe</span>
+</button>
+</div>
+<button class="flex flex-col items-center justify-center flex-1 text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-150 py-1">
+<span class="material-symbols-outlined text-[22px]" data-icon="construction">construction</span>
+<span class="font-label-sm text-[11px] leading-tight mt-0.5">Herramientas</span>
+</button>
+<button class="flex flex-col items-center justify-center flex-1 text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-150 py-1">
+<span class="material-symbols-outlined text-[22px]" data-icon="person">person</span>
+<span class="font-label-sm text-[11px] leading-tight mt-0.5">Perfil</span>
+</button>
+</nav>
+<!-- Swipe drag demo interaction script -->
+<script>
+    const card = document.getElementById('activeCard');
+    let isDragging = false;
+    let startX = 0;
+
+    card.addEventListener('mousedown', startDrag);
+    card.addEventListener('touchstart', startDrag, {passive: true});
+
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag, {passive: false});
+
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchend', endDrag);
+
+    function startDrag(e) {
+        isDragging = true;
+        startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+        card.style.transition = 'none';
+    }
+
+    function drag(e) {
+        if (!isDragging) return;
+        const currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+        const diff = currentX - startX;
+        const rotate = diff * 0.05;
+        card.style.transform = `translateX(${diff}px) rotate(${rotate}deg)`;
+    }
+
+    function endDrag() {
+        if (!isDragging) return;
+        isDragging = false;
+        card.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1)';
+        card.style.transform = 'translateX(0) rotate(0)';
+    }
+</script>
+</body></html>

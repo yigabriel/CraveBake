@@ -1,0 +1,438 @@
+<!DOCTYPE html><html class="light" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Pastry - Mi Portafolio</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+              "on-secondary-container": "#795842",
+              "inverse-primary": "#ffb4a1",
+              "outline": "#88726d",
+              "secondary": "#795741",
+              "on-secondary": "#ffffff",
+              "on-primary-fixed": "#3c0800",
+              "on-tertiary": "#ffffff",
+              "tertiary-fixed-dim": "#9fd1b8",
+              "outline-variant": "#dbc1ba",
+              "tertiary": "#386753",
+              "on-error": "#ffffff",
+              "on-secondary-fixed": "#2d1605",
+              "on-primary-fixed-variant": "#7c2e19",
+              "error-container": "#ffdad6",
+              "inverse-surface": "#382e2b",
+              "surface-dim": "#e8d6d2",
+              "surface-container-high": "#f6e4e0",
+              "on-primary": "#ffffff",
+              "on-background": "#221917",
+              "on-secondary-fixed-variant": "#5e402b",
+              "on-primary-container": "#5b1604",
+              "inverse-on-surface": "#ffede9",
+              "on-tertiary-fixed": "#002115",
+              "surface-container": "#fceae6",
+              "on-error-container": "#93000a",
+              "primary-fixed-dim": "#ffb4a1",
+              "surface": "#fff8f6",
+              "tertiary-container": "#70a18a",
+              "surface-container-low": "#fff1ed",
+              "tertiary-fixed": "#bbeed4",
+              "surface-tint": "#9a442d",
+              "surface-container-highest": "#f0dfda",
+              "on-tertiary-fixed-variant": "#1f4f3c",
+              "secondary-fixed-dim": "#e9bea2",
+              "secondary-container": "#fed1b5",
+              "surface-variant": "#f0dfda",
+              "primary-fixed": "#ffdbd2",
+              "primary": "#9a442d",
+              "error": "#ba1a1a",
+              "on-tertiary-container": "#003725",
+              "secondary-fixed": "#ffdcc6",
+              "surface-container-lowest": "#ffffff",
+              "surface-bright": "#fff8f6",
+              "on-surface-variant": "#55423e",
+              "on-surface": "#221917",
+              "background": "#fff8f6",
+              "primary-container": "#e07a5f",
+              "eggshell": "#F4F1DE",
+              "apricot-cream": "#F2CC8F",
+              "dark-coffee": "#3C2A21",
+              "burnt-peach": "#9a442d",
+              "muted-teal": "#70a18a"
+            },
+            "borderRadius": {
+              "DEFAULT": "0.25rem",
+              "lg": "0.5rem",
+              "xl": "0.75rem",
+              "full": "9999px"
+            },
+            "spacing": {
+              "gutter": "24px",
+              "margin-mobile": "20px",
+              "base": "8px",
+              "sm": "12px",
+              "xs": "4px",
+              "margin-desktop": "64px",
+              "md": "24px",
+              "lg": "48px",
+              "xl": "80px"
+            },
+            "fontFamily": {
+              sans: ["Be Vietnam Pro", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+      body {
+        background-color: #FAF7F2;
+        color: #3C2A21;
+        min-height: max(884px, 100dvh);
+        font-family: 'Be Vietnam Pro', sans-serif;
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .filled-icon {
+        font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+</style>
+</head>
+<body class="bg-[#FAF7F2] text-dark-coffee antialiased pb-28">
+<!-- Top App Bar -->
+<header class="bg-surface/90 backdrop-blur-md sticky top-0 z-40 border-b border-outline-variant/30">
+<div class="px-margin-mobile py-3.5 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined filled-icon text-[22px]" data-icon="menu_book">menu_book</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tight text-dark-coffee">Mi Portafolio</h1>
+<p class="text-xs text-on-surface-variant font-medium">18 creaciones en tu obrador</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<button class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container active:scale-95 transition-all" title="Estadísticas de horneado">
+<span class="material-symbols-outlined text-[20px]" data-icon="query_stats">query_stats</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container active:scale-95 transition-all" title="Ajustes">
+<span class="material-symbols-outlined text-[20px]" data-icon="tune">tune</span>
+</button>
+</div>
+</div>
+<!-- Search Bar & Category Filter Button -->
+<div class="px-margin-mobile pb-3 pt-0.5 flex items-center gap-2">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]" data-icon="search">search</span>
+<input class="w-full bg-surface-container-lowest text-dark-coffee placeholder:text-outline/70 pl-10 pr-4 py-2 rounded-2xl text-sm border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-sm" name="q" placeholder="Buscar por receta, harina, técnica..." type="search">
+</div>
+<button class="flex items-center justify-center gap-1.5 px-3 py-2 bg-surface-container-lowest border border-outline-variant/40 rounded-2xl text-on-surface-variant hover:text-primary active:scale-95 transition-all text-sm font-medium shadow-sm" title="Filtrar por categoría">
+<span class="material-symbols-outlined text-[18px]" data-icon="filter_list">filter_list</span>
+<span class="hidden sm:inline">Filtros</span>
+</button>
+</div>
+<!-- Horizontal Tabs with Exact Counters (GET /portfolio/summary) -->
+<div class="flex px-margin-mobile border-t border-outline-variant/20 overflow-x-auto no-scrollbar gap-2 pt-1.5">
+<button class="px-3 py-2 text-xs font-semibold text-primary border-b-2 border-primary whitespace-nowrap flex items-center gap-1.5">
+<span>Todo</span>
+<span class="bg-primary/10 text-primary text-[11px] px-1.5 py-0.5 rounded-full font-bold">18</span>
+</button>
+<button class="px-3 py-2 text-xs font-medium text-on-surface-variant hover:text-dark-coffee whitespace-nowrap transition-colors flex items-center gap-1.5">
+<span>Mis recetas</span>
+<span class="bg-surface-container text-on-surface-variant text-[11px] px-1.5 py-0.5 rounded-full">6</span>
+</button>
+<button class="px-3 py-2 text-xs font-medium text-on-surface-variant hover:text-dark-coffee whitespace-nowrap transition-colors flex items-center gap-1.5">
+<span>Mis versiones</span>
+<span class="bg-surface-container text-on-surface-variant text-[11px] px-1.5 py-0.5 rounded-full">4</span>
+</button>
+<button class="px-3 py-2 text-xs font-medium text-on-surface-variant hover:text-dark-coffee whitespace-nowrap transition-colors flex items-center gap-1.5">
+<span>Guardadas</span>
+<span class="bg-surface-container text-on-surface-variant text-[11px] px-1.5 py-0.5 rounded-full">8</span>
+</button>
+</div>
+</header>
+<!-- Tag Filter Chips -->
+<section class="px-margin-mobile pt-3.5 pb-2">
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+<span class="text-[11px] font-semibold text-outline uppercase tracking-wider shrink-0 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="sell">sell</span> Tags:
+      </span>
+<button class="px-2.5 py-1 rounded-full text-xs font-medium bg-burnt-peach text-white shadow-xs shrink-0 flex items-center gap-1">
+<span>Todos</span>
+</button>
+<button class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-container-lowest text-on-surface-variant border border-outline-variant/40 hover:border-primary/50 shrink-0 flex items-center gap-1 active:scale-95 transition-all">
+<span>Masa Madre</span>
+</button>
+<button class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-container-lowest text-on-surface-variant border border-outline-variant/40 hover:border-primary/50 shrink-0 flex items-center gap-1 active:scale-95 transition-all">
+<span>Viennoiserie</span>
+</button>
+<button class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-container-lowest text-on-surface-variant border border-outline-variant/40 hover:border-primary/50 shrink-0 flex items-center gap-1 active:scale-95 transition-all">
+<span>Sin Gluten</span>
+</button>
+<button class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-container-lowest text-on-surface-variant border border-outline-variant/40 hover:border-primary/50 shrink-0 flex items-center gap-1 active:scale-95 transition-all">
+<span>Entremets</span>
+</button>
+<button class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-container-lowest text-on-surface-variant border border-outline-variant/40 hover:border-primary/50 shrink-0 flex items-center gap-1 active:scale-95 transition-all">
+<span>Alta Hidratación</span>
+</button>
+</div>
+</section>
+<!-- Main Content / Recipe List -->
+<main class="max-w-4xl mx-auto px-margin-mobile pt-2 pb-6 space-y-4">
+<!-- Card 1: Mis Recetas (Pública, menú contextual, metadatos) -->
+<article class="bg-surface-container-lowest rounded-2xl p-3.5 shadow-[0_3px_16px_rgba(60,42,33,0.06)] border border-outline-variant/30 hover:border-primary/40 transition-all flex flex-col gap-3 group">
+<div class="flex gap-3.5">
+<div class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0 relative bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="A close-up, high-end culinary magazine style photograph of a perfectly layered chocolate entremet cake. The cake has a glossy mirror glaze reflecting soft, bright light. The background is a minimalist eggshell surface with a hint of warm, apricot cream tint. The lighting is soft and directional, creating a mouth-watering texture on the chocolate." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA92ui37Wgm4d69naRYSTr24Lde_kp5gJxa8gP6vtDhVdnzCp5zXfXYhjZKZsMHRh8cLTi_B6UU80orE1_99DHWr7RHgVU2u_Ns7CoY4IenGZV_mhupiTsH3Ac4nScONCd4I_vp6nHYwC8HtwoQmZnYcckZlstsA3f3FU5oeCSCoa1XbxK3E1z8taAWiVfZRrNRfkZTqHYwOfVgxUArCgfYBX5KqBbgrjXZcwpJSu6M7M3IcrMYL74-">
+<span class="absolute top-1.5 left-1.5 bg-emerald-700/90 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+            Pública
+          </span>
+</div>
+<div class="flex-1 min-w-0 flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between gap-1">
+<span class="text-[10px] uppercase font-bold tracking-wider text-burnt-peach">Mis recetas</span>
+<button class="text-outline hover:text-dark-coffee p-1 -mr-1 -mt-1 rounded-full hover:bg-surface-container active:scale-95 transition-all" title="Opciones de receta">
+<span class="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<h3 class="font-bold text-base text-dark-coffee leading-snug group-hover:text-primary transition-colors line-clamp-1">
+              Dark Chocolate Entremet
+            </h3>
+<p class="text-xs text-on-surface-variant line-clamp-1 mt-0.5">Glaseado espejo 70% cacao &amp; praliné de avellanas</p>
+</div>
+<!-- Recipe Metadata (Prep, Servings, Difficulty) -->
+<div class="flex items-center gap-3 text-xs text-on-surface-variant pt-2 border-t border-outline-variant/20 mt-1">
+<span class="flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[15px] text-burnt-peach" data-icon="timer">timer</span>
+              120 min
+            </span>
+<span class="flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[15px] text-burnt-peach" data-icon="pie_chart">pie_chart</span>
+              8 porc.
+            </span>
+<span class="flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[15px] text-burnt-peach" data-icon="signal_cellular_alt">signal_cellular_alt</span>
+              Avanzada
+            </span>
+</div>
+</div>
+</div>
+<!-- Quick Action Drawer for "Mis recetas" (Editar, Fotos, Estado) -->
+<div class="flex items-center justify-between pt-1 border-t border-outline-variant/15 text-xs">
+<span class="text-[11px] text-outline">Editada hace 2 días</span>
+<div class="flex items-center gap-1">
+<button class="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-dark-coffee font-medium flex items-center gap-1 active:scale-95 transition-all text-xs">
+<span class="material-symbols-outlined text-[15px]" data-icon="edit">edit</span>
+            Editar
+          </button>
+<button class="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-dark-coffee font-medium flex items-center gap-1 active:scale-95 transition-all text-xs">
+<span class="material-symbols-outlined text-[15px]" data-icon="photo_camera">photo_camera</span>
+            Fotos (4)
+          </button>
+</div>
+</div>
+</article>
+<!-- Card 2: Mis Versiones (Badge "Tu versión de...", fecha, metadatos) -->
+<article class="bg-surface-container-lowest rounded-2xl p-3.5 shadow-[0_3px_16px_rgba(60,42,33,0.06)] border border-amber-200/60 hover:border-primary/40 transition-all flex flex-col gap-3 group">
+<div class="flex gap-3.5">
+<div class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0 relative bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="A high-quality food photograph of freshly baked artisanal sourdough bread sliced open to reveal a perfect crumb structure. The bread sits on a warm, minimalist wooden board. The lighting is bright and natural, highlighting the golden crust and soft interior. Warm editorial minimalism style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDm8FGTgq3nWaOzDimGL929UL5C5PiuNpAaWQ4kwS1wq7ohG6ct6H35EBWwQOMth4vQ9Wv_10hmxYoNUEnenFEgkg7nEXBSw_Du72XUs_zJ5uuz1C4H-EYnkeKg5_y6jbD1GzhBuERH-ySQ0AngaPOw3PlGrDUd5N0anDkkc47eeKHsjaUsRlz2RPh8arGmrk9EQ-qUHeb19w75cDRyPjIq-wn3LdERXqJ7S-fOj5qQc2R1sbioYwbD">
+<span class="absolute top-1.5 left-1.5 bg-amber-600/90 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+<span class="material-symbols-outlined text-[12px]" data-icon="alt_route">alt_route</span>
+            Versión
+          </span>
+</div>
+<div class="flex-1 min-w-0 flex flex-col justify-between">
+<div>
+<!-- Distinctive Badge: Tu versión de «Sourdough Boule» -->
+<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-secondary-container/60 text-on-secondary-container text-[11px] font-semibold mb-1 max-w-full truncate">
+<span class="material-symbols-outlined text-[13px] shrink-0" data-icon="fork_right">fork_right</span>
+<span class="truncate">Tu versión de «Sourdough Boule»</span>
+</div>
+<h3 class="font-bold text-base text-dark-coffee leading-snug group-hover:text-primary transition-colors line-clamp-1">
+              Spelt &amp; Honey Sourdough
+            </h3>
+<p class="text-xs text-on-surface-variant line-clamp-1 mt-0.5">82% hidratación con harina de espelta molida en piedra</p>
+</div>
+<!-- Recipe Metadata -->
+<div class="flex items-center gap-3 text-xs text-on-surface-variant pt-2 border-t border-outline-variant/20 mt-1">
+<span class="flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[15px] text-burnt-peach" data-icon="timer">timer</span>
+              24h ferm.
+            </span>
+<span class="flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[15px] text-burnt-peach" data-icon="scale">scale</span>
+              1 Hogaza
+            </span>
+<span class="flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[15px] text-burnt-peach" data-icon="signal_cellular_alt">signal_cellular_alt</span>
+              Media
+            </span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-outline-variant/15 text-xs">
+<span class="text-[11px] text-outline font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="history">history</span>
+          Editada hace 2 días
+        </span>
+<div class="flex items-center gap-1.5">
+<button class="px-2.5 py-1 rounded-lg bg-secondary/10 hover:bg-secondary/20 text-secondary font-semibold flex items-center gap-1 active:scale-95 transition-all text-xs">
+<span class="material-symbols-outlined text-[15px]" data-icon="compare_arrows">compare_arrows</span>
+            Ver cambios (3)
+          </button>
+</div>
+</div>
+</article>
+<!-- Card 3: Guardadas / Favoritos (Corazón activo ♥, autor original, tiempo relativo) -->
+<article class="bg-surface-container-lowest rounded-2xl p-3.5 shadow-[0_3px_16px_rgba(60,42,33,0.06)] border border-rose-200/50 hover:border-primary/40 transition-all flex flex-col gap-3 group">
+<div class="flex gap-3.5">
+<div class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0 relative bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="A delicate raspberry tart with perfect shortcrust pastry and a glossy red glaze, topped with a single fresh raspberry. The setting is a minimalist, high-end bakery display. The lighting is soft and diffused, emphasizing the vibrant red against a warm eggshell background. Editorial culinary style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBz_WW_b8bd091YpEpyH0SH4qOfOHBbz8kFVm0yudstmF9xH3uDDowJ7Kin59HqTYd0_SYpIzQfst0cjlsNaa-J3K-tUhnaDhzfXgGtHRrCQMB-Va6Yv_Q-ZRBgZ0gcn70hluWcQMAuMmLXBtjgtX6gi95ylnaMtT-jxyHUHh6lx3SeEkx1QgO3TJDxWZ1qMXnuY62DnktNQR2XLqeiXvEiMSk_M3eTGFoHrL3P1k1tjgJ7XGsT3HGC">
+<!-- Active Heart Badge -->
+<button class="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-surface-container-lowest/90 backdrop-blur-xs flex items-center justify-center text-rose-600 shadow-sm active:scale-90 transition-transform" title="Guardado en favoritos">
+<span class="material-symbols-outlined filled-icon text-[18px]" data-icon="favorite">favorite</span>
+</button>
+</div>
+<div class="flex-1 min-w-0 flex flex-col justify-between">
+<div>
+<!-- Original Author Tag -->
+<div class="flex items-center gap-1.5 text-xs text-on-surface-variant mb-1">
+<span class="w-4 h-4 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center text-[9px]">CL</span>
+<span class="text-[11px] font-medium text-outline">Por <strong class="text-dark-coffee font-semibold">Chef Claire Laurent</strong></span>
+</div>
+<h3 class="font-bold text-base text-dark-coffee leading-snug group-hover:text-primary transition-colors line-clamp-1">
+              Raspberry Rose Tart
+            </h3>
+<p class="text-xs text-on-surface-variant line-clamp-1 mt-0.5">Masa sablée crujiente y confitura artesanal de frambuesas</p>
+</div>
+<!-- Recipe Metadata -->
+<div class="flex items-center gap-3 text-xs text-on-surface-variant pt-2 border-t border-outline-variant/20 mt-1">
+<span class="flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[15px] text-burnt-peach" data-icon="timer">timer</span>
+              75 min
+            </span>
+<span class="flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[15px] text-burnt-peach" data-icon="pie_chart">pie_chart</span>
+              6 tartas
+            </span>
+<span class="flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[15px] text-burnt-peach" data-icon="signal_cellular_alt">signal_cellular_alt</span>
+              Media
+            </span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-outline-variant/15 text-xs">
+<span class="text-[11px] text-rose-700 font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] filled-icon text-rose-600" data-icon="bookmark">bookmark</span>
+          Guardada hace 3 días
+        </span>
+<button class="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-dark-coffee font-medium flex items-center gap-1 active:scale-95 transition-all text-xs">
+<span class="material-symbols-outlined text-[15px]" data-icon="alt_route">alt_route</span>
+          Crear mi versión
+        </button>
+</div>
+</article>
+<!-- Card 4: Mis Recetas (Privada con Menú contextual) -->
+<article class="bg-surface-container-lowest rounded-2xl p-3.5 shadow-[0_3px_16px_rgba(60,42,33,0.06)] border border-outline-variant/30 hover:border-primary/40 transition-all flex flex-col gap-3 group">
+<div class="flex gap-3.5">
+<div class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0 relative bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="A stack of perfectly flaky, golden-brown croissants on a white ceramic plate. The lighting highlights the countless layers of butter pastry. The background is a soft, out-of-focus warm editorial minimal kitchen setting. The image evokes a sense of morning warmth and high-end baking craft." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMBudM_t86AEpKwQ7ov1BOB8NBZIp9PVYe5mwmnE7rb9VEf6-xEiabDKIXcUp6IDxnghTsIkZZPm60zHNv0ULLUab7UWDGXfd-1NX_bgtpAYCXLJU4BJaDp2TeIs3eKbSO-7q3SW069WXjQebZAbxqAGnhQ9AjvdQ17pmWkNyALs4h1tXgURv_T2Lc79MwvW9gIMUJHWm8IGMxw8Oyi-1OexM-8_NnYAFrVuz9aKHsk04_bkMlUdpW">
+<span class="absolute top-1.5 left-1.5 bg-zinc-800/85 backdrop-blur-xs text-zinc-100 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+<span class="material-symbols-outlined text-[11px]" data-icon="lock">lock</span>
+            Privada
+          </span>
+</div>
+<div class="flex-1 min-w-0 flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between gap-1">
+<span class="text-[10px] uppercase font-bold tracking-wider text-burnt-peach">Mis recetas</span>
+<button class="text-outline hover:text-dark-coffee p-1 -mr-1 -mt-1 rounded-full hover:bg-surface-container active:scale-95 transition-all" title="Opciones de receta">
+<span class="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<h3 class="font-bold text-base text-dark-coffee leading-snug group-hover:text-primary transition-colors line-clamp-1">
+              Classic Butter Croissant
+            </h3>
+<p class="text-xs text-on-surface-variant line-clamp-1 mt-0.5">Laminado francés tradicional con mantequilla AOP 84%</p>
+</div>
+<!-- Recipe Metadata -->
+<div class="flex items-center gap-3 text-xs text-on-surface-variant pt-2 border-t border-outline-variant/20 mt-1">
+<span class="flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[15px] text-burnt-peach" data-icon="timer">timer</span>
+              180 min
+            </span>
+<span class="flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[15px] text-burnt-peach" data-icon="bakery_dining">bakery_dining</span>
+              12 uds.
+            </span>
+<span class="flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[15px] text-burnt-peach" data-icon="signal_cellular_alt">signal_cellular_alt</span>
+              Avanzada
+            </span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-outline-variant/15 text-xs">
+<span class="text-[11px] text-outline">Editada hace 1 mes</span>
+<div class="flex items-center gap-1">
+<button class="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-dark-coffee font-medium flex items-center gap-1 active:scale-95 transition-all text-xs">
+<span class="material-symbols-outlined text-[15px]" data-icon="edit">edit</span>
+            Editar
+          </button>
+<button class="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-dark-coffee font-medium flex items-center gap-1 active:scale-95 transition-all text-xs" title="Cambiar visibilidad">
+<span class="material-symbols-outlined text-[15px]" data-icon="public">public</span>
+            Hacer Pública
+          </button>
+</div>
+</div>
+</article>
+</main>
+<!-- Floating Action Button (+ Crear Receta) - Thumb Friendly Placement -->
+<button aria-label="Crear nueva receta" class="fixed bottom-24 right-5 bg-burnt-peach text-white pl-4 pr-5 py-3 rounded-full shadow-[0_8px_25px_rgba(154,68,45,0.35)] flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all z-40 group border border-white/20">
+<span class="material-symbols-outlined text-[22px] group-hover:rotate-90 transition-transform duration-200" data-icon="add">add</span>
+<span class="text-sm font-semibold tracking-wide">Crear Receta</span>
+</button>
+<!-- Floating Pill Bottom Navigation Bar (Mobile) -->
+<nav class="fixed bottom-4 left-4 right-4 z-50 bg-surface-container-lowest/95 backdrop-blur-md rounded-full shadow-[0_10px_35px_rgba(60,42,33,0.18)] border border-outline-variant/40 px-3 py-1.5 flex items-center justify-between max-w-md mx-auto">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all duration-150 active:scale-95 px-2" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="explore">explore</span>
+<span class="text-[10px] tracking-tight font-medium">Explorar</span>
+</a>
+<!-- Active Portfolio Pill Tab -->
+<a class="flex flex-col items-center justify-center text-burnt-peach font-bold transition-all duration-150 active:scale-95 px-3 py-1 bg-primary-fixed/50 rounded-2xl" href="#">
+<span class="material-symbols-outlined filled-icon text-[22px]" data-icon="bookmark">bookmark</span>
+<span class="text-[10px] tracking-tight text-burnt-peach">Portafolio</span>
+</a>
+<!-- Elevated Center Swipe Button -->
+<div class="relative -top-4 flex flex-col items-center">
+<a aria-label="Swipe recetas" class="w-13 h-13 w-12 h-12 rounded-full bg-burnt-peach text-white flex items-center justify-center shadow-[0_6px_20px_rgba(154,68,45,0.4)] active:scale-95 hover:scale-105 transition-transform duration-200 border-4 border-[#FAF7F2]" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="style">style</span>
+</a>
+<span class="text-[10px] font-semibold text-burnt-peach mt-0.5">Swipe</span>
+</div>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all duration-150 active:scale-95 px-2" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="architecture">architecture</span>
+<span class="text-[10px] tracking-tight font-medium">Herramientas</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all duration-150 active:scale-95 px-2" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="person">person</span>
+<span class="text-[10px] tracking-tight font-medium">Perfil</span>
+</a>
+</nav>
+</body></html>

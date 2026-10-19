@@ -1,0 +1,635 @@
+<!DOCTYPE html><html class="light" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Hogaza de Masa Madre Rústica - Pastry</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "on-secondary-container": "#795842",
+          "inverse-primary": "#ffb4a1",
+          "outline": "#88726d",
+          "secondary": "#795741",
+          "on-secondary": "#ffffff",
+          "on-primary-fixed": "#3c0800",
+          "on-tertiary": "#ffffff",
+          "tertiary-fixed-dim": "#9fd1b8",
+          "outline-variant": "#dbc1ba",
+          "tertiary": "#386753",
+          "on-error": "#ffffff",
+          "on-secondary-fixed": "#2d1605",
+          "on-primary-fixed-variant": "#7c2e19",
+          "error-container": "#ffdad6",
+          "inverse-surface": "#382e2b",
+          "surface-dim": "#e8d6d2",
+          "surface-container-high": "#f6e4e0",
+          "on-primary": "#ffffff",
+          "on-background": "#221917",
+          "on-secondary-fixed-variant": "#5e402b",
+          "on-primary-container": "#5b1604",
+          "inverse-on-surface": "#ffede9",
+          "on-tertiary-fixed": "#002115",
+          "surface-container": "#fceae6",
+          "on-error-container": "#93000a",
+          "primary-fixed-dim": "#ffb4a1",
+          "surface": "#fff8f6",
+          "tertiary-container": "#70a18a",
+          "surface-container-low": "#fff1ed",
+          "tertiary-fixed": "#bbeed4",
+          "surface-tint": "#9a442d",
+          "surface-container-highest": "#f0dfda",
+          "on-tertiary-fixed-variant": "#1f4f3c",
+          "secondary-fixed-dim": "#e9bea2",
+          "secondary-container": "#fed1b5",
+          "surface-variant": "#f0dfda",
+          "primary-fixed": "#ffdbd2",
+          "primary": "#9a442d",
+          "error": "#ba1a1a",
+          "on-tertiary-container": "#003725",
+          "secondary-fixed": "#ffdcc6",
+          "surface-container-lowest": "#ffffff",
+          "surface-bright": "#fff8f6",
+          "on-surface-variant": "#55423e",
+          "on-surface": "#221917",
+          "background": "#fff8f6",
+          "primary-container": "#e07a5f"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "fontFamily": {
+          "display-lg-mobile": ["Be Vietnam Pro"],
+          "display-lg": ["Be Vietnam Pro"],
+          "headline-md": ["Be Vietnam Pro"],
+          "body-lg": ["Be Vietnam Pro"],
+          "body-md": ["Be Vietnam Pro"],
+          "label-sm": ["Be Vietnam Pro"],
+          "title-lg": ["Be Vietnam Pro"],
+          "label-md": ["Be Vietnam Pro"]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  .material-symbols-outlined.fill {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  body {
+    background-color: #F4F1DE;
+    font-family: 'Be Vietnam Pro', sans-serif;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+</style>
+</head>
+<body class="text-on-background min-h-screen flex flex-col items-center justify-start pb-40 select-none">
+<!-- Top Floating App Bar (transparent to blur backdrop) -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-[#F4F1DE]/85 backdrop-blur-md transition-all duration-200 border-b border-outline-variant/30">
+<div class="max-w-2xl mx-auto h-16 flex items-center justify-between px-4">
+<button aria-label="Volver" class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-lowest/80 text-on-surface hover:bg-surface-container shadow-sm transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<div class="flex items-center gap-2">
+<span class="text-xs font-semibold uppercase tracking-wider text-primary bg-primary-fixed/60 px-2.5 py-0.5 rounded-full">Receta</span>
+</div>
+<div class="flex items-center gap-1.5">
+<!-- Compartir / Opciones -->
+<button aria-label="Compartir" class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-lowest/80 text-on-surface hover:bg-surface-container shadow-sm transition-all active:scale-95">
+<span class="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
+</button>
+<!-- Favorito (si no es el dueño) -->
+<button aria-label="Guardar en favoritos" class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-lowest/80 text-primary hover:bg-surface-container shadow-sm transition-all active:scale-90" id="favBtn" onclick="toggleFavorite()">
+<span class="material-symbols-outlined text-[22px] text-[#e07a5f] transition-transform duration-200" data-icon="favorite_border" id="favIcon">favorite_border</span>
+</button>
+</div>
+</div>
+</header>
+<main class="w-full max-w-2xl mx-auto mt-16 px-4 md:px-6">
+<!-- 1. Cabecera y multimedia: Carrusel de portada (hasta 3 fotos) -->
+<section class="mt-3 relative">
+<div class="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-md bg-stone-200">
+<!-- Carrusel Track -->
+<div class="flex w-full h-full overflow-x-auto snap-x snap-mandatory hide-scrollbar scroll-smooth" id="carouselTrack" onscroll="handleCarouselScroll(this)">
+<!-- Slide 1 -->
+<div class="w-full h-full flex-shrink-0 snap-center relative">
+<img alt="Hogaza dorada recién horneada" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7ujh8XvgRih8uQXuby6miHsmScwX86l2e7WdD6DYmCp9Ffgs3JgH6uhxE7zzbzE8zFbUvIfsf4Mcty0h1iSQDsZTNEuWo_m4pnrimOmXm__f-zIG1KT5YBo0Gs1zzOZGneApdFVXqnChPUH37LvVQOqIsLvsowEpdSsJJ7LQVMZkwDPtD0baSM3PsWCv76RHV5tE3Cyu3GCg1PwRyk1sfcBQZTF8xqvZCbOGRbJJl7YKsgW4rLxmy">
+</div>
+<!-- Slide 2 -->
+<div class="w-full h-full flex-shrink-0 snap-center relative">
+<img alt="Detalle de la miga y greñado" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD25CTSMDqodKLdCgRYUuzDUIy-Dj9IiRZFNJqR_A5mvR_JeFQKgsBgExxnTea-Goz3XqHxpKR0F15G2JRDOpJBG1H963qqQf1HwEdW2fYe7QOkqLfnu73-u-MJ_Tpxvn5c3S_2pzG8BlgxZC1vDSo1uNGIH-dwSdUo3emDTtcwzfel05_LXQj9L8YprrhViYg7eoJX67E9ZrS1ySo591_dEkHC-jR1uPPGlH-T9hlRBIv53gzT4RyS">
+</div>
+<!-- Slide 3 -->
+<div class="w-full h-full flex-shrink-0 snap-center relative">
+<img alt="Corteza crujiente y harina" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgt3_3gpIlioPqKl82XaLKq5DpV2IVP8OPkMOWRh52cUCnOo6kzFwb6cssevzJSEF5wuC6z4TQCEVqYI6g4W7iSKlSvAAfj7Qxx6_WTRQ_tOD4XX36uzjpjgpb-_ARbY7yag7bfChOOydWZYrrtejmo09q3wtQ0iksTscE5M8HSwOglKarGv3F0Nig_c2ISC3pmQBZcL_NjOJWejBop_SxMoQR1bWGksJt-7RgRlN2LXFcgBgCPhCV">
+</div>
+</div>
+<!-- Video Chip Flotante (si tiene video_url) -->
+<button class="absolute top-3.5 right-3.5 bg-black/70 hover:bg-black/85 backdrop-blur-md text-white text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-md active:scale-95 transition-all" onclick="openVideoModal()">
+<span class="material-symbols-outlined fill text-[18px] text-[#ffb4a1]" data-icon="play_circle">play_circle</span>
+<span>Ver video (02:14)</span>
+</button>
+<!-- Dots indicadores de posición -->
+<div class="absolute bottom-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-full">
+<span class="w-2 h-2 rounded-full bg-white transition-all" id="dot-0"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-white/40 transition-all" id="dot-1"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-white/40 transition-all" id="dot-2"></span>
+</div>
+</div>
+<!-- Badges de Metadatos Rápidos -->
+<div class="mt-3.5 flex flex-wrap items-center gap-2">
+<div class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#F2CC8F] text-[#3e2723] text-xs font-semibold shadow-xs">
+<span class="material-symbols-outlined text-[17px] text-[#9a442d]" data-icon="schedule">schedule</span>
+<span>45 min prep (24h ferment.)</span>
+</div>
+<div class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#F2CC8F] text-[#3e2723] text-xs font-semibold shadow-xs">
+<span class="material-symbols-outlined text-[17px] text-[#386753]" data-icon="tune">tune</span>
+<span>Intermedio</span>
+</div>
+<div class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#fceae6] text-[#795741] text-xs font-medium border border-[#dbc1ba]/50">
+<span class="material-symbols-outlined text-[17px]" data-icon="restaurant">restaurant</span>
+<span>Base original: 4 porciones</span>
+</div>
+</div>
+<!-- Alertas de personalización -->
+<div class="mt-3.5 space-y-2">
+<!-- Badge versión personalizada -->
+<div class="flex items-center justify-between p-2.5 px-3.5 bg-[#fceae6]/80 border border-[#dbc1ba] rounded-xl text-xs text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="auto_fix_high">auto_fix_high</span>
+<span>Tu versión de <strong class="font-semibold text-primary">Sourdough Boule Clásica</strong></span>
+</div>
+<button class="text-primary hover:underline font-semibold text-[11px] flex items-center">
+            Ver original <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+<!-- Alerta si source_updated_since_personalized == true -->
+<div class="flex items-start gap-2.5 p-3 bg-amber-50 border border-amber-200/90 rounded-xl text-amber-900 text-xs shadow-xs">
+<span class="material-symbols-outlined text-amber-700 text-[18px] shrink-0 mt-0.5" data-icon="sync_problem">sync_problem</span>
+<div class="flex-1">
+<p class="font-semibold">La receta original cambió desde que hiciste tu versión</p>
+<p class="text-amber-800/80 mt-0.5">El autor modificó tiempos de autólisis e hidratación. Puedes <a class="font-bold underline text-amber-950" href="#">comparar los cambios aquí</a>.</p>
+</div>
+</div>
+</div>
+<!-- Título y Descripción -->
+<div class="mt-4">
+<h1 class="text-2xl md:text-3xl font-bold tracking-tight text-on-surface leading-tight">Hogaza de Masa Madre Rústica</h1>
+<p class="text-sm md:text-base text-on-surface-variant mt-1.5 leading-relaxed">
+          Pan campesino de fermentación lenta natural con corteza caramelizada, greñado crujiente tipo oreja y miga abierta e hidratada.
+        </p>
+</div>
+</section>
+<!-- 2. CONVERSOR DE PORCIONES EN EL FRONTEND -->
+<section class="mt-6 bg-[#ffffff]/80 backdrop-blur-sm border border-outline-variant/40 rounded-2xl p-4 shadow-sm">
+<div class="flex items-center justify-between">
+<div>
+<span class="text-[11px] font-bold uppercase tracking-wider text-primary">Escalar Receta</span>
+<h2 class="text-base font-semibold text-on-surface flex items-center gap-1.5 mt-0.5">
+            Porciones a preparar
+          </h2>
+</div>
+<!-- Selector interactivo - / + -->
+<div class="flex items-center bg-[#fceae6] rounded-full p-1 border border-[#dbc1ba]/60 shadow-xs">
+<button aria-label="Menos porciones" class="w-8 h-8 rounded-full bg-white text-on-surface flex items-center justify-center hover:bg-[#fff1ed] active:scale-90 transition-all font-bold text-lg shadow-xs" onclick="adjustServings(-1)">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<div class="px-3 min-w-[3.5rem] text-center">
+<span class="font-bold text-base text-on-surface" id="servingsDisplay">4</span>
+<span class="text-[10px] text-on-surface-variant block -mt-0.5">porc.</span>
+</div>
+<button aria-label="Más porciones" class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center hover:bg-[#7c2e19] active:scale-90 transition-all font-bold text-lg shadow-xs" onclick="adjustServings(1)">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+<!-- Multiplicador & Botón restablecer -->
+<div class="mt-3 pt-2.5 border-t border-outline-variant/30 flex items-center justify-between text-xs text-on-surface-variant">
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 bg-[#e07a5f]/15 text-primary font-bold rounded-md" id="scaleFactorTag">1.0×</span>
+<span>Cantidades recalculadas en vivo</span>
+</div>
+<button class="text-xs font-semibold text-primary hover:text-[#5b1604] hidden transition-colors flex items-center gap-0.5" id="resetServingsBtn" onclick="resetServings()">
+<span class="material-symbols-outlined text-[14px]">replay</span> Restablecer
+        </button>
+</div>
+<!-- Aclaración fija de horneado/reposo -->
+<div class="mt-2.5 flex items-center gap-1.5 text-[11px] text-[#795741] bg-[#fed1b5]/30 rounded-lg p-2 border border-[#fed1b5]/60">
+<span class="material-symbols-outlined text-[16px] text-primary shrink-0" data-icon="info">info</span>
+<span><strong>Aclaración:</strong> Los tiempos de horneado y reposo se mantienen fijos al escalar.</span>
+</div>
+</section>
+<!-- 3. INGREDIENTES CON REGLAS DE MEDIDA -->
+<section class="mt-6">
+<div class="flex items-center justify-between mb-3">
+<div>
+<h2 class="text-lg font-bold text-on-surface flex items-center gap-2">
+<span>Ingredientes</span>
+<span class="text-xs font-medium text-on-surface-variant bg-[#fceae6] px-2 py-0.5 rounded-full" id="checkedCounter">0/5 listos</span>
+</h2>
+<p class="text-xs text-on-surface-variant">Marca cada ingrediente a medida que lo tengas pesado o listo</p>
+</div>
+<button class="text-xs font-semibold text-primary hover:underline" onclick="toggleAllIngredients()">
+          Marcar todos
+        </button>
+</div>
+<div class="space-y-2 bg-white/70 backdrop-blur-sm p-2 rounded-2xl border border-outline-variant/30 shadow-sm" id="ingredientsList">
+<!-- Harina de fuerza -->
+<label class="ingredient-row flex items-start gap-3 p-2.5 rounded-xl hover:bg-surface-container/60 cursor-pointer transition-colors" data-base="400" data-unit="g">
+<input class="mt-1 w-5 h-5 rounded text-primary focus:ring-primary border-outline-variant cursor-pointer transition-all" onchange="handleIngredientCheck(this)" type="checkbox">
+<div class="flex-1 text-sm">
+<div class="flex items-baseline gap-1">
+<span class="qty font-bold text-primary text-base">400</span>
+<span class="unit font-semibold text-primary text-sm">g</span>
+<span class="name text-on-surface font-semibold ml-1">Harina de fuerza</span>
+</div>
+<p class="note text-xs text-on-surface-variant italic mt-0.5">Mínimo 12% proteína, tamizada</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant/70 text-[18px] mt-1 shrink-0">scale</span>
+</label>
+<!-- Harina integral -->
+<label class="ingredient-row flex items-start gap-3 p-2.5 rounded-xl hover:bg-surface-container/60 cursor-pointer transition-colors" data-base="100" data-unit="g">
+<input class="mt-1 w-5 h-5 rounded text-primary focus:ring-primary border-outline-variant cursor-pointer transition-all" onchange="handleIngredientCheck(this)" type="checkbox">
+<div class="flex-1 text-sm">
+<div class="flex items-baseline gap-1">
+<span class="qty font-bold text-primary text-base">100</span>
+<span class="unit font-semibold text-primary text-sm">g</span>
+<span class="name text-on-surface font-semibold ml-1">Harina de trigo integral</span>
+</div>
+<p class="note text-xs text-on-surface-variant italic mt-0.5">Molienda fina de grano entero</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant/70 text-[18px] mt-1 shrink-0">scale</span>
+</label>
+<!-- Agua tibia -->
+<label class="ingredient-row flex items-start gap-3 p-2.5 rounded-xl hover:bg-surface-container/60 cursor-pointer transition-colors" data-base="375" data-unit="ml">
+<input class="mt-1 w-5 h-5 rounded text-primary focus:ring-primary border-outline-variant cursor-pointer transition-all" onchange="handleIngredientCheck(this)" type="checkbox">
+<div class="flex-1 text-sm">
+<div class="flex items-baseline gap-1">
+<span class="qty font-bold text-primary text-base">375</span>
+<span class="unit font-semibold text-primary text-sm">ml</span>
+<span class="name text-on-surface font-semibold ml-1">Agua filtrada</span>
+</div>
+<p class="note text-xs text-on-surface-variant italic mt-0.5">Tibia a 26°C - 28°C sin cloro</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant/70 text-[18px] mt-1 shrink-0">water_drop</span>
+</label>
+<!-- Masa madre activa -->
+<label class="ingredient-row flex items-start gap-3 p-2.5 rounded-xl hover:bg-surface-container/60 cursor-pointer transition-colors" data-base="100" data-unit="g">
+<input class="mt-1 w-5 h-5 rounded text-primary focus:ring-primary border-outline-variant cursor-pointer transition-all" onchange="handleIngredientCheck(this)" type="checkbox">
+<div class="flex-1 text-sm">
+<div class="flex items-baseline gap-1">
+<span class="qty font-bold text-primary text-base">100</span>
+<span class="unit font-semibold text-primary text-sm">g</span>
+<span class="name text-on-surface font-semibold ml-1">Masa madre activa</span>
+</div>
+<p class="note text-xs text-on-surface-variant italic mt-0.5">100% hidratación, en su punto pico</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant/70 text-[18px] mt-1 shrink-0">science</span>
+</label>
+<!-- Sal marina fina -->
+<label class="ingredient-row flex items-start gap-3 p-2.5 rounded-xl hover:bg-surface-container/60 cursor-pointer transition-colors" data-base="10" data-unit="g">
+<input class="mt-1 w-5 h-5 rounded text-primary focus:ring-primary border-outline-variant cursor-pointer transition-all" onchange="handleIngredientCheck(this)" type="checkbox">
+<div class="flex-1 text-sm">
+<div class="flex items-baseline gap-1">
+<span class="qty font-bold text-primary text-base">10</span>
+<span class="unit font-semibold text-primary text-sm">g</span>
+<span class="name text-on-surface font-semibold ml-1">Sal marina fina</span>
+</div>
+<p class="note text-xs text-on-surface-variant italic mt-0.5">Equivale aprox. a 1.5 cdta</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant/70 text-[18px] mt-1 shrink-0">grain</span>
+</label>
+</div>
+</section>
+<!-- 4. EQUIPAMIENTO REQUERIDO (Sección 12) -->
+<section class="mt-6">
+<h2 class="text-base font-bold text-on-surface mb-2.5 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="cookie">cookie</span>
+        Equipamiento requerido
+      </h2>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+<!-- Olla Holandesa -->
+<div class="bg-white/80 border border-outline-variant/40 rounded-xl p-3 flex flex-col items-center text-center shadow-xs">
+<div class="w-9 h-9 rounded-full bg-[#fed1b5]/50 text-secondary flex items-center justify-center mb-1.5">
+<span class="material-symbols-outlined text-[20px]" data-icon="skillet">skillet</span>
+</div>
+<span class="text-xs font-bold text-on-surface leading-tight">Olla Holandesa</span>
+<span class="text-[10px] text-on-surface-variant mt-0.5">Hierro fundido c/tapa</span>
+</div>
+<!-- Banneton / Cesto -->
+<div class="bg-white/80 border border-outline-variant/40 rounded-xl p-3 flex flex-col items-center text-center shadow-xs">
+<div class="w-9 h-9 rounded-full bg-[#fed1b5]/50 text-secondary flex items-center justify-center mb-1.5">
+<span class="material-symbols-outlined text-[20px]" data-icon="shopping_basket">shopping_basket</span>
+</div>
+<span class="text-xs font-bold text-on-surface leading-tight">Cesto Banneton</span>
+<span class="text-[10px] text-on-surface-variant mt-0.5">Redondo 22 cm</span>
+</div>
+<!-- Cuchilla de corte / Lame -->
+<div class="bg-white/80 border border-outline-variant/40 rounded-xl p-3 flex flex-col items-center text-center shadow-xs">
+<div class="w-9 h-9 rounded-full bg-[#fed1b5]/50 text-secondary flex items-center justify-center mb-1.5">
+<span class="material-symbols-outlined text-[20px]" data-icon="content_cut">content_cut</span>
+</div>
+<span class="text-xs font-bold text-on-surface leading-tight">Cuchilla / Lame</span>
+<span class="text-[10px] text-on-surface-variant mt-0.5">Para el greñado</span>
+</div>
+<!-- Báscula digital -->
+<div class="bg-white/80 border border-outline-variant/40 rounded-xl p-3 flex flex-col items-center text-center shadow-xs">
+<div class="w-9 h-9 rounded-full bg-[#fed1b5]/50 text-secondary flex items-center justify-center mb-1.5">
+<span class="material-symbols-outlined text-[20px]" data-icon="monitor_weight">monitor_weight</span>
+</div>
+<span class="text-xs font-bold text-on-surface leading-tight">Báscula Digital</span>
+<span class="text-[10px] text-on-surface-variant mt-0.5">Precisión 1g</span>
+</div>
+</div>
+</section>
+<!-- 5. RESUMEN DE PASOS CON TIMERS (Sección 5 & 14) -->
+<section class="mt-7">
+<div class="flex items-center justify-between mb-3 border-b border-outline-variant/30 pb-2">
+<h2 class="text-lg font-bold text-on-surface">Resumen de pasos</h2>
+<span class="text-xs font-medium text-on-surface-variant">5 fases clave</span>
+</div>
+<div class="space-y-3.5">
+<!-- Paso 1 -->
+<div class="bg-white/80 border border-outline-variant/30 rounded-2xl p-3.5 flex gap-3 shadow-xs">
+<div class="w-7 h-7 rounded-full bg-primary-container text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+            1
+          </div>
+<div class="flex-1">
+<div class="flex items-center justify-between flex-wrap gap-1">
+<h3 class="font-bold text-sm text-on-surface">Autólisis inicial</h3>
+<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-primary bg-primary-fixed/50 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[13px]">timer</span> 60 min reposo
+              </span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">
+              Mezcla las harinas con 350ml de agua hasta que no queden zonas secas. Tapa y reposa 1 hora para hidratar y formar gluten.
+            </p>
+</div>
+</div>
+<!-- Paso 2 -->
+<div class="bg-white/80 border border-outline-variant/30 rounded-2xl p-3.5 flex gap-3 shadow-xs">
+<div class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+            2
+          </div>
+<div class="flex-1">
+<div class="flex items-center justify-between flex-wrap gap-1">
+<h3 class="font-bold text-sm text-on-surface">Incorporar Masa Madre &amp; Sal</h3>
+<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary bg-secondary-fixed/60 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[13px]">timer</span> 30 min reposo
+              </span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">
+              Integra la masa madre activa con hoyuelos. Tras 30 min, agrega la sal con los 25ml restantes de agua tibia mediante amasado Rubaud.
+            </p>
+</div>
+</div>
+<!-- Paso 3 -->
+<div class="bg-white/80 border border-outline-variant/30 rounded-2xl p-3.5 flex gap-3 shadow-xs">
+<div class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+            3
+          </div>
+<div class="flex-1">
+<div class="flex items-center justify-between flex-wrap gap-1">
+<h3 class="font-bold text-sm text-on-surface">Plegados y Fermentación en Bloque</h3>
+<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary bg-secondary-fixed/60 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[13px]">timer</span> 4h total (pliegues c/30m)
+              </span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">
+              Realiza 4 series de estirado y plegado (stretch and fold) cada 30 minutos. Deja fermentar hasta que la masa aumente un 40-50% en volumen.
+            </p>
+</div>
+</div>
+<!-- Paso 4 -->
+<div class="bg-white/80 border border-outline-variant/30 rounded-2xl p-3.5 flex gap-3 shadow-xs">
+<div class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+            4
+          </div>
+<div class="flex-1">
+<div class="flex items-center justify-between flex-wrap gap-1">
+<h3 class="font-bold text-sm text-on-surface">Formado y Retardo en Frío</h3>
+<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary bg-secondary-fixed/60 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[13px]">timer</span> 12 - 16h refrigerador
+              </span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">
+              Preforma bola, descansa 15 min y da tensión final. Pasa al banneton enharinado con harina de arroz y refrigera a 4°C toda la noche.
+            </p>
+</div>
+</div>
+<!-- Paso 5 -->
+<div class="bg-white/80 border border-outline-variant/30 rounded-2xl p-3.5 flex gap-3 shadow-xs">
+<div class="w-7 h-7 rounded-full bg-primary-container text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+            5
+          </div>
+<div class="flex-1">
+<div class="flex items-center justify-between flex-wrap gap-1">
+<h3 class="font-bold text-sm text-on-surface">Greñado y Horneado</h3>
+<span class="inline-flex items-center gap-1 text-[11px] font-bold text-primary bg-[#fed1b5] px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[13px]">local_fire_department</span> 45 min de horneado
+              </span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">
+              Precalienta la olla a 240°C. Vuelca la masa, haz un corte longitudinal a 45° con la cuchilla. Hornea 20 min tapado, luego 25 min destapado a 220°C.
+            </p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- 6. ACCIÓN PRINCIPAL INFERIOR (Sticky) -->
+<footer class="fixed bottom-0 left-0 right-0 z-40 bg-[#F4F1DE]/95 backdrop-blur-md border-t border-outline-variant/40 px-4 py-3 pb-6 md:pb-4 shadow-lg">
+<div class="max-w-2xl mx-auto flex items-center gap-3">
+<!-- Botón Secundario: Personalizar receta (crear copia privada) -->
+<button class="flex-1 bg-surface-container-highest hover:bg-surface-container-high text-on-surface font-semibold text-xs md:text-sm py-3.5 px-3 rounded-2xl flex items-center justify-center gap-1.5 border border-outline-variant/60 active:scale-95 transition-all" onclick="handlePersonalize()">
+<span class="material-symbols-outlined text-[19px] text-primary" data-icon="edit_note">edit_note</span>
+<span class="truncate">Personalizar</span>
+</button>
+<!-- Botón Principal: Cocinar (Modo Guiado) -->
+<button class="flex-[2] bg-primary-container hover:bg-[#d06b50] text-white font-bold text-sm md:text-base py-3.5 px-5 rounded-2xl shadow-md hover:shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all" onclick="startGuidedMode()">
+<span class="material-symbols-outlined fill text-[22px]" data-icon="skillet">skillet</span>
+<span class="tracking-wide">Cocinar (Modo Guiado)</span>
+</button>
+</div>
+</footer>
+<!-- Modal de Video (Simulado) -->
+<div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden" id="videoModal">
+<div class="bg-surface rounded-3xl overflow-hidden max-w-md w-full shadow-2xl border border-outline-variant/30">
+<div class="p-4 flex items-center justify-between border-b border-outline-variant/30">
+<h3 class="font-bold text-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">videocam</span>
+          Técnica de formado y horneado
+        </h3>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high" onclick="closeVideoModal()">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="relative aspect-video bg-black flex items-center justify-center">
+<img alt="Video preview" class="w-full h-full object-cover opacity-60" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDb7p3B5n-gFd-ILwd8iZAkNue_5u9WUtZwdV5Cwu5xxvUPEe2FNI5l0tJVqgoBLO9SFHv4ClfgKwsLW56VriO4OJ-oeFEXeWO0dzQQ4nJZzSnwLQGt5dzgEq2NhwFFYdTXu38peWvywYzvZ-jiucrwwyBomcUA3fKRYmhVs7ud9w4D4kTfbfLQ2Zo4QlWPdUP_1_el5ir61hCRi9MBynD_L1LPTgoNqc4o_XWzyQAegQwhQy12UUYX">
+<button class="w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform" onclick="closeVideoModal()">
+<span class="material-symbols-outlined fill text-[32px]">play_arrow</span>
+</button>
+</div>
+<div class="p-3 bg-surface-container-low text-center">
+<p class="text-xs text-on-surface-variant">Video demostrativo paso a paso (02:14 min)</p>
+</div>
+</div>
+</div>
+<!-- Toast de Notificación -->
+<div class="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-on-surface text-surface text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 flex items-center gap-1.5" id="toast">
+<span class="material-symbols-outlined text-[16px] text-tertiary-fixed">check_circle</span>
+<span id="toastMsg">Copia creada en tus recetas</span>
+</div>
+<!-- Scripts funcionales -->
+<script>
+    // Manejo de Porciones y Conversión de cantidades
+    const BASE_SERVINGS = 4;
+    let currentServings = 4;
+
+    function adjustServings(delta) {
+      const next = currentServings + delta;
+      if (next < 1 || next > 24) return;
+      currentServings = next;
+      updateServingsUI();
+    }
+
+    function resetServings() {
+      currentServings = BASE_SERVINGS;
+      updateServingsUI();
+    }
+
+    function updateServingsUI() {
+      const display = document.getElementById('servingsDisplay');
+      const resetBtn = document.getElementById('resetServingsBtn');
+      const scaleTag = document.getElementById('scaleFactorTag');
+
+      display.textContent = currentServings;
+      const factor = currentServings / BASE_SERVINGS;
+      scaleTag.textContent = factor.toFixed( factor % 1 === 0 ? 1 : 2 ) + '×';
+
+      if (currentServings !== BASE_SERVINGS) {
+        resetBtn.classList.remove('hidden');
+      } else {
+        resetBtn.classList.add('hidden');
+      }
+
+      // Actualizar ingredientes
+      const rows = document.querySelectorAll('.ingredient-row');
+      rows.forEach(row => {
+        const base = parseFloat(row.getAttribute('data-base'));
+        const unit = row.getAttribute('data-unit');
+        const qtyEl = row.querySelector('.qty');
+        const calculated = base * factor;
+
+        // Formato limpio de números
+        let formatted = calculated >= 10 ? Math.round(calculated) : calculated.toFixed(1).replace('.0', '');
+        qtyEl.textContent = formatted;
+      });
+    }
+
+    // Checkboxes de Ingredientes
+    function handleIngredientCheck(checkbox) {
+      const row = checkbox.closest('.ingredient-row');
+      const textEls = row.querySelectorAll('.qty, .unit, .name');
+      if (checkbox.checked) {
+        textEls.forEach(el => el.classList.add('line-through', 'opacity-40'));
+      } else {
+        textEls.forEach(el => el.classList.remove('line-through', 'opacity-40'));
+      }
+      updateCheckedCounter();
+    }
+
+    function toggleAllIngredients() {
+      const checkboxes = document.querySelectorAll('.ingredient-row input[type="checkbox"]');
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+      checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+        handleIngredientCheck(cb);
+      });
+    }
+
+    function updateCheckedCounter() {
+      const total = document.querySelectorAll('.ingredient-row input[type="checkbox"]').length;
+      const checked = document.querySelectorAll('.ingredient-row input[type="checkbox"]:checked').length;
+      document.getElementById('checkedCounter').textContent = `${checked}/${total} listos`;
+    }
+
+    // Carrusel Dots
+    function handleCarouselScroll(el) {
+      const slideWidth = el.offsetWidth;
+      const index = Math.round(el.scrollLeft / slideWidth);
+      for (let i = 0; i < 3; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        if (!dot) continue;
+        if (i === index) {
+          dot.className = "w-4 h-1.5 rounded-full bg-white transition-all";
+        } else {
+          dot.className = "w-1.5 h-1.5 rounded-full bg-white/40 transition-all";
+        }
+      }
+    }
+
+    // Favoritos
+    let isFav = false;
+    function toggleFavorite() {
+      isFav = !isFav;
+      const icon = document.getElementById('favIcon');
+      if (isFav) {
+        icon.innerText = 'favorite';
+        icon.classList.add('fill');
+        showToast('Guardado en tus favoritos');
+      } else {
+        icon.innerText = 'favorite_border';
+        icon.classList.remove('fill');
+        showToast('Eliminado de favoritos');
+      }
+    }
+
+    // Personalizar
+    function handlePersonalize() {
+      showToast('Copia editable creada en tus recetas');
+    }
+
+    // Modo guiado
+    function startGuidedMode() {
+      showToast('Iniciando modo guiado de preparación...');
+    }
+
+    // Video modal
+    function openVideoModal() {
+      document.getElementById('videoModal').classList.remove('hidden');
+    }
+    function closeVideoModal() {
+      document.getElementById('videoModal').classList.add('hidden');
+    }
+
+    // Toast feedback
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.innerText = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2500);
+    }
+  </script>
+</body></html>

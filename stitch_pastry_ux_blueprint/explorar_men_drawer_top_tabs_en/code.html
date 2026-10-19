@@ -1,0 +1,376 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Pastry - Explore</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#002115",
+                        "inverse-primary": "#ffb4a1",
+                        "inverse-surface": "#382e2b",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#ffdcc6",
+                        "on-primary-container": "#5b1604",
+                        "secondary": "#795741",
+                        "surface-container-low": "#fff1ed",
+                        "tertiary-fixed-dim": "#9fd1b8",
+                        "on-tertiary-container": "#003725",
+                        "on-surface": "#221917",
+                        "surface-container": "#fceae6",
+                        "on-secondary-container": "#795842",
+                        "surface-bright": "#fff8f6",
+                        "surface-container-high": "#f6e4e0",
+                        "on-primary": "#ffffff",
+                        "surface": "#fff8f6",
+                        "outline-variant": "#dbc1ba",
+                        "tertiary-fixed": "#bbeed4",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#2d1605",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#1f4f3c",
+                        "on-secondary-fixed-variant": "#5e402b",
+                        "surface-dim": "#e8d6d2",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#e9bea2",
+                        "on-surface-variant": "#55423e",
+                        "on-primary-fixed-variant": "#7c2e19",
+                        "primary-container": "#e07a5f",
+                        "primary-fixed": "#ffdbd2",
+                        "background": "#fff8f6",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#ffede9",
+                        "tertiary-container": "#70a18a",
+                        "secondary-container": "#fed1b5",
+                        "surface-container-highest": "#f0dfda",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#88726d",
+                        "tertiary": "#386753",
+                        "primary": "#9a442d",
+                        "on-primary-fixed": "#3c0800",
+                        "on-background": "#221917",
+                        "primary-fixed-dim": "#ffb4a1",
+                        "surface-tint": "#9a442d",
+                        "surface-variant": "#f0dfda"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "3xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-mobile": "20px",
+                        "base": "8px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "margin-desktop": "64px",
+                        "md": "24px",
+                        "lg": "48px",
+                        "xl": "80px"
+                    },
+                    "fontFamily": {
+                        "display-lg-mobile": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "headline-md": ["Be Vietnam Pro"],
+                        "title-lg": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "display-lg": ["Be Vietnam Pro"],
+                        "label-sm": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen pb-safe antialiased relative">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-40 bg-surface/95 backdrop-blur-md shadow-xs border-b border-outline-variant/30 flex justify-between items-center px-5 h-16 transition-all">
+<button aria-label="Open menu" class="w-10 h-10 -ml-1 text-on-surface hover:bg-surface-container-high transition-colors duration-200 active:scale-95 flex items-center justify-center rounded-full group" onclick="toggleDrawer()">
+<span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors" data-icon="menu">menu</span>
+</button>
+<div class="font-display-lg text-[26px] tracking-tight font-bold text-primary select-none flex items-center gap-1.5">
+<span>Pastry</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary mb-0.5"></span>
+</div>
+<button aria-label="Search" class="w-10 h-10 -mr-1 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 active:scale-95 flex items-center justify-center rounded-full">
+<span class="material-symbols-outlined text-[24px]" data-icon="search">search</span>
+</button>
+</header>
+<!-- Lateral Navigation Sheet / Drawer -->
+<div class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-xs z-50 transition-opacity duration-300 opacity-0 pointer-events-none" id="drawer-backdrop" onclick="toggleDrawer()"></div>
+<aside class="fixed top-0 left-0 bottom-0 w-[82%] max-w-[320px] bg-surface z-50 shadow-2xl -translate-x-full transition-transform duration-300 ease-out flex flex-col rounded-r-3xl border-r border-outline-variant/30 overflow-hidden" id="side-drawer">
+<!-- Drawer Header -->
+<div class="p-6 pb-4 bg-surface-container-low border-b border-outline-variant/20 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-lg shadow-sm">
+                P
+            </div>
+<div>
+<h3 class="font-headline-md text-base leading-tight font-bold text-on-surface">Pastry Club</h3>
+<p class="font-label-sm text-[11px] text-on-surface-variant">Artisan Bakery &amp; Pastry</p>
+</div>
+</div>
+<button aria-label="Close drawer" class="w-9 h-9 rounded-full text-on-surface-variant hover:bg-surface-container flex items-center justify-center transition-colors" onclick="toggleDrawer()">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Drawer Navigation Links -->
+<div class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+<div class="px-3 pb-2 text-[11px] font-semibold tracking-wider text-outline uppercase font-label-sm">Navigation</div>
+<a class="flex items-center gap-3 px-3.5 py-3 rounded-xl bg-primary-container/25 text-primary font-medium text-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">explore</span>
+<span>Explore Recipes</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface text-sm transition-colors font-medium" href="#">
+<span class="material-symbols-outlined text-[22px]">auto_awesome</span>
+<span>Discovery (Swipe)</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface text-sm transition-colors font-medium" href="#">
+<span class="material-symbols-outlined text-[22px]">bookmark</span>
+<span>My Recipe Book</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface text-sm transition-colors font-medium" href="#">
+<span class="material-symbols-outlined text-[22px]">calculate</span>
+<span>Sourdough Calculator</span>
+</a>
+<div class="pt-4 px-3 pb-2 text-[11px] font-semibold tracking-wider text-outline uppercase font-label-sm">Collections</div>
+<a class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container-high text-sm transition-colors" href="#">
+<span class="flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>Sourdough 101</span>
+</span>
+<span class="text-xs bg-surface-container px-2 py-0.5 rounded-full text-secondary font-medium">8</span>
+</a>
+<a class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container-high text-sm transition-colors" href="#">
+<span class="flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span>Fine Viennoiserie</span>
+</span>
+<span class="text-xs bg-surface-container px-2 py-0.5 rounded-full text-secondary font-medium">14</span>
+</a>
+</div>
+<!-- Drawer Footer (User ergonomic area) -->
+<div class="p-4 border-t border-outline-variant/30 bg-surface-container-low/60 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface-container-highest border border-outline-variant flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">person</span>
+</div>
+<div class="truncate">
+<p class="text-xs font-semibold text-on-surface leading-tight">Elena Morales</p>
+<p class="text-[11px] text-on-surface-variant truncate">Master Baker Tier</p>
+</div>
+</div>
+<button aria-label="Settings" class="w-8 h-8 rounded-full text-on-surface-variant hover:bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="pt-[76px] pb-[105px] px-margin-mobile md:px-margin-desktop md:max-w-7xl md:mx-auto">
+<!-- Search Bar Container -->
+<div class="mb-4">
+<div class="flex items-center bg-surface-container-lowest rounded-2xl px-4 py-3 shadow-[0_2px_12px_rgba(34,25,23,0.04)] border border-outline-variant/30 focus-within:border-primary focus-within:shadow-[0_2px_14px_rgba(154,68,45,0.12)] transition-all">
+<span class="material-symbols-outlined text-primary mr-3 text-[22px]">search</span>
+<input class="w-full bg-transparent border-none p-0 focus:ring-0 text-on-surface placeholder:text-on-surface-variant/70 font-body-md text-sm outline-none" placeholder="Search breads, doughs, techniques..." type="text">
+<span class="material-symbols-outlined text-outline-variant text-[20px]">tune</span>
+</div>
+</div>
+<!-- Category Chips (Selector deslizable horizontal de alto contraste y microinteracción) -->
+<section class="mb-7">
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mx-margin-mobile px-margin-mobile md:mx-0 md:px-0">
+<!-- Active Pill: High contrast, warm editorial -->
+<button class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2.5 rounded-full shadow-sm flex-shrink-0 active:scale-95 transition-all text-xs font-medium tracking-wide">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">bakery_dining</span>
+<span>Bakery</span>
+</button>
+<!-- Secondary Pills -->
+<button class="flex items-center gap-2 bg-surface-container-high text-on-surface hover:bg-surface-container-highest px-4 py-2.5 rounded-full border border-outline-variant/20 flex-shrink-0 active:scale-95 transition-all text-xs font-medium">
+<span class="material-symbols-outlined text-[18px] text-secondary">cake</span>
+<span>Cakes</span>
+</button>
+<button class="flex items-center gap-2 bg-surface-container-high text-on-surface hover:bg-surface-container-highest px-4 py-2.5 rounded-full border border-outline-variant/20 flex-shrink-0 active:scale-95 transition-all text-xs font-medium">
+<span class="material-symbols-outlined text-[18px] text-secondary">cookie</span>
+<span>Cookies</span>
+</button>
+<button class="flex items-center gap-2 bg-surface-container-high text-on-surface hover:bg-surface-container-highest px-4 py-2.5 rounded-full border border-outline-variant/20 flex-shrink-0 active:scale-95 transition-all text-xs font-medium">
+<span class="material-symbols-outlined text-[18px] text-secondary">layers</span>
+<span>Pastries</span>
+</button>
+<button class="flex items-center gap-2 bg-surface-container-high text-on-surface hover:bg-surface-container-highest px-4 py-2.5 rounded-full border border-outline-variant/20 flex-shrink-0 active:scale-95 transition-all text-xs font-medium">
+<span class="material-symbols-outlined text-[18px] text-secondary">pie_chart</span>
+<span>Pies &amp; Tarts</span>
+</button>
+</div>
+</section>
+<!-- Featured Section -->
+<section class="mb-8">
+<div class="flex justify-between items-baseline mb-3.5">
+<div>
+<span class="text-[11px] font-semibold tracking-wider text-primary uppercase font-label-sm">Master's Selection</span>
+<h2 class="font-headline-md text-headline-md text-secondary leading-tight">Featured</h2>
+</div>
+<a class="font-label-md text-xs font-semibold text-primary hover:underline flex items-center gap-0.5" href="#">
+<span>See all</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</a>
+</div>
+<div class="relative rounded-3xl overflow-hidden bg-surface-container-lowest shadow-[0_6px_24px_rgba(154,68,45,0.08)] border border-outline-variant/20 group">
+<div class="bg-cover bg-center w-full aspect-[4/3]" data-alt="A stunning overhead macro photograph of a perfectly scored, golden-brown artisan sourdough loaf resting on a rustic wooden cutting board, dusted with white flour. The lighting is bright and warm, emulating soft morning sunlight streaming through a window, highlighting the crisp, blistered crust and the airy crumb structure visible through the slashes. The scene is styled minimally in a high-end culinary magazine aesthetic, emphasizing the tactile textures of baking with a warm editorial color palette featuring eggshell and apricot tones." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB73NuTdMmm2yhVuTmUyvvEyvFw-Jl3_b7K_WKeIuMYXk-H-Q4rIoKXP4s_B2xrldRcVF1Pv34IJHh_vk8gGCkBUZZoByxKs1lBgZcGsmeWghOFPdOZVh5y4wtkf65dyKaJpBw8nZ4JVvKvyo97xbtZbgtHMnJ1loK-aHLGoVQ-PVbLV-6K18HGdoWTIoT-blNB6pe8qnS_Zc-wG7e4_JpUXTj76dBG-DnuacYzJoZicFmO3QdgrQwQ')"></div>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="bg-secondary-container/95 backdrop-blur-xs text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center shadow-xs font-medium">
+<span class="material-symbols-outlined text-[14px] mr-1">schedule</span> 24h
+                    </span>
+<span class="bg-surface-container-lowest/95 backdrop-blur-sm text-secondary px-3 py-1 rounded-full font-label-sm text-label-sm shadow-xs border border-outline-variant/30 font-medium">
+                        Advanced
+                    </span>
+</div>
+<button aria-label="Add to favorites" class="absolute top-4 right-4 bg-surface-container-lowest/90 backdrop-blur-sm p-2 rounded-full text-on-surface-variant hover:text-primary transition-colors shadow-sm active:scale-90">
+<span class="material-symbols-outlined">favorite</span>
+</button>
+<div class="p-5 bg-surface-container-lowest">
+<h3 class="font-title-lg text-title-lg text-on-surface mb-1">Rustic Sourdough Loaf</h3>
+<p class="font-body-md text-sm text-on-surface-variant mb-4 leading-relaxed">Master the art of wild wild yeasts with this high-hydration country bread.</p>
+<button class="w-full bg-primary text-on-primary font-label-md text-sm py-3.5 rounded-xl shadow-xs hover:bg-primary/95 transition-all active:scale-[0.98] font-medium tracking-wide flex items-center justify-center gap-2">
+<span>View Step-by-Step Recipe</span>
+<span class="material-symbols-outlined text-[18px]">menu_book</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Trending Now -->
+<section>
+<div class="flex justify-between items-center mb-3">
+<h2 class="font-headline-md text-xl text-secondary">Weekly Trends</h2>
+<span class="text-xs text-on-surface-variant">Top recipes</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+<!-- Card 1 -->
+<div class="flex items-center gap-3.5 bg-surface-container-lowest p-3 rounded-2xl shadow-xs border border-outline-variant/20 hover:shadow-md transition-shadow active:bg-surface-container-low/40">
+<img alt="Classic French Croissant with golden, flaky laminated crust" class="w-20 h-20 sm:w-22 sm:h-22 rounded-xl object-cover flex-shrink-0 shadow-xs" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJYG_-hWU24tCxI6-bsEErhSMuIZRoe-yG05L73IGgDG-0WMBdEx9A9mkIFnW9no3OIfEeKA-EMGgRV5jVQJwJL39n8akAlauORwmbHi1sZVd-r8zGiuGHLsR8NlamYU5gxoUFjR8TvQ6Ex8yE2yXjyM1WYgDhKKZJA3zeHSOKs_pNhi-6WDpHqpuAwbRhxZVo5kwqjpzPq3pwfMwV79NdHGEr28v9aqfBpT6UP5Ap3qX6LdeLbvxl">
+<div class="flex flex-col justify-center flex-grow py-0.5">
+<h4 class="font-title-lg text-[15px] font-semibold leading-snug text-on-surface mb-1">Classic French Croissant</h4>
+<div class="flex items-center text-on-surface-variant font-label-sm text-xs mb-2">
+<span class="material-symbols-outlined text-[15px] mr-1 text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-medium text-on-surface">4.9</span>
+<span class="ml-1 text-[11px] text-outline">(128)</span>
+</div>
+<div class="flex gap-2">
+<span class="text-secondary font-label-sm text-[11px] bg-surface-container-high px-2 py-0.5 rounded-md font-medium">Laminated</span>
+<span class="text-secondary font-label-sm text-[11px] bg-surface-container-high px-2 py-0.5 rounded-md font-medium">3 Days</span>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="flex items-center gap-3.5 bg-surface-container-lowest p-3 rounded-2xl shadow-xs border border-outline-variant/20 hover:shadow-md transition-shadow active:bg-surface-container-low/40">
+<img alt="Rustic Peach Galette with golden folded pastry crust and fresh fruit" class="w-20 h-20 sm:w-22 sm:h-22 rounded-xl object-cover flex-shrink-0 shadow-xs" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYbAYVLpHBQg_Pcg0uKXttrnjtR501_reFNPV8bBWryXnrZY6pwv7exUy0SXP3x-5u46SRv73PxyApkv3L3Z5N6zrQ_gaoqDSi9RO0GfcBUTNRfnhHKioZGT4elYyemEF8n9Q7pGvRVJxLY3F5kQQ_HVrU7B0fMbu8UEzigKvxLrFnOQVaiKtOJtaf7hYvmfYpAiwu8SkCqQtI0QqFc4dol2Q5IEa6lPuyvxwXrZTyXFNzjfTGdknz">
+<div class="flex flex-col justify-center flex-grow py-0.5">
+<h4 class="font-title-lg text-[15px] font-semibold leading-snug text-on-surface mb-1">Rustic Peach Galette</h4>
+<div class="flex items-center text-on-surface-variant font-label-sm text-xs mb-2">
+<span class="material-symbols-outlined text-[15px] mr-1 text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-medium text-on-surface">4.7</span>
+<span class="ml-1 text-[11px] text-outline">(85)</span>
+</div>
+<div class="flex gap-2">
+<span class="text-secondary font-label-sm text-[11px] bg-surface-container-high px-2 py-0.5 rounded-md font-medium">Beginner</span>
+<span class="text-secondary font-label-sm text-[11px] bg-surface-container-high px-2 py-0.5 rounded-md font-medium">1.5h</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Ergonomic Bottom Tab Bar (Variante 2: Compacto con píldora activa refinada & micro-interacción) -->
+<nav class="fixed bottom-4 left-4 right-4 z-40 md:hidden max-w-md mx-auto pointer-events-none">
+  <div class="bg-surface/95 backdrop-blur-md rounded-full shadow-[0_6px_24px_rgba(34,25,23,0.14)] border border-outline-variant/30 px-4 py-2 pointer-events-auto flex items-center justify-between relative">
+    <a class="flex flex-col items-center justify-center py-1 text-primary group focus:outline-none flex-1" href="#">
+      <div class="w-10 h-7 bg-primary-container/30 text-primary rounded-full flex items-center justify-center transition-all duration-200 group-active:scale-90">
+        <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">explore</span>
+      </div>
+      <span class="text-[11px] font-semibold mt-0.5 tracking-tight text-primary">Explore</span>
+    </a>
+    <a class="flex flex-col items-center justify-center py-1 text-on-surface-variant hover:text-primary transition-colors focus:outline-none flex-1" href="#">
+      <div class="w-10 h-7 rounded-full flex items-center justify-center transition-all duration-200 group-hover:bg-surface-container group-active:scale-90">
+        <span class="material-symbols-outlined text-[20px]">auto_stories</span>
+      </div>
+      <span class="text-[11px] font-medium mt-0.5 tracking-tight">Portfolio</span>
+    </a>
+    <div class="relative flex-1 flex justify-center">
+      <a class="absolute -top-7 w-12 h-12 rounded-full bg-primary text-on-primary shadow-lg flex items-center justify-center transition-transform active:scale-90 hover:bg-primary/95 border-2 border-surface" href="#" aria-label="Swipe">
+        <span class="material-symbols-outlined text-[24px]">style</span>
+      </a>
+      <span class="text-[11px] font-medium mt-6 tracking-tight text-on-surface-variant">Swipe</span>
+    </div>
+    <a class="flex flex-col items-center justify-center py-1 text-on-surface-variant hover:text-primary transition-colors focus:outline-none flex-1" href="#">
+      <div class="w-10 h-7 rounded-full flex items-center justify-center transition-all duration-200 group-hover:bg-surface-container group-active:scale-90">
+        <span class="material-symbols-outlined text-[20px]">architecture</span>
+      </div>
+      <span class="text-[11px] font-medium mt-0.5 tracking-tight">Tools</span>
+    </a>
+    <a class="flex flex-col items-center justify-center py-1 text-on-surface-variant hover:text-primary transition-colors focus:outline-none flex-1" href="#">
+      <div class="w-10 h-7 rounded-full flex items-center justify-center transition-all duration-200 group-hover:bg-surface-container group-active:scale-90">
+        <span class="material-symbols-outlined text-[20px]">account_circle</span>
+      </div>
+      <span class="text-[11px] font-medium mt-0.5 tracking-tight">Profile</span>
+    </a>
+  </div>
+</nav>
+<!-- Micro-interaction JS for Drawer -->
+<script>
+    function toggleDrawer() {
+        const drawer = document.getElementById('side-drawer');
+        const backdrop = document.getElementById('drawer-backdrop');
+        const isOpen = !drawer.classList.contains('-translate-x-full');
+        
+        if (isOpen) {
+            drawer.classList.add('-translate-x-full');
+            backdrop.classList.add('opacity-0', 'pointer-events-none');
+            backdrop.classList.remove('opacity-100');
+            document.body.style.overflow = '';
+        } else {
+            drawer.classList.remove('-translate-x-full');
+            backdrop.classList.remove('opacity-0', 'pointer-events-none');
+            backdrop.classList.add('opacity-100');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+</script>
+
+
+</body></html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html><html class="h-full" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Pastry - Swipe Recipes</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#002115",
+                        "inverse-primary": "#ffb4a1",
+                        "inverse-surface": "#382e2b",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#ffdcc6",
+                        "on-primary-container": "#5b1604",
+                        "secondary": "#795741",
+                        "surface-container-low": "#fff1ed",
+                        "tertiary-fixed-dim": "#9fd1b8",
+                        "on-tertiary-container": "#003725",
+                        "on-surface": "#221917",
+                        "surface-container": "#fceae6",
+                        "on-secondary-container": "#795842",
+                        "surface-bright": "#fff8f6",
+                        "surface-container-high": "#f6e4e0",
+                        "on-primary": "#ffffff",
+                        "surface": "#fff8f6",
+                        "outline-variant": "#dbc1ba",
+                        "tertiary-fixed": "#bbeed4",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#2d1605",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#1f4f3c",
+                        "on-secondary-fixed-variant": "#5e402b",
+                        "surface-dim": "#e8d6d2",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#e9bea2",
+                        "on-surface-variant": "#55423e",
+                        "on-primary-fixed-variant": "#7c2e19",
+                        "primary-container": "#e07a5f",
+                        "primary-fixed": "#ffdbd2",
+                        "background": "#fff8f6",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#ffede9",
+                        "tertiary-container": "#70a18a",
+                        "secondary-container": "#fed1b5",
+                        "surface-container-highest": "#f0dfda",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#88726d",
+                        "tertiary": "#386753",
+                        "primary": "#9a442d",
+                        "on-primary-fixed": "#3c0800",
+                        "on-background": "#221917",
+                        "primary-fixed-dim": "#ffb4a1",
+                        "surface-tint": "#9a442d",
+                        "surface-variant": "#f0dfda"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-mobile": "20px",
+                        "base": "8px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "margin-desktop": "64px",
+                        "md": "24px",
+                        "lg": "48px",
+                        "xl": "80px"
+                    },
+                    "fontFamily": {
+                        "display-lg-mobile": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "headline-md": ["Be Vietnam Pro"],
+                        "title-lg": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "display-lg": ["Be Vietnam Pro"],
+                        "label-sm": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
+        
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .swipe-card {
+            transition: transform 0.3s ease-out;
+        }
+        
+        .swipe-overlay-like {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .swipe-card.dragging .swipe-overlay-like[data-dir="right"] {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-[#F4F1DE] h-full flex flex-col font-body-md text-on-surface overflow-hidden">
+<!-- TopAppBar (Hidden on Mobile, Visible on Desktop for context, but usually swiping is full screen mobile intent. Rendering as per JSON for desktop consistency) -->
+<header class="hidden md:flex justify-between items-center px-gutter w-full h-16 bg-surface dark:bg-surface-dim shadow-sm docked full-width top-0 z-10">
+<button class="text-primary dark:text-primary-fixed-dim hover:bg-surface-container-high transition-colors duration-200 active:scale-95 p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-display-lg text-display-lg text-primary dark:text-inverse-primary tracking-tight">Pastry</h1>
+<button class="text-primary dark:text-primary-fixed-dim hover:bg-surface-container-high transition-colors duration-200 active:scale-95 p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 relative w-full h-full flex flex-col items-center justify-center px-margin-mobile md:px-margin-desktop py-gutter overflow-hidden">
+<!-- Deck Container -->
+<div class="relative w-full max-w-sm aspect-[3/4] sm:aspect-[4/5] mx-auto z-10">
+<!-- Card 2 (Underneath) -->
+<div class="absolute inset-0 bg-[#F2CC8F] rounded-[1rem] shadow-[0_4px_20px_rgba(154,68,45,0.1)] scale-95 translate-y-4 opacity-50 flex flex-col overflow-hidden pointer-events-none">
+<div class="h-[60%] w-full bg-surface-container-highest"></div>
+</div>
+<!-- Card 1 (Active) -->
+<div class="swipe-card absolute inset-0 bg-[#F2CC8F] rounded-[1rem] shadow-[0_4px_20px_rgba(154,68,45,0.1)] flex flex-col overflow-hidden cursor-grab active:cursor-grabbing touch-none" id="activeCard">
+<!-- Image Area -->
+<div class="relative h-[60%] w-full">
+<img class="w-full h-full object-cover" data-alt="A highly detailed close-up food photography shot of a perfectly baked artisanal sourdough bread boule resting on a rustic wooden cutting board. The bread has a deeply caramelized, crusty exterior scored with a beautiful leaf pattern, dusted lightly with flour. Soft, warm natural sunlight streams in from a window, casting gentle shadows and highlighting the texture of the crust. The background is slightly blurred, hinting at a cozy, minimal kitchen setting with a muted, warm aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrg8QcUHOutBrm5X5FJYAw_CG9GFYah68LCCz4aaGUxkEOYNy6Opq4aPGUYqZUG_DMMq5sHnbjRmQEONt8Nun0S-w_7d0uaNSYn0RrZpCnE_Lxmrl1qCaEpPRpDC8lTY0ZKZwza6V_BrrgxSSvPSWp7M22GmJZe-yrd74mZj1N4oncajYPlu3nM1vbkfcQ_7NwsX6upYbpObVNwkmfWMWaJ-xChdtyfsITHbNm9zr74UVEOvog-KQn">
+<!-- Overlay Badge -->
+<div class="absolute top-4 left-4 bg-[#70a18a] text-white px-3 py-1 rounded-full font-label-sm text-label-sm shadow-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="check_circle">check_circle</span>
+                        Matches your ingredients
+                    </div>
+<!-- Swipe Indicators (Hidden by default, shown via JS) -->
+<div class="swipe-overlay-like absolute inset-0 bg-primary/20 flex items-center justify-center pointer-events-none" data-dir="right">
+<div class="bg-surface/90 text-primary px-6 py-3 rounded-full font-headline-md text-headline-md shadow-lg border border-primary/20 backdrop-blur-sm">
+                            SAVE
+                        </div>
+</div>
+</div>
+<!-- Content Area -->
+<div class="flex-1 p-6 flex flex-col justify-between bg-surface-container-low">
+<div>
+<h2 class="font-title-lg text-title-lg text-[#2d1605] mb-2 line-clamp-2">Artisanal Sourdough Boule</h2>
+<p class="font-body-md text-body-md text-[#5e402b] line-clamp-2">A classic, crusty loaf with a tender, airy crumb. Perfect for toast or dipping.</p>
+</div>
+<div class="flex items-center gap-6 mt-4 pt-4 border-t border-[#795741]/20">
+<div class="flex items-center gap-2 text-[#5e402b]">
+<span class="material-symbols-outlined" data-icon="schedule">schedule</span>
+<span class="font-label-md text-label-md">24 hrs</span>
+</div>
+<div class="flex items-center gap-2 text-[#5e402b]">
+<span class="material-symbols-outlined" data-icon="bar_chart">bar_chart</span>
+<span class="font-label-md text-label-md">Hard</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex justify-center items-center gap-6 mt-4 mb-20 z-20 md:mb-0">
+<!-- Reject -->
+<button class="w-16 h-16 rounded-full bg-surface border border-[#2d1605]/20 flex items-center justify-center text-[#2d1605] shadow-sm hover:shadow-md hover:bg-surface-container-high transition-all active:scale-90">
+<span class="material-symbols-outlined text-[32px]" data-icon="close">close</span>
+</button>
+<!-- Save/Heart -->
+<button class="w-20 h-20 rounded-full bg-[#9a442d] flex items-center justify-center text-white shadow-[0_4px_20px_rgba(154,68,45,0.3)] hover:shadow-[0_8px_30px_rgba(154,68,45,0.4)] transition-all active:scale-90">
+<span class="material-symbols-outlined text-[40px]" data-icon="favorite" data-weight="fill" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</button>
+<!-- Bake/Check -->
+<button class="w-16 h-16 rounded-full bg-surface border border-[#2d1605]/20 flex items-center justify-center text-[#70a18a] shadow-sm hover:shadow-md hover:bg-surface-container-high transition-all active:scale-90">
+<span class="material-symbols-outlined text-[32px]" data-icon="done">done</span>
+</button>
+</div>
+</main>
+<!-- BottomNavBar (Visible on Mobile only, Swipe intent maps to 'Swipe' label) -->
+<nav class="fixed bottom-5 inset-x-0 mx-auto w-[92%] max-w-md z-50 bg-surface/95 dark:bg-surface-container-lowest/95 backdrop-blur-md rounded-full px-3 py-2 shadow-[0_8px_30px_rgba(154,68,45,0.15)] border border-outline-variant flex items-center justify-between">
+<button class="flex flex-col items-center justify-center flex-1 text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-150 py-1">
+<span class="material-symbols-outlined text-[22px]" data-icon="explore">explore</span>
+<span class="font-label-sm text-[11px] leading-tight mt-0.5">Explorar</span>
+</button>
+<button class="flex flex-col items-center justify-center flex-1 text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-150 py-1">
+<span class="material-symbols-outlined text-[22px]" data-icon="menu_book">menu_book</span>
+<span class="font-label-sm text-[11px] leading-tight mt-0.5">Portafolio</span>
+</button>
+<div class="flex-1 flex justify-center -mt-6">
+<button class="w-14 h-14 rounded-full bg-primary-container text-white shadow-[0_6px_20px_rgba(224,122,95,0.45)] flex flex-col items-center justify-center transition-all active:scale-90 hover:shadow-lg duration-150 border-4 border-[#F4F1DE]">
+<span class="material-symbols-outlined text-[26px]" data-icon="style" data-weight="fill" style="font-variation-settings: 'FILL' 1;">style</span>
+<span class="font-label-sm text-[10px] font-bold leading-none -mt-0.5">Swipe</span>
+</button>
+</div>
+<button class="flex flex-col items-center justify-center flex-1 text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-150 py-1">
+<span class="material-symbols-outlined text-[22px]" data-icon="construction">construction</span>
+<span class="font-label-sm text-[11px] leading-tight mt-0.5">Herramientas</span>
+</button>
+<button class="flex flex-col items-center justify-center flex-1 text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-150 py-1">
+<span class="material-symbols-outlined text-[22px]" data-icon="person">person</span>
+<span class="font-label-sm text-[11px] leading-tight mt-0.5">Perfil</span>
+</button>
+</nav>
+<!-- Simple JS for illustrative swipe interaction feel -->
+<script>
+        const card = document.getElementById('activeCard');
+        let isDragging = false;
+        let startX, currentX;
+
+        card.addEventListener('mousedown', startDrag);
+        card.addEventListener('touchstart', startDrag, {passive: true});
+
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag, {passive: false});
+
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+
+        function startDrag(e) {
+            isDragging = true;
+            startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            card.style.transition = 'none';
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            // e.preventDefault(); // prevent scrolling while swiping
+            
+            currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            const diff = currentX - startX;
+            const rotate = diff * 0.05;
+            
+            card.style.transform = `translateX(${diff}px) rotate(${rotate}deg)`;
+            
+            if (diff > 50) {
+                card.classList.add('dragging');
+            } else {
+                card.classList.remove('dragging');
+            }
+        }
+
+        function endDrag() {
+            if (!isDragging) return;
+            isDragging = false;
+            card.style.transition = 'transform 0.3s ease-out';
+            card.style.transform = 'translateX(0) rotate(0)';
+            card.classList.remove('dragging');
+        }
+    </script>
+
+
+
+
+</body></html>

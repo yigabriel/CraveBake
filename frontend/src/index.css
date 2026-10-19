@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background font-sans text-body-md text-on-surface antialiased;
+    overscroll-behavior-y: none;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-container ring-offset-2 ring-offset-surface;
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+@media print {
+  header,
+  nav,
+  footer,
+  .fixed {
+    display: none !important;
+  }
+}
