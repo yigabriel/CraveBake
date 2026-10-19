@@ -154,10 +154,14 @@ async def list_my_recipes(
 @router.get("/{recipe_id}", response_model=RecipeDetailResponse)
 async def get_recipe(
     recipe_id: str,
+    unit_system: Literal["metric", "us", "original"] | None = Query(
+        default=None,
+        description="How to display ingredient quantities (display_* fields). Defaults to the user's preferred unit system",
+    ),
     current_user: UserDTO = Depends(get_current_user),
     use_case: GetRecipeUseCase = Depends(get_get_recipe_use_case),
 ) -> RecipeDetailResponse:
-    recipe = await use_case.execute(recipe_id, current_user.id)
+    recipe = await use_case.execute(recipe_id, current_user.id, unit_system or current_user.preferred_unit_system)
     return RecipeDetailResponse.model_validate(recipe, from_attributes=True)
 
 

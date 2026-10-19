@@ -112,6 +112,10 @@ class RecipeIngredientDTO:
     unit_abbreviation: str | None
     notes: str | None
     position: int
+    # How to show it in the requested unit system; equal to quantity/unit_abbreviation for 'original'.
+    display_quantity: Decimal
+    display_unit_abbreviation: str | None
+    converted: bool
 
 
 @dataclass(frozen=True)
@@ -188,6 +192,7 @@ class RecipeDetailDTO:
     steps: list[RecipeStepDTO]
     created_at: datetime
     updated_at: datetime
+    unit_system: str  # metric | us | original: the system the ingredients' display_* fields are in
 
 
 @dataclass(frozen=True)

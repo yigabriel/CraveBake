@@ -21,7 +21,12 @@ from app.recipes.domain.repositories.recipe_repository import (
     RecipeRepository,
 )
 from app.recipes.domain.services.equipment_catalog import CatalogEquipment, EquipmentCatalog
-from app.recipes.domain.services.ingredient_catalog import CatalogIngredient, CatalogUnit, IngredientCatalog
+from app.recipes.domain.services.ingredient_catalog import (
+    CatalogIngredient,
+    CatalogUnit,
+    DisplayedQuantity,
+    IngredientCatalog,
+)
 from app.recipes.domain.value_objects.difficulty_id import DifficultyId
 from app.recipes.domain.value_objects.recipe_category_id import RecipeCategoryId
 from app.recipes.domain.value_objects.recipe_tag_id import RecipeTagId
@@ -117,6 +122,12 @@ class FakeIngredientCatalog(IngredientCatalog):
 
     async def get_units(self, ids):
         return {u: CatalogUnit(u, self.units[u], self.units[u]) for u in ids if u in self.units}
+
+    async def display_in(self, quantities, unit_system):
+        """Pretends 'us' turns everything into half as many cups; 'metric' leaves it as written."""
+        if unit_system == "us":
+            return [DisplayedQuantity(q.quantity / 2, "cup", converted=True) for q in quantities]
+        return [DisplayedQuantity(q.quantity, self.units.get(q.unit_id, ""), converted=False) for q in quantities]
 
 
 class FakeEquipmentCatalog(EquipmentCatalog):

@@ -125,6 +125,9 @@ class RecipeIngredientResponse(BaseModel):
     unit_abbreviation: str | None
     notes: str | None
     position: int
+    display_quantity: Decimal = Field(description="Quantity in the response's unit_system (as written for 'original')")
+    display_unit_abbreviation: str | None
+    converted: bool = Field(description="True if display_* differ from the quantity/unit the author wrote")
 
 
 class RecipeEquipmentResponse(BaseModel):
@@ -194,3 +197,4 @@ class RecipeDetailResponse(BaseModel):
     steps: list[RecipeStepResponse]
     created_at: datetime
     updated_at: datetime
+    unit_system: str = Field(description="metric | us | original: the system of the ingredients' display_* fields")

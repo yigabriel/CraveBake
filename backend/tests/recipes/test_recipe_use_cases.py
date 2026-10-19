@@ -132,6 +132,35 @@ class TestCreateAndGet:
             with pytest.raises(RecipeNotFoundError):
                 await get.execute(recipe_id, STRANGER)
 
+    async def test_get_shows_quantities_as_written_by_default(self, world):
+        recipe = await create(world)
+        detail = await GetRecipeUseCase(world.recipes, world.assembler).execute(recipe.id, STRANGER)
+
+        assert detail.unit_system == "original"
+        assert [(i.display_quantity, i.display_unit_abbreviation, i.converted) for i in detail.ingredients] == [
+            (Decimal("250"), "g", False),
+            (Decimal("3"), "u", False),
+        ]
+
+    async def test_get_displays_quantities_in_unit_system_without_touching_originals(self, world):
+        recipe = await create(world)
+        detail = await GetRecipeUseCase(world.recipes, world.assembler).execute(recipe.id, STRANGER, "us")
+
+        assert detail.unit_system == "us"
+        assert [(i.display_quantity, i.display_unit_abbreviation, i.converted) for i in detail.ingredients] == [
+            (Decimal("125"), "cup", True),
+            (Decimal("1.5"), "cup", True),
+        ]
+        # The editor and preparation read these: they stay as the author wrote them.
+        assert [(i.quantity, i.unit_id, i.unit_abbreviation) for i in detail.ingredients] == [
+            (Decimal("250"), world.grams, "g"),
+            (Decimal("3"), world.units, "u"),
+        ]
+        stored = await RecipeQueryService(world.recipes, world.assembler, world.categories, world.tags).get_detail(
+            recipe.id, STRANGER
+        )
+        assert stored.unit_system == "original"
+
 
 class TestOwnership:
 

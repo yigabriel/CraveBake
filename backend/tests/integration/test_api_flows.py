@@ -353,6 +353,14 @@ class TestPreparation:
 
         detail = await ok(await client.post(f"/v1/preparations/{prep_id}/steps/1/complete", headers=headers))
         assert (detail["current_step_number"], detail["total_steps"]) == (2, 3)
+
+        # The recipe detail converts the same way, keeping what the author wrote next to it.
+        shown = await ok(await client.get(f"/v1/recipes/{recipe['id']}", params={"unit_system": "metric"}, headers=headers))
+        flour_line = next(i for i in shown["ingredients"] if i["unit_abbreviation"] == "cup")
+        assert (Decimal(str(flour_line["display_quantity"])), flour_line["display_unit_abbreviation"]) == (Decimal("250"), "g")
+        assert (shown["unit_system"], flour_line["converted"]) == ("metric", True)
+        as_written = await ok(await client.get(f"/v1/recipes/{recipe['id']}", params={"unit_system": "original"}, headers=headers))
+        assert next(i for i in as_written["ingredients"] if i["id"] == flour_line["id"])["converted"] is False
         detail = await ok(await client.post(f"/v1/preparations/{prep_id}/steps/2/timer", headers=headers))
         assert 0 < detail["steps"][1]["timer_remaining_seconds"] <= 1800
         assert (await client.post(f"/v1/preparations/{prep_id}/steps/1/timer", headers=headers)).status_code == 400

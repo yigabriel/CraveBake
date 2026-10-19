@@ -9,8 +9,15 @@ has to adapt, as long as its public contract holds.
 """
 from __future__ import annotations
 
+from app.ingredients.application.dto.display_quantity_dto import QuantityToDisplayDTO
 from app.ingredients.application.public.ingredient_query_service import IngredientQueryService
-from app.recipes.domain.services.ingredient_catalog import CatalogIngredient, CatalogUnit, IngredientCatalog
+from app.recipes.domain.services.ingredient_catalog import (
+    CatalogIngredient,
+    CatalogUnit,
+    DisplayedQuantity,
+    IngredientCatalog,
+    QuantityToDisplay,
+)
 
 
 class IngredientsModuleCatalog(IngredientCatalog):
@@ -28,3 +35,10 @@ class IngredientsModuleCatalog(IngredientCatalog):
             unit.id: CatalogUnit(id=unit.id, name=unit.name, abbreviation=unit.abbreviation)
             for unit in await self._ingredients.get_units(ids)
         }
+
+    async def display_in(self, quantities: list[QuantityToDisplay], unit_system: str) -> list[DisplayedQuantity]:
+        shown = await self._ingredients.display_in_unit_system(
+            [QuantityToDisplayDTO(item.ingredient_id, item.quantity, item.unit_id) for item in quantities],
+            unit_system,
+        )
+        return [DisplayedQuantity(item.quantity, item.unit_abbreviation, item.converted) for item in shown]

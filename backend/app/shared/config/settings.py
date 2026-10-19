@@ -18,7 +18,7 @@ class Settings(BaseSettings):
 
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60
+    access_token_expire_minutes: int = 3720
 
     # Failed logins allowed per (client IP, email) before that pair is locked out.
     login_max_failed_attempts: int = 5

@@ -34,8 +34,10 @@ from app.recipes.domain.repositories.recipe_catalog_repositories import (
 )
 from app.recipes.domain.repositories.recipe_repository import RecipeRepository
 from app.recipes.domain.services.equipment_catalog import EquipmentCatalog
-from app.recipes.domain.services.ingredient_catalog import IngredientCatalog
+from app.recipes.domain.services.ingredient_catalog import DisplayedQuantity, IngredientCatalog, QuantityToDisplay
 from app.recipes.domain.value_objects.recipe_id import RecipeId
+
+ORIGINAL_UNITS = "original"
 
 
 def category_to_dto(category: RecipeCategory) -> RecipeCategoryDTO:
@@ -122,13 +124,25 @@ class RecipeAssembler:
             for recipe in recipes
         ]
 
-    async def to_detail(self, recipe: Recipe, viewer_user_id: str) -> RecipeDetailDTO:
+    async def to_detail(
+        self, recipe: Recipe, viewer_user_id: str, unit_system: str = ORIGINAL_UNITS
+    ) -> RecipeDetailDTO:
+        """`unit_system` only changes the display_* fields of the ingredients; the stored recipe is untouched."""
         context = await self._load_context([recipe], viewer_user_id)
-        ingredients = await self._ingredient_catalog.get_ingredients(
-            [line.ingredient_id for line in recipe.ingredients]
-        )
-        units = await self._ingredient_catalog.get_units([line.unit_id for line in recipe.ingredients])
+        lines = sorted(recipe.ingredients, key=lambda line: line.position)
+        ingredients = await self._ingredient_catalog.get_ingredients([line.ingredient_id for line in lines])
+        units = await self._ingredient_catalog.get_units([line.unit_id for line in lines])
         equipment = await self._equipment_catalog.get_equipment([item.equipment_id for item in recipe.equipment])
+
+        def abbreviation(line) -> str | None:
+            return units[line.unit_id].abbreviation if line.unit_id in units else None
+
+        if unit_system == ORIGINAL_UNITS:
+            shown = [DisplayedQuantity(line.quantity, abbreviation(line) or "", converted=False) for line in lines]
+        else:
+            shown = await self._ingredient_catalog.display_in(
+                [QuantityToDisplay(line.ingredient_id, line.quantity, line.unit_id) for line in lines], unit_system
+            )
 
         return RecipeDetailDTO(
             **context.common_fields(recipe),
@@ -144,11 +158,14 @@ class RecipeAssembler:
                     else None,
                     quantity=line.quantity,
                     unit_id=line.unit_id,
-                    unit_abbreviation=units[line.unit_id].abbreviation if line.unit_id in units else None,
+                    unit_abbreviation=abbreviation(line),
                     notes=line.notes,
                     position=line.position,
+                    display_quantity=display.quantity,
+                    display_unit_abbreviation=display.unit_abbreviation or abbreviation(line),
+                    converted=display.converted,
                 )
-                for line in sorted(recipe.ingredients, key=lambda line: line.position)
+                for line, display in zip(lines, shown)
             ],
             equipment=[
                 RecipeEquipmentDTO(
@@ -170,6 +187,7 @@ class RecipeAssembler:
                 )
                 for step in sorted(recipe.steps, key=lambda step: step.step_number)
             ],
+            unit_system=unit_system,
         )
 
     async def _load_context(self, recipes: list[Recipe], viewer_user_id: str) -> _Context:
