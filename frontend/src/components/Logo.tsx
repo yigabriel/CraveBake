@@ -2,7 +2,7 @@ import { useId } from "react";
 
 /**
  * Crave Bake isotype: the cookie is the C, the bite is a mirrored B, and the two
- * crumbs sit where the B's counters would be. Source: public/logo-concepts/galleta-cb-migas-clasica.svg.
+ * crumbs sit where the B's counters would be. Same drawing as public/favicon.svg.
  */
 export function LogoMark({ size = 32, className = "" }: { size?: number; className?: string }) {
   // Unique per instance: two marks on one page must not share a <mask> id.
@@ -33,14 +33,25 @@ export function LogoMark({ size = 32, className = "" }: { size?: number; classNa
   );
 }
 
+/** The wordmark: Fraunces extra bold, "Crave" in espresso and "Bake" in brick-red italic. */
+export function Wordmark({ size = 24, className = "" }: { size?: number; className?: string }) {
+  return (
+    <span
+      className={`inline-flex items-baseline gap-[0.25em] whitespace-nowrap font-serif font-extrabold leading-none tracking-tight ${className}`}
+      style={{ fontSize: size }}
+    >
+      <span className="text-[#2d1810]">Crave</span>
+      <span className="italic text-[#9c3b24]">Bake</span>
+    </span>
+  );
+}
+
 /** Mark + wordmark, for headers and footers. */
 export function Logo({ size = 32, className = "" }: { size?: number; className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-xs ${className}`}>
+    <span className={`inline-flex select-none items-center gap-sm ${className}`}>
       <LogoMark size={size} />
-      <span className="font-bold tracking-tight text-[#3A1F14]" style={{ fontSize: size * 0.62 }}>
-        Crave <span className="text-primary">Bake</span>
-      </span>
+      <Wordmark size={size * 0.66} />
     </span>
   );
 }

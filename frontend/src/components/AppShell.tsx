@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, NavLink, Outlet, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/AuthContext";
-import { Logo, LogoMark } from "./Logo";
+import { Logo } from "./Logo";
 import { Icon } from "./ui";
 
 const NAV = [
@@ -115,7 +115,7 @@ export function AppShell() {
       <footer className="hidden border-t border-outline-variant/40 bg-surface-container-low lg:block">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-margin-desktop py-md text-label-md text-on-surface-variant">
           <span className="flex items-center gap-xs">
-            <LogoMark size={22} /> Crave Bake — {t("nav.tagline")}
+            <Logo size={24} /> — {t("nav.tagline")}
           </span>
           <span className="flex gap-md">
             <Link to="/">{t("nav.explore")}</Link>

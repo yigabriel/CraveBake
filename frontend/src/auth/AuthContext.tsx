@@ -3,7 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { setUnauthorizedHandler, tokenStore } from "../api/client";
 import { authApi, usersApi } from "../api/endpoints";
-import type { Language, User } from "../api/types";
+import type { User } from "../api/types";
+import { browserLanguage } from "../i18n";
 
 interface AuthState {
   user: User | null;
@@ -65,20 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (email: string, password: string, fullName: string) => {
-      // Read before login() switches the UI to the account's (default) language.
-      const uiLanguage = i18n.language as Language;
-      await authApi.register({ email, password, full_name: fullName });
+      // The account speaks the browser's language from the start.
+      await authApi.register({ email, password, full_name: fullName, preferred_language: browserLanguage() });
       // Registration returns no token: sign in with the same credentials.
-      const created = await login(email, password);
-      // New accounts default to "en": keep the language the person signed up in.
-      if (created.preferred_language !== uiLanguage) {
-        const updated = await usersApi.setLanguage(uiLanguage).catch(() => created);
-        setUser(updated);
-        return updated;
-      }
-      return created;
+      return login(email, password);
     },
-    [login, i18n, setUser],
+    [login],
   );
 
   const value = useMemo(

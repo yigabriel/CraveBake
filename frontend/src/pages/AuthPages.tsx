@@ -5,6 +5,7 @@ import { ApiError } from "../api/client";
 import { useErrorMessage } from "../api/queries";
 import { useAuth } from "../auth/AuthContext";
 import { Logo } from "../components/Logo";
+import { DessertScene, ReviewCard, type Dessert } from "../components/DessertScene";
 import { Button, Icon } from "../components/ui";
 
 export const passwordRules = (password: string) => [
@@ -30,19 +31,21 @@ export function PasswordRules({ password }: { password: string }) {
 const CREAM = "#FBF6EE";
 
 /** The craving in the headline changes every couple of seconds (still for reduced motion). */
-function CravingWord() {
+function CravingWord({ dessert }: { dessert: Dessert | null }) {
   const { t } = useTranslation();
   const words = t("auth.cravings", { returnObjects: true }) as string[];
   const [index, setIndex] = useState(0);
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Paused while a dessert is pointed at: the headline names that one instead.
+    if (dessert || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = setInterval(() => setIndex((i) => (i + 1) % words.length), 2400);
     return () => clearInterval(timer);
-  }, [words.length]);
+  }, [words.length, dessert]);
+  const word = dessert ? t(`auth.desserts.${dessert}.craving`) : words[index];
   return (
     <span className="relative inline-block font-serif font-semibold italic text-primary">
-      <span key={index} className="inline-block animate-craving">
-        {words[index]}
+      <span key={word} className="inline-block animate-craving">
+        {word}
       </span>
       {/* A crumb trail under the word, drawn like the logo's crumbs. */}
       <svg aria-hidden viewBox="0 0 120 10" className="absolute -bottom-1 left-0 h-2.5 w-full" preserveAspectRatio="none">
@@ -58,7 +61,7 @@ function AuthField({ label, error, hint, ...props }: InputHTMLAttributes<HTMLInp
       <span className="text-label-md font-semibold text-[#3A1F14]">{label}</span>
       <input
         {...props}
-        className={`w-full rounded-xl border bg-white/80 px-md py-sm text-body-md text-[#3A1F14] shadow-[0_1px_0_rgba(58,31,20,0.04)] outline-none backdrop-blur transition-colors placeholder:text-[#3A1F14]/35 focus:border-primary focus:bg-white ${
+        className={`w-full rounded-xl border bg-white/80 px-md py-[10px] text-body-md text-[#3A1F14] shadow-[0_1px_0_rgba(58,31,20,0.04)] outline-none backdrop-blur transition-colors placeholder:text-[#3A1F14]/35 focus:border-primary focus:bg-white ${
           error ? "border-error" : "border-[#3A1F14]/15"
         }`}
       />
@@ -78,38 +81,33 @@ function Notice({ children }: { children: ReactNode }) {
 
 function AuthLayout({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
+  const [dessert, setDessert] = useState<Dessert | null>(null);
   const tab = ({ isActive }: { isActive: boolean }) =>
     `relative pb-xs text-label-md transition-colors ${
       isActive ? "font-semibold text-[#3A1F14] after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:rounded-full after:bg-primary" : "text-[#3A1F14]/55 hover:text-[#3A1F14]"
     }`;
   return (
-    <div className="relative min-h-screen overflow-hidden" style={{ background: CREAM }}>
-      {/* Desktop: the photo fills the screen; the form lives on its empty cream side. */}
-      <img src="/images/auth-bakery.webp" alt="" className="absolute inset-0 hidden h-full w-full object-cover object-right lg:block" />
-      <div
-        className="absolute inset-y-0 left-0 hidden w-[62%] lg:block"
-        style={{ background: `linear-gradient(90deg, ${CREAM} 55%, ${CREAM}cc 75%, transparent)` }}
-      />
-      {/* Mobile: the photo is a banner that melts into the cream. */}
-      <div className="relative h-60 lg:hidden">
-        <img src="/images/auth-bakery.webp" alt="" className="h-full w-full object-cover object-[78%_50%]" />
-        <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, transparent 35%, ${CREAM})` }} />
+    <div className="relative flex min-h-screen flex-col overflow-hidden lg:block" style={{ background: CREAM }}>
+      {/* Desktop: the pastry table fills the screen; the form lives on its empty cream side. */}
+      <div className="fixed inset-0 hidden overflow-hidden lg:block">
+        <DessertScene variant="cover" active={dessert} onActive={setDessert} />
       </div>
 
-      <div className="relative z-10 -mt-xl flex min-h-[calc(100vh-15rem)] flex-col px-margin-mobile pb-md lg:mt-0 lg:min-h-screen lg:px-xl lg:py-lg">
-        <Link to="/login" aria-label="Crave Bake" className="mb-md self-start">
-          <Logo size={40} />
+      {/* Spans the page but lets the pointer through to the desserts; only real controls catch it. */}
+      <div className="pointer-events-none relative z-10 flex flex-col px-margin-mobile pb-md pt-md lg:min-h-screen lg:px-xl lg:py-md">
+        <Link to="/login" aria-label="Crave Bake" className="pointer-events-auto mb-md self-start">
+          <Logo size={36} />
         </Link>
 
-        <main className="flex w-full max-w-[440px] flex-1 flex-col justify-center">
-          <h1 className="text-[38px] font-bold leading-[1.08] tracking-tight text-[#3A1F14] lg:text-[60px]">
+        <main className="pointer-events-auto flex w-full max-w-[420px] flex-1 flex-col justify-center">
+          <h1 className="text-[32px] font-bold leading-[1.06] tracking-tight text-[#3A1F14] lg:text-[44px] xl:text-[50px]">
             {t("auth.headline")}
             <br />
-            <CravingWord />
+            <CravingWord dessert={dessert} />
           </h1>
-          <p className="mb-lg mt-md max-w-sm text-body-lg text-[#3A1F14]/70">{t("auth.subtitle")}</p>
+          <p className="mb-md mt-sm max-w-sm text-body-md text-[#3A1F14]/70">{t("auth.subtitle")}</p>
 
-          <nav className="mb-md flex gap-md border-b border-[#3A1F14]/10">
+          <nav className="mb-sm flex gap-md border-b border-[#3A1F14]/10">
             <NavLink to="/login" className={tab}>
               {t("auth.login")}
             </NavLink>
@@ -120,8 +118,33 @@ function AuthLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
 
-        <p className="mt-lg text-label-sm font-normal text-[#3A1F14]/50">© Crave Bake · {t("auth.footer")}</p>
+        <p className="mt-md hidden text-label-sm font-normal text-[#3A1F14]/50 lg:block">
+          © Crave Bake · {t("auth.footer")} · {t("auth.hoverHint")}
+        </p>
       </div>
+
+      {/* Phones and tablets: the table closes the page, after the form. */}
+      <div
+        className="relative mt-auto overflow-hidden pt-sm lg:hidden"
+        // Tall enough for the whole table on a phone (it spans the full canvas height), capped on
+        // tablets — but never so short that the scene is narrower than the screen.
+        style={{ ["--scene-h" as string]: "max(min(118vw, 27rem), calc(100vw * 1536 / 2736))", height: "var(--scene-h)" }}
+      >
+        <DessertScene variant="banner" active={dessert} onActive={setDessert} />
+        {/* Above the desserts (z 10-20): the fade, the hint and the footer must stay readable. */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-16" style={{ background: `linear-gradient(0deg, transparent, ${CREAM})` }} />
+        <p className="pointer-events-none absolute left-1/2 top-sm z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/75 px-sm py-[2px] text-label-sm text-[#3A1F14]/75 shadow-card backdrop-blur">
+          {t("auth.tapHint")}
+        </p>
+        <p className="pointer-events-none absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-[#FBF6EE] via-[#FBF6EE]/85 to-transparent pb-xs pt-md text-center text-label-sm text-[#3A1F14]/70">
+          © Crave Bake · {t("auth.footer")}
+        </p>
+      </div>
+      {dessert && (
+        <div className="fixed inset-x-margin-mobile bottom-md z-50 lg:hidden">
+          <ReviewCard dessert={dessert} compact />
+        </div>
+      )}
     </div>
   );
 }
@@ -164,7 +187,7 @@ export function LoginPage() {
 
   return (
     <AuthLayout>
-      <form onSubmit={submit} className="flex flex-col gap-md">
+      <form onSubmit={submit} className="flex flex-col gap-sm">
         <AuthField label={t("auth.email")} type="email" autoComplete="email" required placeholder="tu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
         <AuthField label={t("auth.password")} type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         {/* No "forgot password" link: the API has no password recovery yet (§17). */}
@@ -211,7 +234,7 @@ export function RegisterPage() {
 
   return (
     <AuthLayout>
-      <form onSubmit={submit} className="flex flex-col gap-md">
+      <form onSubmit={submit} className="flex flex-col gap-sm">
         <AuthField label={t("auth.fullName")} error={errors.full_name} required maxLength={255} autoComplete="name" value={form.full_name} onChange={set("full_name")} />
         <AuthField label={t("auth.email")} error={errors.email} type="email" required autoComplete="email" placeholder="tu@email.com" value={form.email} onChange={set("email")} />
         <AuthField

@@ -41,7 +41,7 @@ import type {
 // --- Auth & profile ------------------------------------------------------------------
 
 export const authApi = {
-  register: (body: { email: string; password: string; full_name: string }) =>
+  register: (body: { email: string; password: string; full_name: string; preferred_language: Language }) =>
     api<User>("/auth/register", { method: "POST", json: body }),
   // OAuth2 password form: `username` is the email.
   login: (email: string, password: string) =>

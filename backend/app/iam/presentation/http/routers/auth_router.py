@@ -18,6 +18,7 @@ from app.iam.presentation.http.schemas.auth_schemas import (
     TokenResponse,
 )
 from app.iam.presentation.http.schemas.user_schemas import UserResponse
+from app.shared.presentation.i18n import language_from_header
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -25,12 +26,15 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     request: RegisterRequest,
+    http_request: Request,
     use_case: RegisterUserUseCase = Depends(get_register_user_use_case),
 ) -> UserResponse:
     dto = RegisterUserDTO(
         email=request.email,
         password=request.password,
         full_name=request.full_name,
+        # New accounts speak the language the person signed up in.
+        preferred_language=request.preferred_language or language_from_header(http_request.headers.get("accept-language")),
     )
 
     user = await use_case.execute(dto)

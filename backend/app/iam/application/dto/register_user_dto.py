@@ -7,3 +7,4 @@ class RegisterUserDTO:
     email: str
     password: str
     full_name: str
+    preferred_language: str | None = None  # None: the domain default

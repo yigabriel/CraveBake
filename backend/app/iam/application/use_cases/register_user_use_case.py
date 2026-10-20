@@ -15,6 +15,7 @@ from app.iam.domain.repositories.user_repository import UserRepository
 from app.iam.domain.services.password_hasher import PasswordHasher
 from app.iam.domain.value_objects.email import Email
 from app.iam.domain.value_objects.plain_password import PlainPassword
+from app.iam.domain.value_objects.language_preference import LanguagePreference
 
 
 class RegisterUserUseCase:
@@ -31,7 +32,8 @@ class RegisterUserUseCase:
         plain_password = PlainPassword(dto.password)
         hashed_password = self._password_hasher.hash(plain_password)
 
-        user = User.register(email=email, hashed_password=hashed_password, full_name=dto.full_name)
+        language = {"preferred_language": LanguagePreference(dto.preferred_language)} if dto.preferred_language else {}
+        user = User.register(email=email, hashed_password=hashed_password, full_name=dto.full_name, **language)
         await self._user_repository.add(user)
 
         return user_to_dto(user)

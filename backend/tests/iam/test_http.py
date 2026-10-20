@@ -64,6 +64,27 @@ class TestAuth:
         assert response.status_code == 200
         assert response.json()["token_type"] == "bearer"
 
+    @pytest.mark.parametrize(
+        "body_language, accept_language, expected",
+        [
+            ("es", "en-US,en;q=0.9", "es"),  # explicit choice wins
+            (None, "es-AR,es;q=0.9,en;q=0.8", "es"),  # else the browser's first supported language
+            (None, "fr-FR,fr;q=0.9,en;q=0.5", "en"),
+            (None, None, "en"),  # else the default
+        ],
+    )
+    def test_register_speaks_the_language_of_the_sign_up(self, client, body_language, accept_language, expected):
+        body = {"email": "lang@example.com", "password": "Password1", "full_name": "Lang"}
+        if body_language:
+            body["preferred_language"] = body_language
+        headers = {"Accept-Language": accept_language} if accept_language else {}
+        response = client.post("/v1/auth/register", json=body, headers=headers)
+        assert (response.status_code, response.json()["preferred_language"]) == (201, expected)
+
+    def test_register_rejects_unknown_language(self, client):
+        body = {"email": "fr@example.com", "password": "Password1", "full_name": "Fr", "preferred_language": "fr"}
+        assert client.post("/v1/auth/register", json=body).status_code == 422
+
     def test_register_duplicate_is_409(self, client):
         register(client)
         response = register(client, email="ANA@example.com")

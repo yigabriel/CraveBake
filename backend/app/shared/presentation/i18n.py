@@ -14,7 +14,7 @@ from typing import Annotated, Any
 
 from pydantic import BeforeValidator, ValidationInfo
 
-from app.shared.domain.value_objects.localized_text import LocalizedText
+from app.shared.domain.value_objects.localized_text import SUPPORTED_LANGUAGES, LocalizedText
 
 
 def _localize(value: Any, info: ValidationInfo) -> Any:
@@ -25,6 +25,19 @@ def _localize(value: Any, info: ValidationInfo) -> Any:
 
 
 LocalizedStr = Annotated[str, BeforeValidator(_localize)]
+
+
+def language_from_header(accept_language: str | None) -> str | None:
+    """The first supported language of an Accept-Language header ("es-AR,es;q=0.9,en;q=0.8" -> "es").
+
+    Tags are taken in the order sent (browsers list them by preference), ignoring
+    region and q-values; None when nothing supported is listed.
+    """
+    for part in (accept_language or "").split(","):
+        tag = part.split(";")[0].strip().lower().split("-")[0]
+        if tag in SUPPORTED_LANGUAGES:
+            return tag
+    return None
 
 
 def language_context(user: Any) -> dict[str, str]:
