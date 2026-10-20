@@ -72,6 +72,7 @@ class PreparationAssembler:
                     original_unit_abbreviation=line.unit_abbreviation,
                     converted=display.converted,
                     notes=line.notes,
+                    section=line.section,
                 )
                 for line, display in zip(session.ingredients, shown)
             ],
@@ -87,6 +88,7 @@ class PreparationAssembler:
                     is_completed=step.is_completed,
                     completed_at=step.completed_at,
                     is_current=step.step_number == session.current_step_number,
+                    section=step.section,
                 )
                 for step in session.steps
             ],

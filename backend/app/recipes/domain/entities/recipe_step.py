@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.recipes.domain.value_objects.recipe_section_id import RecipeSectionId
 from app.recipes.domain.value_objects.recipe_step_id import RecipeStepId
 from app.shared.exceptions.domain_exceptions import ValidationError
 
@@ -19,6 +20,7 @@ class RecipeStep:
     instructions: str
     title: str | None = None
     timer_seconds: int | None = None
+    section_id: RecipeSectionId | None = None
 
     def __post_init__(self) -> None:
         self.instructions = (self.instructions or "").strip()

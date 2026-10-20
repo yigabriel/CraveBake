@@ -41,6 +41,7 @@ class RecipesModuleSource(RecipeSource):
                     unit_abbreviation=line.unit_abbreviation,
                     notes=line.notes,
                     position=line.position,
+                    section=line.section,
                 )
                 for line in detail.ingredients
             ],
@@ -52,6 +53,7 @@ class RecipesModuleSource(RecipeSource):
                     title=step.title,
                     timer_seconds=step.timer_seconds,
                     photo_url=step.photo.photo_url if step.photo else None,
+                    section=step.section,
                 )
                 for step in detail.steps
             ],

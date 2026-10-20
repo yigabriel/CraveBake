@@ -29,3 +29,6 @@ class RecipeIngredientModel(Base):
     unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("units.id"), nullable=False)
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
     position: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0)
+    section_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("recipe_sections.id", ondelete="SET NULL"), nullable=True, index=True
+    )

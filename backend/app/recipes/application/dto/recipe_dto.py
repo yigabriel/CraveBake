@@ -17,6 +17,7 @@ class RecipeIngredientInputDTO:
     quantity: Decimal
     unit_id: str
     notes: str | None = None
+    section: str | None = None  # name of the group it belongs to
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,7 @@ class RecipeStepInputDTO:
     title: str | None = None
     timer_seconds: int | None = None
     id: str | None = None  # set to keep an existing step (and its photo) when replacing steps
+    section: str | None = None  # name of the group it belongs to
 
 
 @dataclass(frozen=True)
@@ -114,6 +116,8 @@ class RecipeIngredientDTO:
     unit_abbreviation: str | None
     notes: str | None
     position: int
+    section_id: str | None
+    section: str | None  # name of its group
     # How to show it in the requested unit system; equal to quantity/unit_abbreviation for 'original'.
     display_quantity: Decimal
     display_unit_abbreviation: str | None
@@ -145,6 +149,8 @@ class RecipeStepDTO:
     instructions: str
     timer_seconds: int | None
     photo: RecipePhotoDTO | None
+    section_id: str | None
+    section: str | None  # name of its group
 
 
 @dataclass(frozen=True)

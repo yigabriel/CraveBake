@@ -58,6 +58,7 @@ class PreparedIngredient:
     unit_abbreviation: str | None
     notes: str | None
     position: int
+    section: str | None = None  # group of the recipe it belonged to, copied like the rest
 
 
 @dataclass
@@ -70,6 +71,7 @@ class PreparedStep:
     source_step_id: str | None = None
     completed_at: datetime | None = None
     timer_started_at: datetime | None = None
+    section: str | None = None  # group of the recipe it belonged to, copied like the rest
 
     @property
     def is_completed(self) -> bool:
@@ -108,6 +110,7 @@ class PreparationSession:
                 timer_seconds=step.timer_seconds,
                 photo_url=step.photo_url,
                 source_step_id=step.source_step_id,
+                section=step.section,
             )
             for step in sorted(recipe.steps, key=lambda step: step.step_number)
         ]
@@ -129,6 +132,7 @@ class PreparationSession:
                     unit_abbreviation=line.unit_abbreviation,
                     notes=line.notes,
                     position=line.position,
+                    section=line.section,
                 )
                 for line in sorted(recipe.ingredients, key=lambda line: line.position)
             ],

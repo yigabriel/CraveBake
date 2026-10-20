@@ -6,14 +6,17 @@ per-test transactional one.
 """
 from __future__ import annotations
 
+import uuid
 from decimal import Decimal
 
 import pytest
 from httpx2 import ASGITransport, AsyncClient
+from sqlalchemy import select
 
 from app.iam.infraestructure.security.login_rate_limiter import LoginRateLimiter
 from app.iam.presentation.http.dependencies import get_login_rate_limiter
 from app.main import app
+from app.recipes.infraestructure.persistence.models.recipe_section_model import RecipeSectionModel
 from app.shared.database.session import get_db_session
 
 PASSWORD = "Secret123"
@@ -231,6 +234,102 @@ class TestRecipeLifecycle:
 
         assert response.status_code == 404
         assert (await ok(await client.get("/v1/recipes/mine", headers=headers)))["total"] == 0
+
+
+class TestRecipeSections:
+    """Groups ("Masa choux", "Manjar") through HTTP, real SQL and the preparation snapshot."""
+
+    @staticmethod
+    def grouped_body(catalog):
+        units = catalog["units"]
+        flour, butter, egg = catalog["flour"], catalog["butter"], catalog["egg_white"]
+        return recipe_body(
+            catalog,
+            "Profiteroles",
+            ingredients=[
+                {"ingredient_id": flour, "quantity": "1", "unit_id": units["cup"], "section": "Masa choux"},
+                {"ingredient_id": butter, "quantity": "100", "unit_id": units["g"], "section": "masa choux"},
+                {"ingredient_id": egg, "quantity": "3", "unit_id": units["u"], "section": "Manjar"},
+            ],
+            steps=[
+                {"instructions": "Hervir", "section": "Masa choux"},
+                {"instructions": "Batir", "section": "Manjar"},
+            ],
+        )
+
+    async def test_create_read_edit_and_drop_sections(self, client, catalog, db_session):
+        headers = await sign_up(client, "sections@example.com")
+        created = await ok(await client.post("/v1/recipes", json=self.grouped_body(catalog), headers=headers), 201)
+        recipe_id = created["id"]
+
+        # Reloaded from the database: one section per name, shared by lines and steps.
+        stored = await ok(await client.get(f"/v1/recipes/{recipe_id}", headers=headers))
+        assert [i["section"] for i in stored["ingredients"]] == ["Masa choux", "Masa choux", "Manjar"]
+        assert [s["section"] for s in stored["steps"]] == ["Masa choux", "Manjar"]
+        assert stored["ingredients"][0]["section_id"] == stored["ingredients"][1]["section_id"]
+        assert stored["ingredients"][0]["section_id"] == stored["steps"][0]["section_id"]
+
+        # Renaming "Manjar" in the ingredients only: the steps still use it, so both groups exist
+        # until the steps follow (the editor sends both when a group is renamed).
+        units = catalog["units"]
+        moved = [
+            {"ingredient_id": catalog["flour"], "quantity": "1", "unit_id": units["cup"], "section": "Masa choux"},
+            {"ingredient_id": catalog["egg_white"], "quantity": "3", "unit_id": units["u"], "section": "Crema"},
+        ]
+        after = await ok(await client.put(f"/v1/recipes/{recipe_id}/ingredients", json={"ingredients": moved}, headers=headers))
+        assert [i["section"] for i in after["ingredients"]] == ["Masa choux", "Crema"]
+        steps = [{"instructions": "Hervir", "section": "Masa choux"}, {"instructions": "Batir", "section": "Crema"}]
+        after = await ok(await client.put(f"/v1/recipes/{recipe_id}/steps", json={"steps": steps}, headers=headers))
+        assert [s["section"] for s in after["steps"]] == ["Masa choux", "Crema"]
+
+        # No line uses "Manjar" any more: it is gone from the database, not just from the response.
+        rows = await db_session.execute(select(RecipeSectionModel.name).where(RecipeSectionModel.recipe_id == uuid.UUID(recipe_id)))
+        assert sorted(rows.scalars()) == ["Crema", "Masa choux"]
+
+    async def test_grouping_rules_are_400s(self, client, catalog):
+        headers = await sign_up(client, "rules@example.com")
+        units = catalog["units"]
+
+        def line(section):
+            return {"ingredient_id": catalog["flour"], "quantity": "1", "unit_id": units["g"], "section": section}
+
+        scattered = recipe_body(catalog, ingredients=[line("A"), line("B"), line("A")])
+        assert (await client.post("/v1/recipes", json=scattered, headers=headers)).status_code == 400
+        ungrouped_last = recipe_body(catalog, ingredients=[line("A"), line(None)])
+        assert (await client.post("/v1/recipes", json=ungrouped_last, headers=headers)).status_code == 400
+        too_long = recipe_body(catalog, ingredients=[line("x" * 101)])
+        assert (await client.post("/v1/recipes", json=too_long, headers=headers)).status_code == 422
+
+    async def test_personalization_and_preparation_keep_the_groups(self, client, catalog):
+        author = await sign_up(client, "chef-sections@example.com")
+        fan = await sign_up(client, "fan-sections@example.com")
+        original = await ok(await client.post("/v1/recipes", json=self.grouped_body(catalog), headers=author), 201)
+
+        copy = await ok(await client.post(f"/v1/recipes/{original['id']}/personalizations", headers=fan), 201)
+        assert [i["section"] for i in copy["ingredients"]] == ["Masa choux", "Masa choux", "Manjar"]
+        assert copy["ingredients"][0]["section_id"] != original["ingredients"][0]["section_id"]
+        # Emptying the copy's groups leaves the original alone.
+        await ok(await client.put(f"/v1/recipes/{copy['id']}/steps", json={"steps": [{"instructions": "Todo"}]}, headers=fan))
+        await ok(
+            await client.put(
+                f"/v1/recipes/{copy['id']}/ingredients",
+                json={"ingredients": [{"ingredient_id": catalog["flour"], "quantity": "1", "unit_id": catalog["units"]["g"]}]},
+                headers=fan,
+            )
+        )
+        assert [i["section"] for i in (await ok(await client.get(f"/v1/recipes/{original['id']}", headers=author)))["ingredients"]] == [
+            "Masa choux",
+            "Masa choux",
+            "Manjar",
+        ]
+
+        # Cooking copies the group names; renaming them later does not touch the preparation.
+        started = await ok(await client.post("/v1/preparations", json={"recipe_id": original["id"]}, headers=author), 201)
+        assert [i["section"] for i in started["ingredients"]] == ["Masa choux", "Masa choux", "Manjar"]
+        assert [s["section"] for s in started["steps"]] == ["Masa choux", "Manjar"]
+        await ok(await client.put(f"/v1/recipes/{original['id']}/steps", json={"steps": [{"instructions": "Otro"}]}, headers=author))
+        again = await ok(await client.get(f"/v1/preparations/{started['id']}", headers=author))
+        assert [s["section"] for s in again["steps"]] == ["Masa choux", "Manjar"]
 
 
 class TestPersonalizationAndPortfolio:

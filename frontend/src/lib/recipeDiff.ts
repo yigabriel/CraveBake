@@ -34,11 +34,13 @@ export interface RecipeDiff {
   steps: StepChange[];
 }
 
+// Moving a line to another group is a change too, so the group is part of what is compared.
 const amount = (line: RecipeDetail["ingredients"][number]) =>
-  `${new Decimal(line.quantity).toString()} ${line.unit_abbreviation ?? ""}`.trim();
+  `${new Decimal(line.quantity).toString()} ${line.unit_abbreviation ?? ""}`.trim() + (line.section ? ` (${line.section})` : "");
 
 const stepText = (step: RecipeDetail["steps"][number]) =>
-  [step.title, step.instructions].filter(Boolean).join(" — ") + (step.timer_seconds ? ` (${step.timer_seconds}s)` : "");
+  [step.section && `[${step.section}]`, step.title, step.instructions].filter(Boolean).join(" — ") +
+  (step.timer_seconds ? ` (${step.timer_seconds}s)` : "");
 
 /** Lines grouped by ingredient; the same ingredient may appear twice (dough + dusting). */
 function byIngredient(recipe: RecipeDetail) {

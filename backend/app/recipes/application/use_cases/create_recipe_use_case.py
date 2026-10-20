@@ -41,7 +41,12 @@ class CreateRecipeUseCase:
             equipment=await self._reference_validator.equipment_lines(dto.equipment),
             tag_ids=await self._reference_validator.tags(dto.tag_ids),
             steps=[
-                StepDraft(instructions=step.instructions, title=step.title, timer_seconds=step.timer_seconds)
+                StepDraft(
+                    instructions=step.instructions,
+                    title=step.title,
+                    timer_seconds=step.timer_seconds,
+                    section=step.section,
+                )
                 for step in dto.steps
             ],
         )

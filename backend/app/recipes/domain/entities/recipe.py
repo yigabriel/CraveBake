@@ -10,6 +10,10 @@ through this class, which is where every business rule lives:
 - Max 3 cover photos; max 1 photo per step; a step photo must point to a
   step of this same recipe.
 - Steps are numbered 1..n by the aggregate, so `step_number` is unique.
+- Ingredient lines and steps may be grouped in named sections ("Masa choux").
+  A section exists only while a line uses it, its name is unique per recipe
+  (ignoring case), and lines are listed without section first and then each
+  section's lines together.
 - At most `MAX_TAGS` tags, each listed once.
 - Deletion is logical (`deleted_at`): favorites, personalizations and
   preparation sessions may still reference a deleted recipe.
@@ -25,6 +29,13 @@ from decimal import Decimal
 from app.recipes.domain.entities.recipe_equipment import RecipeEquipment
 from app.recipes.domain.entities.recipe_ingredient import RecipeIngredient
 from app.recipes.domain.entities.recipe_photo import PhotoType, RecipePhoto, validate_http_url
+from app.recipes.domain.entities.recipe_section import (
+    MAX_SECTIONS,
+    RecipeSection,
+    check_grouped,
+    clean_section_name,
+    section_key,
+)
 from app.recipes.domain.entities.recipe_step import RecipeStep
 from app.recipes.domain.exceptions import (
     CannotPersonalizePersonalizationError,
@@ -40,6 +51,7 @@ from app.recipes.domain.value_objects.recipe_equipment_id import RecipeEquipment
 from app.recipes.domain.value_objects.recipe_id import RecipeId
 from app.recipes.domain.value_objects.recipe_ingredient_id import RecipeIngredientId
 from app.recipes.domain.value_objects.recipe_photo_id import RecipePhotoId
+from app.recipes.domain.value_objects.recipe_section_id import RecipeSectionId
 from app.recipes.domain.value_objects.recipe_step_id import RecipeStepId
 from app.recipes.domain.value_objects.recipe_tag_id import RecipeTagId
 from app.shared.exceptions.domain_exceptions import ValidationError
@@ -71,6 +83,7 @@ class IngredientLine:
     quantity: Decimal
     unit_id: str
     notes: str | None = None
+    section: str | None = None  # name of the section it belongs to
 
 
 @dataclass(frozen=True)
@@ -89,6 +102,7 @@ class StepDraft:
     title: str | None = None
     timer_seconds: int | None = None
     id: RecipeStepId | None = None
+    section: str | None = None  # name of the section it belongs to
 
 
 @dataclass
@@ -109,6 +123,7 @@ class Recipe:
     tag_ids: list[RecipeTagId] = field(default_factory=list)
     steps: list[RecipeStep] = field(default_factory=list)
     photos: list[RecipePhoto] = field(default_factory=list)
+    sections: list[RecipeSection] = field(default_factory=list)
     deleted_at: datetime | None = None
     created_at: datetime = field(default_factory=_utc_now)
     updated_at: datetime = field(default_factory=_utc_now)
@@ -157,6 +172,7 @@ class Recipe:
         if self.is_personalization:
             raise CannotPersonalizePersonalizationError()
 
+        section_id_map = {section.id: RecipeSectionId() for section in self.sections}
         step_id_map: dict[RecipeStepId, RecipeStepId] = {}
         copied_steps: list[RecipeStep] = []
         for step in self.steps:
@@ -169,6 +185,7 @@ class Recipe:
                     instructions=step.instructions,
                     title=step.title,
                     timer_seconds=step.timer_seconds,
+                    section_id=section_id_map[step.section_id] if step.section_id else None,
                 )
             )
 
@@ -192,6 +209,7 @@ class Recipe:
                     unit_id=line.unit_id,
                     notes=line.notes,
                     position=line.position,
+                    section_id=section_id_map[line.section_id] if line.section_id else None,
                 )
                 for line in self.ingredients
             ],
@@ -200,6 +218,7 @@ class Recipe:
                 for item in self.equipment
             ],
             tag_ids=list(self.tag_ids),
+            sections=[RecipeSection(id=section_id_map[section.id], name=section.name) for section in self.sections],
             steps=copied_steps,
             photos=[
                 RecipePhoto(
@@ -278,6 +297,7 @@ class Recipe:
         self._touch()
 
     def replace_ingredients(self, lines: list[IngredientLine]) -> None:
+        section_ids = self._sections_for([line.section for line in lines])
         self.ingredients = [
             RecipeIngredient(
                 id=RecipeIngredientId(),
@@ -286,9 +306,11 @@ class Recipe:
                 unit_id=line.unit_id,
                 notes=line.notes,
                 position=position,
+                section_id=section_id,
             )
-            for position, line in enumerate(lines, start=1)
+            for position, (line, section_id) in enumerate(zip(lines, section_ids), start=1)
         ]
+        self._drop_unused_sections()
         self._touch()
 
     def replace_equipment(self, lines: list[EquipmentLine]) -> None:
@@ -318,8 +340,9 @@ class Recipe:
         existing_ids = {step.id for step in self.steps}
         kept_ids: set[RecipeStepId] = set()
         new_steps: list[RecipeStep] = []
+        section_ids = self._sections_for([draft.section for draft in drafts])
 
-        for number, draft in enumerate(drafts, start=1):
+        for number, (draft, section_id) in enumerate(zip(drafts, section_ids), start=1):
             if draft.id is not None:
                 if draft.id not in existing_ids:
                     raise RecipeStepNotFoundError(str(draft.id))
@@ -333,6 +356,7 @@ class Recipe:
                     instructions=draft.instructions,
                     title=draft.title,
                     timer_seconds=draft.timer_seconds,
+                    section_id=section_id,
                 )
             )
 
@@ -340,6 +364,7 @@ class Recipe:
         self.photos = [
             photo for photo in self.photos if photo.step_id is None or photo.step_id in kept_ids
         ]
+        self._drop_unused_sections()
         self._touch()
 
     def add_cover_photo(self, photo_url: str) -> RecipePhoto:
@@ -394,6 +419,30 @@ class Recipe:
         if self.deleted_at is None:
             self.deleted_at = _utc_now()
             self._touch()
+
+    def _sections_for(self, names: list[str | None]) -> list[RecipeSectionId | None]:
+        """The section each line belongs to, creating the ones this recipe does not have yet."""
+        cleaned = [clean_section_name(name) for name in names]
+        check_grouped(cleaned)
+        by_key = {section.key: section for section in self.sections}
+        ids: list[RecipeSectionId | None] = []
+        for name in cleaned:
+            if name is None:
+                ids.append(None)
+                continue
+            section = by_key.get(section_key(name))
+            if section is None:
+                section = RecipeSection(id=RecipeSectionId(), name=name)
+                by_key[section.key] = section
+                self.sections.append(section)
+            ids.append(section.id)
+        return ids
+
+    def _drop_unused_sections(self) -> None:
+        used = {line.section_id for line in self.ingredients} | {step.section_id for step in self.steps}
+        self.sections = [section for section in self.sections if section.id in used]
+        if len(self.sections) > MAX_SECTIONS:
+            raise ValidationError(f"A recipe cannot have more than {MAX_SECTIONS} sections")
 
     def _touch(self) -> None:
         self.updated_at = _utc_now()

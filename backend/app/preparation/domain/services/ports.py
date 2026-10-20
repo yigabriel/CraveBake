@@ -22,6 +22,7 @@ class IngredientToPrepare:
     unit_abbreviation: str | None
     notes: str | None
     position: int
+    section: str | None = None  # name of the recipe's group it belongs to
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,7 @@ class StepToPrepare:
     title: str | None
     timer_seconds: int | None
     photo_url: str | None
+    section: str | None = None  # name of the recipe's group it belongs to
 
 
 @dataclass(frozen=True)

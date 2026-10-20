@@ -25,6 +25,7 @@ import app.ingredients.infrastructure.persistence.models.user_ingredient_model  
 import app.recipes.infraestructure.persistence.models.recipe_category_model  # noqa: F401,E402
 import app.recipes.infraestructure.persistence.models.difficulty_model  # noqa: F401,E402
 import app.recipes.infraestructure.persistence.models.recipe_model  # noqa: F401,E402
+import app.recipes.infraestructure.persistence.models.recipe_section_model  # noqa: F401,E402
 import app.recipes.infraestructure.persistence.models.recipe_step_model  # noqa: F401,E402
 import app.recipes.infraestructure.persistence.models.recipe_ingredient_model  # noqa: F401,E402
 import app.recipes.infraestructure.persistence.models.recipe_photo_model  # noqa: F401,E402

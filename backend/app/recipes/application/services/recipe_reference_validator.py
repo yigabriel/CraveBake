@@ -95,6 +95,7 @@ class RecipeReferenceValidator:
                 quantity=line.quantity,
                 unit_id=unit_id,
                 notes=line.notes,
+                section=line.section,
             )
             for line, ingredient_id, unit_id in zip(lines, ingredient_ids, unit_ids)
         ]

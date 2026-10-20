@@ -28,6 +28,7 @@ class PreparedIngredientResponse(BaseModel):
     original_unit_abbreviation: str | None
     converted: bool
     notes: str | None
+    section: str | None = Field(description="Group of the recipe it belongs to; null when it has none")
 
 
 class PreparedStepResponse(BaseModel):
@@ -41,6 +42,7 @@ class PreparedStepResponse(BaseModel):
     is_completed: bool
     completed_at: datetime | None
     is_current: bool
+    section: str | None = Field(description="Group of the recipe it belongs to; null when it has none")
 
 
 class PreparationDetailResponse(BaseModel):

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { RecipeDetail, RecipeIngredient, RecipeStep } from "../api/types";
 import { diffRecipes, isEmptyDiff } from "./recipeDiff";
 
-const line = (ingredient_id: string, name: string, quantity: string, unit = "g"): RecipeIngredient => ({
+const line = (ingredient_id: string, name: string, quantity: string, unit = "g", section: string | null = null): RecipeIngredient => ({
   id: `${ingredient_id}-${quantity}`,
   ingredient_id,
   ingredient_name: name,
@@ -11,6 +11,8 @@ const line = (ingredient_id: string, name: string, quantity: string, unit = "g")
   unit_abbreviation: unit,
   notes: null,
   position: 0,
+  section_id: null,
+  section,
   // Converted values must never leak into the comparison.
   display_quantity: "999",
   display_unit_abbreviation: "oz",
@@ -24,6 +26,8 @@ const step = (n: number, instructions: string): RecipeStep => ({
   instructions,
   timer_seconds: null,
   photo: null,
+  section_id: null,
+  section: null,
 });
 
 const recipe = (overrides: Partial<RecipeDetail>): RecipeDetail =>
@@ -55,6 +59,15 @@ describe("diffRecipes", () => {
     expect(diff.steps.map((s) => [s.stepNumber, s.kind])).toEqual([
       [1, "changed"],
       [2, "removed"],
+    ]);
+  });
+
+  it("reports a line moved to another group", () => {
+    const original = recipe({ ingredients: [line("sugar", "Azúcar", "100", "g", "Masa")] });
+    const mine = recipe({ ingredients: [line("sugar", "Azúcar", "100", "g", "Manjar")] });
+
+    expect(diffRecipes(original, mine).ingredients).toEqual([
+      { name: "Azúcar", kind: "changed", original: "100 g (Masa)", mine: "100 g (Manjar)" },
     ]);
   });
 });

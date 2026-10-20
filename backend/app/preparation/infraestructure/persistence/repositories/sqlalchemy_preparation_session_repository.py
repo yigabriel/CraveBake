@@ -60,6 +60,7 @@ class SqlAlchemyPreparationSessionRepository(PreparationSessionRepository):
                     source_step_id=uuid.UUID(step.source_step_id) if step.source_step_id else None,
                     completed_at=step.completed_at,
                     timer_started_at=step.timer_started_at,
+                    section=step.section,
                 )
             )
         for line in preparation.ingredients:
@@ -75,6 +76,7 @@ class SqlAlchemyPreparationSessionRepository(PreparationSessionRepository):
                     unit_abbreviation=line.unit_abbreviation,
                     notes=line.notes,
                     position=line.position,
+                    section=line.section,
                 )
             )
         await self._session.flush()
@@ -188,6 +190,7 @@ class SqlAlchemyPreparationSessionRepository(PreparationSessionRepository):
                         unit_abbreviation=line.unit_abbreviation,
                         notes=line.notes,
                         position=line.position,
+                        section=line.section,
                     )
                     for line in sorted(ingredients[model.id], key=lambda line: line.position)
                 ],
@@ -201,6 +204,7 @@ class SqlAlchemyPreparationSessionRepository(PreparationSessionRepository):
                         source_step_id=str(step.source_step_id) if step.source_step_id else None,
                         completed_at=step.completed_at,
                         timer_started_at=step.timer_started_at,
+                        section=step.section,
                     )
                     for step in sorted(steps[model.id], key=lambda step: step.step_number)
                 ],

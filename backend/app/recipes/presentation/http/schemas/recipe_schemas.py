@@ -17,6 +17,11 @@ class RecipeIngredientRequest(BaseModel):
     quantity: Decimal = Field(gt=0)
     unit_id: str
     notes: str | None = Field(default=None, max_length=500)
+    section: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Name of the group it belongs to (\"Masa choux\"). Lines without a group go first, then each group's lines together",
+    )
 
 
 class RecipeEquipmentRequest(BaseModel):
@@ -29,6 +34,11 @@ class RecipeStepRequest(BaseModel):
     title: str | None = Field(default=None, max_length=200)
     timer_seconds: int | None = Field(default=None, gt=0)
     id: str | None = Field(default=None, description="Existing step id, to keep it (and its photo) when replacing steps")
+    section: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Name of the group it belongs to (\"Masa choux\"). Steps without a group go first, then each group's steps together",
+    )
 
 
 class CreateRecipeRequest(BaseModel):
@@ -127,6 +137,8 @@ class RecipeIngredientResponse(BaseModel):
     unit_abbreviation: str | None
     notes: str | None
     position: int
+    section_id: str | None
+    section: str | None = Field(description="Name of the group the line belongs to; null when it has none")
     display_quantity: Decimal = Field(description="Quantity in the response's unit_system (as written for 'original')")
     display_unit_abbreviation: str | None
     converted: bool = Field(description="True if display_* differ from the quantity/unit the author wrote")
@@ -146,6 +158,8 @@ class RecipeStepResponse(BaseModel):
     instructions: str
     timer_seconds: int | None
     photo: RecipePhotoResponse | None
+    section_id: str | None
+    section: str | None = Field(description="Name of the group the step belongs to; null when it has none")
 
 
 class RecipeSummaryResponse(BaseModel):

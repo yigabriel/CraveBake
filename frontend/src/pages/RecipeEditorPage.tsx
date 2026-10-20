@@ -25,6 +25,7 @@ import {
   Switch,
 } from "../components/ui";
 import { EquipmentIcon } from "../lib/equipment";
+import { headingProblems, isHeading, rowsOf, withHeadings, withSections, type Heading, type Sectioned } from "../lib/sections";
 import { ImageUploadButton } from "../components/ImageUploadButton";
 
 const MAX_TAGS = 10;
@@ -54,9 +55,10 @@ interface StepRow {
 }
 interface Draft {
   basics: RecipeBasics;
-  ingredients: IngredientRow[];
+  // Rows with the headings of their groups in between (see lib/sections).
+  ingredients: Sectioned<IngredientRow>[];
   equipment: EquipmentRow[];
-  steps: StepRow[];
+  steps: Sectioned<StepRow>[];
   tagIds: string[];
 }
 
@@ -93,28 +95,38 @@ function draftFrom(recipe: RecipeDetail): Draft {
       is_public: recipe.is_public,
     },
     // Always the as-written quantity/unit_id, never display_*.
-    ingredients: recipe.ingredients.map((line) => ({
-      key: newKey(),
-      ingredient_id: line.ingredient_id,
-      name: line.ingredient_name ?? "?",
-      quantity: String(Number(line.quantity)),
-      unit_id: line.unit_id,
-      notes: line.notes ?? "",
-    })),
+    ingredients: withHeadings(
+      recipe.ingredients,
+      (line) => line.section,
+      (line): IngredientRow => ({
+        key: newKey(),
+        ingredient_id: line.ingredient_id,
+        name: line.ingredient_name ?? "?",
+        quantity: String(Number(line.quantity)),
+        unit_id: line.unit_id,
+        notes: line.notes ?? "",
+      }),
+      newKey,
+    ),
     equipment: recipe.equipment.map((item) => ({
       key: newKey(),
       equipment_id: item.equipment_id,
       name: item.equipment_name ?? "?",
       notes: item.notes ?? "",
     })),
-    steps: recipe.steps.map((step) => ({
-      key: newKey(),
-      id: step.id,
-      title: step.title ?? "",
-      instructions: step.instructions,
-      timerMinutes: step.timer_seconds ? String(step.timer_seconds / 60) : "",
-      hasPhoto: !!step.photo,
-    })),
+    steps: withHeadings(
+      recipe.steps,
+      (step) => step.section,
+      (step): StepRow => ({
+        key: newKey(),
+        id: step.id,
+        title: step.title ?? "",
+        instructions: step.instructions,
+        timerMinutes: step.timer_seconds ? String(step.timer_seconds / 60) : "",
+        hasPhoto: !!step.photo,
+      }),
+      newKey,
+    ),
     tagIds: recipe.tags.map((tag) => tag.id),
   };
 }
@@ -132,34 +144,52 @@ function validateBasics(basics: RecipeBasics, t: (key: string) => string): Error
   return errors;
 }
 
-function validateIngredients(rows: IngredientRow[], t: (key: string) => string): Errors {
+/** A group needs a name, and two groups cannot share one (the API would merge them). */
+function validateHeadings<T extends object>(items: Sectioned<T>[], t: (key: string) => string): Errors {
   const errors: Errors = {};
-  rows.forEach((row) => {
+  for (const [key, problem] of Object.entries(headingProblems(items)))
+    errors[key] = t(problem === "blank" ? "editor.errors.groupBlank" : "editor.errors.groupDuplicate");
+  return errors;
+}
+
+function validateIngredients(items: Sectioned<IngredientRow>[], t: (key: string) => string): Errors {
+  const errors: Errors = validateHeadings(items, t);
+  rowsOf(items).forEach((row) => {
     if (!(Number(row.quantity) > 0)) errors[row.key] = t("editor.errors.quantity");
     else if (!row.unit_id) errors[row.key] = t("editor.errors.unit");
   });
   return errors;
 }
 
-function validateSteps(rows: StepRow[], t: (key: string) => string): Errors {
-  const errors: Errors = {};
-  rows.forEach((row) => {
+function validateSteps(items: Sectioned<StepRow>[], t: (key: string) => string): Errors {
+  const errors: Errors = validateHeadings(items, t);
+  rowsOf(items).forEach((row) => {
     if (!row.instructions.trim()) errors[row.key] = t("editor.errors.instructions");
     else if (row.timerMinutes && !(Number(row.timerMinutes) > 0)) errors[row.key] = t("editor.errors.timer");
   });
   return errors;
 }
 
-const ingredientInputs = (rows: IngredientRow[]) =>
-  rows.map((row) => ({ ingredient_id: row.ingredient_id, quantity: row.quantity, unit_id: row.unit_id, notes: row.notes.trim() || null }));
+const ingredientInputs = (items: Sectioned<IngredientRow>[]) =>
+  withSections(items).map((row) => ({
+    ingredient_id: row.ingredient_id,
+    quantity: row.quantity,
+    unit_id: row.unit_id,
+    notes: row.notes.trim() || null,
+    section: row.section,
+  }));
 const equipmentInputs = (rows: EquipmentRow[]) => rows.map((row) => ({ equipment_id: row.equipment_id, notes: row.notes.trim() || null }));
-const stepInputs = (rows: StepRow[]): RecipeStepInput[] =>
-  rows.map((row) => ({
+/** Headings stay, rows that `keep` says no to go (a new recipe ignores its blank steps). */
+const keepSteps = (items: Sectioned<StepRow>[], keep: (step: StepRow) => boolean) => items.filter((item) => isHeading(item) || keep(item));
+
+const stepInputs = (items: Sectioned<StepRow>[]): RecipeStepInput[] =>
+  withSections(items).map((row) => ({
     // Keeping the id keeps the step's photo (§8).
     id: row.id ?? null,
     instructions: row.instructions.trim(),
     title: row.title.trim() || null,
     timer_seconds: row.timerMinutes ? Math.round(Number(row.timerMinutes) * 60) : null,
+    section: row.section,
   }));
 
 function move<T>(list: T[], index: number, delta: number): T[] {
@@ -170,16 +200,68 @@ function move<T>(list: T[], index: number, delta: number): T[] {
   return next;
 }
 
-function RowControls({ index, length, onMove, onRemove }: { index: number; length: number; onMove: (delta: number) => void; onRemove: () => void }) {
+function RowControls({
+  index,
+  length,
+  onMove,
+  onRemove,
+  onGroupHere,
+}: {
+  index: number;
+  length: number;
+  onMove: (delta: number) => void;
+  onRemove: () => void;
+  /** Starts a new group right above this row. */
+  onGroupHere?: () => void;
+}) {
   const { t } = useTranslation();
   return (
     <div className="flex shrink-0 items-center">
+      {onGroupHere && <IconButton icon="segment" label={t("editor.groupHere")} onClick={onGroupHere} className="h-8 w-8 text-primary" />}
       <IconButton icon="arrow_upward" label={t("editor.moveUp")} disabled={index === 0} onClick={() => onMove(-1)} className="h-8 w-8" />
       <IconButton icon="arrow_downward" label={t("editor.moveDown")} disabled={index === length - 1} onClick={() => onMove(1)} className="h-8 w-8" />
       <IconButton icon="delete" label={t("common.delete")} onClick={onRemove} className="h-8 w-8 text-error" />
     </div>
   );
 }
+
+/** The name of a group; the rows below it (until the next heading) belong to it. */
+function GroupHeading({
+  item,
+  error,
+  onRename,
+  ...controls
+}: {
+  item: Heading;
+  error?: string;
+  onRename: (heading: string) => void;
+  index: number;
+  length: number;
+  onMove: (delta: number) => void;
+  onRemove: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className={`rounded-lg border-l-4 border-primary bg-primary-fixed/40 p-xs ${error ? "ring-1 ring-error" : ""}`}>
+      <div className="flex items-center gap-xs">
+        <Icon name="segment" className="text-[20px] text-primary" />
+        <Input
+          autoFocus={!item.heading}
+          maxLength={100}
+          aria-label={t("editor.groupName")}
+          placeholder={t("editor.groupName")}
+          value={item.heading}
+          onChange={(e) => onRename(e.target.value)}
+          className="font-serif font-semibold italic"
+        />
+        <RowControls {...controls} />
+      </div>
+      {error && <span className="text-label-sm font-normal text-error">{error}</span>}
+    </div>
+  );
+}
+
+const newHeading = (): Heading => ({ key: newKey(), heading: "" });
 
 // --- Sections ---------------------------------------------------------------------------
 
@@ -264,10 +346,20 @@ function BasicsSection({
   );
 }
 
-function IngredientsSection({ rows, onChange, errors }: { rows: IngredientRow[]; onChange: (rows: IngredientRow[]) => void; errors: Errors }) {
+function IngredientsSection({
+  items,
+  onChange,
+  errors,
+}: {
+  items: Sectioned<IngredientRow>[];
+  onChange: (items: Sectioned<IngredientRow>[]) => void;
+  errors: Errors;
+}) {
   const { t } = useTranslation();
   const units = useUnits();
-  const update = (key: string, changes: Partial<IngredientRow>) => onChange(rows.map((row) => (row.key === key ? { ...row, ...changes } : row)));
+  const update = (key: string, changes: Partial<IngredientRow>) =>
+    onChange(items.map((item) => (isHeading(item) || item.key !== key ? item : { ...item, ...changes })));
+  let number = 0;
   return (
     <div className="flex flex-col gap-sm">
       {/* The same ingredient may appear twice (dough + dusting): no exclusion here. */}
@@ -275,33 +367,57 @@ function IngredientsSection({ rows, onChange, errors }: { rows: IngredientRow[];
         allowCreate
         placeholder={t("editor.addIngredient")}
         onPick={(ingredient) =>
-          onChange([...rows, { key: newKey(), ingredient_id: ingredient.id, name: ingredient.name, quantity: "", unit_id: "", notes: "" }])
+          onChange([...items, { key: newKey(), ingredient_id: ingredient.id, name: ingredient.name, quantity: "", unit_id: "", notes: "" }])
         }
       />
-      {rows.length === 0 && <p className="text-label-md text-on-surface-variant">{t("editor.noIngredients")}</p>}
-      {rows.map((row, index) => (
-        <Card key={row.key} className={`flex flex-col gap-xs p-sm ${errors[row.key] ? "ring-1 ring-error" : ""}`}>
-          <div className="flex items-center gap-xs">
-            <span className="flex-1 text-label-md font-semibold">
-              {index + 1}. {row.name}
-            </span>
-            <RowControls index={index} length={rows.length} onMove={(delta) => onChange(move(rows, index, delta))} onRemove={() => onChange(rows.filter((r) => r.key !== row.key))} />
-          </div>
-          <div className="grid grid-cols-[100px_1fr] gap-xs sm:grid-cols-[100px_160px_1fr]">
-            <Input type="number" min="0" step="any" inputMode="decimal" aria-label={t("pantry.quantity")} placeholder={t("pantry.quantity")} value={row.quantity} onChange={(e) => update(row.key, { quantity: e.target.value })} />
-            <select aria-label={t("pantry.unit")} value={row.unit_id} onChange={(e) => update(row.key, { unit_id: e.target.value })} className={inputClass}>
-              <option value="">{t("pantry.unit")}</option>
-              {units.data?.map((unit) => (
-                <option key={unit.id} value={unit.id}>
-                  {unit.name}
-                </option>
-              ))}
-            </select>
-            <Input className="col-span-2 sm:col-span-1" maxLength={500} placeholder={t("editor.notesPlaceholder")} value={row.notes} onChange={(e) => update(row.key, { notes: e.target.value })} />
-          </div>
-          {errors[row.key] && <span className="text-label-sm font-normal text-error">{errors[row.key]}</span>}
-        </Card>
-      ))}
+      {rowsOf(items).length === 0 && <p className="text-label-md text-on-surface-variant">{t("editor.noIngredients")}</p>}
+      {items.map((item, index) => {
+        const controls = {
+          index,
+          length: items.length,
+          onMove: (delta: number) => onChange(move(items, index, delta)),
+          onRemove: () => onChange(items.filter((other) => other.key !== item.key)),
+        };
+        if (isHeading(item))
+          return (
+            <GroupHeading
+              key={item.key}
+              item={item}
+              error={errors[item.key]}
+              onRename={(heading) => onChange(items.map((other) => (other.key === item.key ? { ...item, heading } : other)))}
+              {...controls}
+            />
+          );
+        const row = item;
+        number += 1;
+        return (
+          <Card key={row.key} className={`flex flex-col gap-xs p-sm ${errors[row.key] ? "ring-1 ring-error" : ""}`}>
+            <div className="flex items-center gap-xs">
+              <span className="flex-1 text-label-md font-semibold">
+                {number}. {row.name}
+              </span>
+              <RowControls {...controls} onGroupHere={() => onChange([...items.slice(0, index), newHeading(), ...items.slice(index)])} />
+            </div>
+            <div className="grid grid-cols-[100px_1fr] gap-xs sm:grid-cols-[100px_160px_1fr]">
+              <Input type="number" min="0" step="any" inputMode="decimal" aria-label={t("pantry.quantity")} placeholder={t("pantry.quantity")} value={row.quantity} onChange={(e) => update(row.key, { quantity: e.target.value })} />
+              <select aria-label={t("pantry.unit")} value={row.unit_id} onChange={(e) => update(row.key, { unit_id: e.target.value })} className={inputClass}>
+                <option value="">{t("pantry.unit")}</option>
+                {units.data?.map((unit) => (
+                  <option key={unit.id} value={unit.id}>
+                    {unit.name}
+                  </option>
+                ))}
+              </select>
+              <Input className="col-span-2 sm:col-span-1" maxLength={500} placeholder={t("editor.notesPlaceholder")} value={row.notes} onChange={(e) => update(row.key, { notes: e.target.value })} />
+            </div>
+            {errors[row.key] && <span className="text-label-sm font-normal text-error">{errors[row.key]}</span>}
+          </Card>
+        );
+      })}
+      <Button variant="secondary" icon="segment" onClick={() => onChange([...items, newHeading()])}>
+        {t("editor.addGroup")}
+      </Button>
+      <p className="text-label-sm font-normal text-on-surface-variant">{t("editor.groupsHint")}</p>
     </div>
   );
 }
@@ -378,22 +494,24 @@ function StepPhotoSlot({ recipeId, stepId, photo }: { recipeId: string; stepId: 
 }
 
 function StepsSection({
-  rows,
+  items,
   onChange,
   errors,
   recipe,
 }: {
-  rows: StepRow[];
-  onChange: (rows: StepRow[]) => void;
+  items: Sectioned<StepRow>[];
+  onChange: (items: Sectioned<StepRow>[]) => void;
   errors: Errors;
   /** Present when editing: steps that are saved can get their photo right here. */
   recipe?: RecipeDetail;
 }) {
   const { t } = useTranslation();
   const [confirmRemove, setConfirmRemove] = useState<StepRow | null>(null);
-  const update = (key: string, changes: Partial<StepRow>) => onChange(rows.map((row) => (row.key === key ? { ...row, ...changes } : row)));
-  const remove = (row: StepRow) => onChange(rows.filter((r) => r.key !== row.key));
+  const update = (key: string, changes: Partial<StepRow>) =>
+    onChange(items.map((item) => (isHeading(item) || item.key !== key ? item : { ...item, ...changes })));
+  const remove = (row: StepRow) => onChange(items.filter((item) => item.key !== row.key));
   const photoOf = (row: StepRow) => recipe?.steps.find((step) => step.id === row.id)?.photo ?? null;
+  let number = 0;
   return (
     <div className="flex flex-col gap-sm">
       {!recipe && (
@@ -401,36 +519,70 @@ function StepsSection({
           <Icon name="photo_camera" className="text-[18px]" /> {t("editor.stepPhotosLater")}
         </p>
       )}
-      {rows.map((row, index) => (
-        <Card key={row.key} className={`flex flex-col gap-xs p-sm ${errors[row.key] ? "ring-1 ring-error" : ""}`}>
-          <div className="flex items-center gap-xs">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-container text-label-md text-on-primary">{index + 1}</span>
-            <Input className="flex-1" maxLength={200} placeholder={t("editor.stepTitle")} value={row.title} onChange={(e) => update(row.key, { title: e.target.value })} />
-            {/* A step that is not sent is deleted along with its photo: ask first (§8). */}
-            <RowControls index={index} length={rows.length} onMove={(delta) => onChange(move(rows, index, delta))} onRemove={() => (photoOf(row) || row.hasPhoto ? setConfirmRemove(row) : remove(row))} />
-          </div>
-          <textarea rows={3} placeholder={t("editor.instructions")} value={row.instructions} onChange={(e) => update(row.key, { instructions: e.target.value })} className={inputClass} />
-          <label className="flex items-center gap-xs text-label-md text-on-surface-variant">
-            <Icon name="timer" className="text-[18px]" /> {t("editor.timer")}
-            <span className="w-24">
-              <Input type="number" min="0" step="any" value={row.timerMinutes} onChange={(e) => update(row.key, { timerMinutes: e.target.value })} />
-            </span>
-            {t("editor.minutes")}
-          </label>
-          {recipe &&
-            (row.id ? (
-              <StepPhotoSlot recipeId={recipe.id} stepId={row.id} photo={photoOf(row)} />
-            ) : (
-              <p className="flex items-center gap-xs text-label-sm font-normal text-on-surface-variant">
-                <Icon name="photo_camera" className="text-[16px]" /> {t("editor.saveStepForPhoto")}
-              </p>
-            ))}
-          {errors[row.key] && <span className="text-label-sm font-normal text-error">{errors[row.key]}</span>}
-        </Card>
-      ))}
-      <Button variant="secondary" icon="add" onClick={() => onChange([...rows, { key: newKey(), title: "", instructions: "", timerMinutes: "", hasPhoto: false }])}>
-        {t("editor.addStep")}
-      </Button>
+      {items.map((item, index) => {
+        const controls = {
+          index,
+          length: items.length,
+          onMove: (delta: number) => onChange(move(items, index, delta)),
+        };
+        if (isHeading(item))
+          return (
+            <GroupHeading
+              key={item.key}
+              item={item}
+              error={errors[item.key]}
+              onRename={(heading) => onChange(items.map((other) => (other.key === item.key ? { ...item, heading } : other)))}
+              onRemove={() => onChange(items.filter((other) => other.key !== item.key))}
+              {...controls}
+            />
+          );
+        const row = item;
+        number += 1;
+        return (
+          <Card key={row.key} className={`flex flex-col gap-xs p-sm ${errors[row.key] ? "ring-1 ring-error" : ""}`}>
+            <div className="flex items-center gap-xs">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-container text-label-md text-on-primary">{number}</span>
+              <Input className="flex-1" maxLength={200} placeholder={t("editor.stepTitle")} value={row.title} onChange={(e) => update(row.key, { title: e.target.value })} />
+              {/* A step that is not sent is deleted along with its photo: ask first (§8). */}
+              <RowControls
+                {...controls}
+                onRemove={() => (photoOf(row) || row.hasPhoto ? setConfirmRemove(row) : remove(row))}
+                onGroupHere={() => onChange([...items.slice(0, index), newHeading(), ...items.slice(index)])}
+              />
+            </div>
+            <textarea rows={3} placeholder={t("editor.instructions")} value={row.instructions} onChange={(e) => update(row.key, { instructions: e.target.value })} className={inputClass} />
+            <label className="flex items-center gap-xs text-label-md text-on-surface-variant">
+              <Icon name="timer" className="text-[18px]" /> {t("editor.timer")}
+              <span className="w-24">
+                <Input type="number" min="0" step="any" value={row.timerMinutes} onChange={(e) => update(row.key, { timerMinutes: e.target.value })} />
+              </span>
+              {t("editor.minutes")}
+            </label>
+            {recipe &&
+              (row.id ? (
+                <StepPhotoSlot recipeId={recipe.id} stepId={row.id} photo={photoOf(row)} />
+              ) : (
+                <p className="flex items-center gap-xs text-label-sm font-normal text-on-surface-variant">
+                  <Icon name="photo_camera" className="text-[16px]" /> {t("editor.saveStepForPhoto")}
+                </p>
+              ))}
+            {errors[row.key] && <span className="text-label-sm font-normal text-error">{errors[row.key]}</span>}
+          </Card>
+        );
+      })}
+      <div className="flex flex-wrap gap-xs">
+        <Button
+          variant="secondary"
+          icon="add"
+          onClick={() => onChange([...items, { key: newKey(), title: "", instructions: "", timerMinutes: "", hasPhoto: false }])}
+        >
+          {t("editor.addStep")}
+        </Button>
+        <Button variant="ghost" icon="segment" onClick={() => onChange([...items, newHeading()])}>
+          {t("editor.addGroup")}
+        </Button>
+      </div>
+      <p className="text-label-sm font-normal text-on-surface-variant">{t("editor.groupsHint")}</p>
       <Modal
         open={!!confirmRemove}
         onClose={() => setConfirmRemove(null)}
@@ -557,7 +709,10 @@ function PhotosSection({ recipe }: { recipe: RecipeDetail }) {
             <div className="flex items-start gap-xs">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-container text-label-md text-on-primary">{step.step_number}</span>
               <div className="min-w-0">
-                <p className="text-label-md font-semibold">{step.title || t("cook.step", { n: step.step_number })}</p>
+                <p className="text-label-md font-semibold">
+                  {step.section && <span className="font-serif font-normal italic text-primary">{step.section} · </span>}
+                  {step.title || t("cook.step", { n: step.step_number })}
+                </p>
                 <p className="line-clamp-1 text-label-sm font-normal text-on-surface-variant">{step.instructions}</p>
               </div>
             </div>
@@ -637,7 +792,7 @@ export function RecipeEditorPage() {
         ingredients: ingredientInputs(draft.ingredients),
         equipment: equipmentInputs(draft.equipment),
         tag_ids: draft.tagIds,
-        steps: stepInputs(draft.steps.filter((step) => step.instructions.trim())),
+        steps: stepInputs(keepSteps(draft.steps, (step) => !!step.instructions.trim())),
       }),
     onSuccess: (detail) => {
       afterSave(detail);
@@ -691,7 +846,7 @@ export function RecipeEditorPage() {
         : which === "ingredients"
           ? validateIngredients(draft.ingredients, t)
           : which === "steps"
-            ? validateSteps(editing ? draft.steps : draft.steps.filter((s) => s.instructions.trim() || s.title.trim()), t)
+            ? validateSteps(editing ? draft.steps : keepSteps(draft.steps, (s) => !!(s.instructions.trim() || s.title.trim())), t)
             : {};
     setErrors(found);
     return Object.keys(found).length === 0;
@@ -709,9 +864,9 @@ export function RecipeEditorPage() {
 
   const body = {
     basics: <BasicsSection basics={draft.basics} onChange={(basics) => setDraft({ ...draft, basics })} errors={errors} isPersonalization={isPersonalization} />,
-    ingredients: <IngredientsSection rows={draft.ingredients} onChange={(ingredients) => setDraft({ ...draft, ingredients })} errors={errors} />,
+    ingredients: <IngredientsSection items={draft.ingredients} onChange={(ingredients) => setDraft({ ...draft, ingredients })} errors={errors} />,
     equipment: <EquipmentSection rows={draft.equipment} onChange={(equipment) => setDraft({ ...draft, equipment })} />,
-    steps: <StepsSection rows={draft.steps} onChange={(steps) => setDraft({ ...draft, steps })} errors={errors} recipe={recipe.data} />,
+    steps: <StepsSection items={draft.steps} onChange={(steps) => setDraft({ ...draft, steps })} errors={errors} recipe={recipe.data} />,
     tags: <TagsSection selected={draft.tagIds} onChange={(tagIds) => setDraft({ ...draft, tagIds })} />,
     photos: recipe.data ? <PhotosSection recipe={recipe.data} /> : null,
   }[section];
@@ -739,7 +894,7 @@ export function RecipeEditorPage() {
           icon="check"
           loading={create.isPending}
           onClick={() => {
-            const steps = draft.steps.filter((s) => s.instructions.trim() || s.title.trim());
+            const steps = keepSteps(draft.steps, (s) => !!(s.instructions.trim() || s.title.trim()));
             for (const [key, check] of [
               ["basics", () => validateBasics(draft.basics, t)],
               ["ingredients", () => validateIngredients(draft.ingredients, t)],

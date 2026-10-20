@@ -18,6 +18,7 @@ class PreparedIngredientDTO:
     original_unit_abbreviation: str | None
     converted: bool
     notes: str | None
+    section: str | None  # group of the recipe it belongs to
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,7 @@ class PreparedStepDTO:
     is_completed: bool
     completed_at: datetime | None
     is_current: bool
+    section: str | None  # group of the recipe it belongs to
 
 
 @dataclass(frozen=True)

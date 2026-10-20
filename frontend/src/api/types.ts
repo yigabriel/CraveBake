@@ -131,6 +131,9 @@ export interface RecipeIngredient {
   unit_abbreviation: string | null;
   notes: string | null;
   position: number;
+  // The group it belongs to ("Masa choux"); null when it has none.
+  section_id: string | null;
+  section: string | null;
   // In the response's unit_system (what the detail shows).
   display_quantity: Decimalish;
   display_unit_abbreviation: string | null;
@@ -151,6 +154,8 @@ export interface RecipeStep {
   instructions: string;
   timer_seconds: number | null;
   photo: RecipePhoto | null;
+  section_id: string | null;
+  section: string | null;
 }
 
 interface RecipeCommon {
@@ -191,6 +196,8 @@ export interface RecipeIngredientInput {
   quantity: string;
   unit_id: string;
   notes?: string | null;
+  /** Name of the group; lines without one come first, then each group's lines together. */
+  section?: string | null;
 }
 
 export interface RecipeEquipmentInput {
@@ -203,6 +210,7 @@ export interface RecipeStepInput {
   instructions: string;
   title?: string | null;
   timer_seconds?: number | null;
+  section?: string | null;
 }
 
 export interface RecipeBasics {
@@ -320,6 +328,7 @@ export interface PreparedIngredient {
   original_unit_abbreviation: string | null;
   converted: boolean;
   notes: string | null;
+  section: string | null;
 }
 
 export interface PreparedStep {
@@ -333,6 +342,7 @@ export interface PreparedStep {
   is_completed: boolean;
   completed_at: string | null;
   is_current: boolean;
+  section: string | null;
 }
 
 export interface PreparationSummary {

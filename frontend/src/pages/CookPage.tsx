@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { preparationApi } from "../api/endpoints";
@@ -7,10 +7,12 @@ import { useErrorMessage } from "../api/queries";
 import type { DisplayUnitSystem, Language, PreparationDetail, PreparedStep } from "../api/types";
 import { useUser } from "../auth/AuthContext";
 import { useToast } from "../components/Toast";
-import { Button, ErrorState, Icon, IconButton, Modal, Skeleton } from "../components/ui";
+import { Button, ErrorState, Icon, IconButton, Modal, SectionHeading, Skeleton } from "../components/ui";
 import { askNotificationPermission, keepScreenOn, ringAlarm } from "../lib/alarm";
 import { formatMeasure, scale } from "../lib/quantities";
-import { formatClock, formatDate } from "../lib/time";
+import { groupBySection } from "../lib/sections";
+import { formatClock } from "../lib/time";
+import { CookFinished } from "./CookFinished";
 import { UnitSystemToggle } from "./RecipeDetailPage";
 
 /**
@@ -93,8 +95,15 @@ function IngredientsPanel({
           </div>
         </div>
       )}
-      <ul className="flex flex-col gap-xs">
-        {preparation.ingredients.map((line, index) => {
+      {/* `index` is the line's place in the whole list: the checks must not shift between groups. */}
+      {groupBySection(
+        preparation.ingredients.map((line, index) => ({ line, index })),
+        ({ line }) => line.section,
+      ).map((group) => (
+        <div key={group.section ?? ""}>
+          {group.section && <SectionHeading name={group.section} />}
+          <ul className="flex flex-col gap-xs">
+        {group.items.map(({ line, index }) => {
           const quantity = scale(line.quantity, preparation.servings, servings);
           const done = used.has(index);
           return (
@@ -129,34 +138,9 @@ function IngredientsPanel({
             </li>
           );
         })}
-      </ul>
-    </div>
-  );
-}
-
-function FinishedView({ preparation }: { preparation: PreparationDetail }) {
-  const { t, i18n } = useTranslation();
-  const completed = preparation.status === "completed";
-  return (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-md py-lg text-center">
-      <span className={`flex h-24 w-24 items-center justify-center rounded-full ${completed ? "bg-tertiary-fixed" : "bg-surface-container-high"}`}>
-        <Icon name={completed ? "celebration" : "do_not_disturb_on"} className={`text-[48px] ${completed ? "text-tertiary" : "text-on-surface-variant"}`} />
-      </span>
-      <h1 className="text-display-sm">{completed ? t("cook.doneTitle") : t("cook.abandonedTitle")}</h1>
-      <p className="text-body-lg text-on-surface-variant">
-        {preparation.recipe_title} · {t("cook.progress", { done: preparation.completed_steps, total: preparation.total_steps })}
-        {preparation.finished_at && ` · ${formatDate(preparation.finished_at, i18n.language as Language)}`}
-      </p>
-      <div className="flex flex-wrap justify-center gap-sm">
-        <Link to={`/recipes/${preparation.recipe_id}`}>
-          <Button variant="secondary" icon="menu_book">
-            {t("explore.viewRecipe")}
-          </Button>
-        </Link>
-        <Link to="/profile/history">
-          <Button icon="history">{t("history.title")}</Button>
-        </Link>
-      </div>
+          </ul>
+        </div>
+      ))}
     </div>
   );
 }
@@ -219,7 +203,7 @@ export function CookPage() {
 
   if (query.isLoading) return <Skeleton className="h-[70vh]" />;
   if (query.isError || !preparation) return <ErrorState message={errorMessage(query.error)} onRetry={() => void query.refetch()} />;
-  if (!active) return <FinishedView preparation={preparation} />;
+  if (!active) return <CookFinished preparation={preparation} />;
 
   const total = preparation.total_steps;
   // When every step is done the API has no current step: stay on the last one.
@@ -263,7 +247,10 @@ export function CookPage() {
             <div className="mx-auto flex max-w-2xl flex-col gap-md text-center">
               {step.photo_url && <img src={step.photo_url} alt="" className="max-h-72 w-full rounded-xl object-cover shadow-card" />}
               <div>
-                <p className="text-label-sm uppercase text-primary">{t("cook.step", { n: step.step_number })}</p>
+                <p className="text-label-sm uppercase text-primary">
+                  {step.section && <span className="font-serif text-[18px] normal-case italic">{step.section} · </span>}
+                  {t("cook.step", { n: step.step_number })}
+                </p>
                 {step.title && <h1 className="text-display-sm">{step.title}</h1>}
               </div>
               <p className="whitespace-pre-line text-left text-body-lg sm:text-center lg:text-[22px] lg:leading-9">{step.instructions}</p>

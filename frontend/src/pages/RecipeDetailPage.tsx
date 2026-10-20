@@ -23,10 +23,12 @@ import {
   Input,
   Modal,
   Segmented,
+  SectionHeading,
   Skeleton,
 } from "../components/ui";
 import { formatMeasure, isFractionalCount, scale } from "../lib/quantities";
 import { diffRecipes, isEmptyDiff } from "../lib/recipeDiff";
+import { groupBySection } from "../lib/sections";
 import { formatMinutes, formatSeconds } from "../lib/time";
 import { embedUrl } from "../lib/video";
 import { EquipmentIcon } from "../lib/equipment";
@@ -259,8 +261,12 @@ function Ingredients({ recipe, servings, language }: { recipe: RecipeDetail; ser
           {all ? t("recipe.uncheckAll") : t("recipe.checkAll")}
         </button>
       </div>
-      <ul className="flex flex-col gap-xs">
-        {recipe.ingredients.map((line) => {
+      <div className="flex flex-col gap-sm">
+        {groupBySection(recipe.ingredients, (line) => line.section).map((group) => (
+          <div key={group.section ?? ""}>
+            {group.section && <SectionHeading name={group.section} />}
+            <ul className="flex flex-col gap-xs">
+        {group.items.map((line) => {
           // Scale first, then show in the unit the API already converted to (§6).
           const quantity = scale(line.display_quantity, recipe.servings, servings);
           const unit = line.display_unit_abbreviation;
@@ -290,7 +296,10 @@ function Ingredients({ recipe, servings, language }: { recipe: RecipeDetail; ser
             </li>
           );
         })}
-      </ul>
+            </ul>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
@@ -475,7 +484,9 @@ export function RecipeDetailPage() {
           </div>
         </div>
 
-        <aside className="flex flex-col gap-md lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
+        {/* Sticky, but never taller than the screen: a long ingredient list scrolls inside it
+            instead of hiding its bottom until the page ends. Padding keeps rings/shadows unclipped. */}
+        <aside className="flex flex-col gap-md lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:-mx-xs lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:px-xs lg:pb-sm [scrollbar-width:thin]">
           {recipe.servings ? <ScalePanel base={recipe.servings} servings={shownServings} onChange={setServings} /> : null}
           <div className="flex flex-wrap items-center justify-between gap-sm">
             <UnitSystemToggle value={unitSystem} onChange={setUnitSystem} />
@@ -551,8 +562,12 @@ export function RecipeDetailPage() {
             {recipe.steps.length === 0 ? (
               <p className="text-body-md text-on-surface-variant">{t("recipe.noSteps")}</p>
             ) : (
+              <div className="flex flex-col gap-sm">
+                {groupBySection(recipe.steps, (step) => step.section).map((group) => (
+                  <div key={group.section ?? ""}>
+                    {group.section && <SectionHeading name={group.section} />}
               <ol className="flex flex-col gap-sm">
-                {recipe.steps.map((step) => (
+                {group.items.map((step) => (
                   <li key={step.id}>
                     <Card className="flex gap-sm p-sm">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-container text-label-md font-bold text-on-primary">
@@ -572,6 +587,9 @@ export function RecipeDetailPage() {
                   </li>
                 ))}
               </ol>
+                  </div>
+                ))}
+              </div>
             )}
           </section>
         </div>

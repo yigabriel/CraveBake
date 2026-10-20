@@ -14,6 +14,17 @@ export function Icon({ name, filled = false, className = "" }: { name: string; f
   );
 }
 
+/** The name of a recipe group ("Masa choux") above its ingredients or steps. */
+export function SectionHeading({ name, className = "" }: { name: string; className?: string }) {
+  return (
+    <h3 className={`mb-xs flex items-center gap-xs font-serif text-title-lg font-semibold italic text-primary ${className}`}>
+      <span aria-hidden className="h-px w-5 bg-primary/40" />
+      {name}
+      <span aria-hidden className="h-px flex-1 bg-outline-variant/60" />
+    </h3>
+  );
+}
+
 type Variant = "primary" | "secondary" | "ghost" | "tertiary" | "danger";
 
 const VARIANTS: Record<Variant, string> = {

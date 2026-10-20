@@ -131,6 +131,7 @@ class RecipeAssembler:
         """`unit_system` only changes the display_* fields of the ingredients; the stored recipe is untouched."""
         context = await self._load_context([recipe], viewer_user_id)
         lines = sorted(recipe.ingredients, key=lambda line: line.position)
+        section_names = {section.id: section.name for section in recipe.sections}
         ingredients = await self._ingredient_catalog.get_ingredients([line.ingredient_id for line in lines])
         units = await self._ingredient_catalog.get_units([line.unit_id for line in lines])
         equipment = await self._equipment_catalog.get_equipment([item.equipment_id for item in recipe.equipment])
@@ -162,6 +163,8 @@ class RecipeAssembler:
                     unit_abbreviation=abbreviation(line),
                     notes=line.notes,
                     position=line.position,
+                    section_id=str(line.section_id) if line.section_id else None,
+                    section=section_names.get(line.section_id),
                     display_quantity=display.quantity,
                     display_unit_abbreviation=display.unit_abbreviation or abbreviation(line),
                     converted=display.converted,
@@ -185,6 +188,8 @@ class RecipeAssembler:
                     instructions=step.instructions,
                     timer_seconds=step.timer_seconds,
                     photo=photo_to_dto(photo) if (photo := recipe.photo_for_step(step.id)) else None,
+                    section_id=str(step.section_id) if step.section_id else None,
+                    section=section_names.get(step.section_id),
                 )
                 for step in sorted(recipe.steps, key=lambda step: step.step_number)
             ],

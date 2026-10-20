@@ -74,6 +74,8 @@ class PreparationStepModel(Base):
     source_step_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     timer_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # The recipe's group name, copied (not referenced): the recipe may later rename or drop it.
+    section: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
 
 class PreparationIngredientModel(Base):
@@ -91,3 +93,4 @@ class PreparationIngredientModel(Base):
     unit_abbreviation: Mapped[str | None] = mapped_column(String(10), nullable=True)
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
     position: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0)
+    section: Mapped[str | None] = mapped_column(String(100), nullable=True)

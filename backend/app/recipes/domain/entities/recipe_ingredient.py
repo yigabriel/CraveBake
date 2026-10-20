@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from app.recipes.domain.value_objects.recipe_ingredient_id import RecipeIngredientId
+from app.recipes.domain.value_objects.recipe_section_id import RecipeSectionId
 from app.shared.exceptions.domain_exceptions import ValidationError
 
 
@@ -23,6 +24,7 @@ class RecipeIngredient:
     unit_id: str
     notes: str | None = None
     position: int = 0
+    section_id: RecipeSectionId | None = None
 
     def __post_init__(self) -> None:
         if self.quantity <= 0:

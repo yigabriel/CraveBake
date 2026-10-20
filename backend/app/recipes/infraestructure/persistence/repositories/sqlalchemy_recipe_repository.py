@@ -1,12 +1,13 @@
 """
 SQLAlchemy implementation of `RecipeRepository`.
 
-The aggregate spans six tables (recipes, recipe_steps, recipe_ingredients,
+The aggregate spans seven tables (recipes, recipe_sections, recipe_steps, recipe_ingredients,
 recipe_equipment, recipe_tags, recipe_photos). Saving synchronizes the child rows by id instead of
 delete-and-reinsert, so a step keeps its id (and anything pointing to it,
 like its photo or a preparation session's current step) across edits.
 
 Child writes are flushed in dependency order (photos removed before steps,
+sections written before the lines that reference them and removed after them,
 steps inserted before the photos that reference them), so no ORM
 relationships are needed to get the statement order right.
 
@@ -30,6 +31,7 @@ from app.recipes.domain.entities.recipe import Recipe
 from app.recipes.domain.entities.recipe_equipment import RecipeEquipment
 from app.recipes.domain.entities.recipe_ingredient import RecipeIngredient
 from app.recipes.domain.entities.recipe_photo import PhotoType, RecipePhoto
+from app.recipes.domain.entities.recipe_section import RecipeSection
 from app.recipes.domain.entities.recipe_step import RecipeStep
 from app.recipes.domain.repositories.recipe_repository import (
     IngredientOverlapQuery,
@@ -44,12 +46,14 @@ from app.recipes.domain.value_objects.recipe_equipment_id import RecipeEquipment
 from app.recipes.domain.value_objects.recipe_id import RecipeId
 from app.recipes.domain.value_objects.recipe_ingredient_id import RecipeIngredientId
 from app.recipes.domain.value_objects.recipe_photo_id import RecipePhotoId
+from app.recipes.domain.value_objects.recipe_section_id import RecipeSectionId
 from app.recipes.domain.value_objects.recipe_step_id import RecipeStepId
 from app.recipes.domain.value_objects.recipe_tag_id import RecipeTagId
 from app.recipes.infraestructure.persistence.models.recipe_equipment_model import RecipeEquipmentModel
 from app.recipes.infraestructure.persistence.models.recipe_ingredient_model import RecipeIngredientModel
 from app.recipes.infraestructure.persistence.models.recipe_model import RecipeModel
 from app.recipes.infraestructure.persistence.models.recipe_photo_model import RecipePhotoModel
+from app.recipes.infraestructure.persistence.models.recipe_section_model import RecipeSectionModel
 from app.recipes.infraestructure.persistence.models.recipe_step_model import RecipeStepModel
 from app.recipes.infraestructure.persistence.models.tag_models import RecipeTagModel
 
@@ -81,11 +85,13 @@ class SqlAlchemyRecipeRepository(RecipeRepository):
 
     async def _sync_children(self, recipe: Recipe) -> None:
         recipe_uuid = recipe.id.value
+        existing_sections = await self._existing(RecipeSectionModel, recipe_uuid)
         existing_steps = await self._existing(RecipeStepModel, recipe_uuid)
         existing_ingredients = await self._existing(RecipeIngredientModel, recipe_uuid)
         existing_equipment = await self._existing(RecipeEquipmentModel, recipe_uuid)
         existing_photos = await self._existing(RecipePhotoModel, recipe_uuid)
 
+        desired_sections = {section.id.value: {"name": section.name} for section in recipe.sections}
         desired_steps = {step.id.value: _step_values(step) for step in recipe.steps}
         desired_ingredients = {line.id.value: _ingredient_values(line) for line in recipe.ingredients}
         desired_equipment = {item.id.value: _equipment_values(item) for item in recipe.equipment}
@@ -97,10 +103,13 @@ class SqlAlchemyRecipeRepository(RecipeRepository):
         await self._delete_missing(existing_equipment, desired_equipment)
         await self._delete_missing(existing_steps, desired_steps)
         # 2) inserts/updates, referenced rows first
+        await self._upsert(RecipeSectionModel, recipe_uuid, existing_sections, desired_sections)
         await self._upsert(RecipeStepModel, recipe_uuid, existing_steps, desired_steps)
         await self._upsert(RecipeIngredientModel, recipe_uuid, existing_ingredients, desired_ingredients)
         await self._upsert(RecipeEquipmentModel, recipe_uuid, existing_equipment, desired_equipment)
         await self._upsert(RecipePhotoModel, recipe_uuid, existing_photos, desired_photos)
+        # 3) sections no line points to any more (the lines were already moved off them)
+        await self._delete_missing(existing_sections, desired_sections)
         await self._sync_tags(recipe)
 
     async def _sync_tags(self, recipe: Recipe) -> None:
@@ -307,6 +316,7 @@ class SqlAlchemyRecipeRepository(RecipeRepository):
         if not models:
             return []
         ids = [model.id for model in models]
+        sections = await self._children_by_recipe(RecipeSectionModel, ids)
         steps = await self._children_by_recipe(RecipeStepModel, ids)
         ingredients = await self._children_by_recipe(RecipeIngredientModel, ids)
         equipment = await self._children_by_recipe(RecipeEquipmentModel, ids)
@@ -314,7 +324,13 @@ class SqlAlchemyRecipeRepository(RecipeRepository):
         photos = await self._children_by_recipe(RecipePhotoModel, ids)
         return [
             _to_entity(
-                model, steps[model.id], ingredients[model.id], equipment[model.id], tags[model.id], photos[model.id]
+                model,
+                sections[model.id],
+                steps[model.id],
+                ingredients[model.id],
+                equipment[model.id],
+                tags[model.id],
+                photos[model.id],
             )
             for model in models
         ]
@@ -367,6 +383,7 @@ def _step_values(step: RecipeStep) -> dict[str, Any]:
         "title": step.title,
         "instructions": step.instructions,
         "timer_seconds": step.timer_seconds,
+        "section_id": step.section_id.value if step.section_id else None,
     }
 
 
@@ -377,6 +394,7 @@ def _ingredient_values(line: RecipeIngredient) -> dict[str, Any]:
         "unit_id": uuid.UUID(line.unit_id),
         "notes": line.notes,
         "position": line.position,
+        "section_id": line.section_id.value if line.section_id else None,
     }
 
 
@@ -395,6 +413,7 @@ def _photo_values(photo: RecipePhoto) -> dict[str, Any]:
 
 def _to_entity(
     model: RecipeModel,
+    sections: list[RecipeSectionModel],
     steps: list[RecipeStepModel],
     ingredients: list[RecipeIngredientModel],
     equipment: list[RecipeEquipmentModel],
@@ -420,6 +439,7 @@ def _to_entity(
                 instructions=step.instructions,
                 title=step.title,
                 timer_seconds=step.timer_seconds,
+                section_id=RecipeSectionId(step.section_id) if step.section_id else None,
             )
             for step in sorted(steps, key=lambda step: step.step_number)
         ],
@@ -431,6 +451,7 @@ def _to_entity(
                 unit_id=str(line.unit_id),
                 notes=line.notes,
                 position=line.position,
+                section_id=RecipeSectionId(line.section_id) if line.section_id else None,
             )
             for line in sorted(ingredients, key=lambda line: line.position)
         ],
@@ -449,6 +470,10 @@ def _to_entity(
                 created_at=photo.created_at,
             )
             for photo in photos
+        ],
+        sections=[
+            RecipeSection(id=RecipeSectionId(section.id), name=section.name)
+            for section in sorted(sections, key=lambda section: (section.created_at, section.id))
         ],
         deleted_at=model.deleted_at,
         created_at=model.created_at,

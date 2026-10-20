@@ -34,5 +34,9 @@ def _to_draft(step: RecipeStepInputDTO) -> StepDraft:
         if step_id is None:
             raise RecipeStepNotFoundError(step.id)
     return StepDraft(
-        instructions=step.instructions, title=step.title, timer_seconds=step.timer_seconds, id=step_id
+        instructions=step.instructions,
+        title=step.title,
+        timer_seconds=step.timer_seconds,
+        id=step_id,
+        section=step.section,
     )
