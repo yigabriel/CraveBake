@@ -8,6 +8,7 @@ import { useErrorMessage } from "../api/queries";
 import type { Language, UnitSystem } from "../api/types";
 import { useAuth, useUser } from "../auth/AuthContext";
 import { Avatar } from "../components/AppShell";
+import { ImageUploadButton } from "../components/ImageUploadButton";
 import { useToast } from "../components/Toast";
 import { Button, Card, Field, Icon, Input, Modal, PageHeader, Segmented } from "../components/ui";
 import { PasswordRules, passwordRules } from "./AuthPages";
@@ -63,13 +64,13 @@ function EditProfileModal({ open, onClose }: { open: boolean; onClose: () => voi
   const toast = useToast();
   const errorMessage = useErrorMessage();
   const [fullName, setFullName] = useState(user.full_name);
-  const [avatar, setAvatar] = useState(user.avatar_url ?? "");
+  const [avatar, setAvatar] = useState<string | null>(user.avatar_url);
   const save = useMutation({
     // Send only what changed (§3).
     mutationFn: () =>
       usersApi.updateProfile({
         ...(fullName.trim() !== user.full_name ? { full_name: fullName.trim() } : {}),
-        ...(avatar.trim() !== (user.avatar_url ?? "") ? { avatar_url: avatar.trim() || null } : {}),
+        ...(avatar !== user.avatar_url ? { avatar_url: avatar } : {}),
       }),
     onSuccess: (updated) => {
       setUser(updated);
@@ -98,9 +99,23 @@ function EditProfileModal({ open, onClose }: { open: boolean; onClose: () => voi
         <Field label={t("auth.fullName")}>
           <Input value={fullName} maxLength={255} onChange={(e) => setFullName(e.target.value)} />
         </Field>
-        {/* No uploads yet (§17): the avatar is a URL. */}
-        <Field label={t("profile.avatarUrl")} hint={t("profile.avatarHint")}>
-          <Input type="url" value={avatar} placeholder="https://" onChange={(e) => setAvatar(e.target.value)} />
+        {/* The photo is uploaded right away but only saved to the profile with "Save". */}
+        <Field label={t("profile.avatar")}>
+          <div className="flex items-center gap-md">
+            {avatar ? (
+              <img src={avatar} alt="" className="h-16 w-16 shrink-0 rounded-full bg-surface-container-high object-cover" />
+            ) : (
+              <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-surface-container-high text-outline">
+                <Icon name="person" className="text-[32px]" />
+              </span>
+            )}
+            <ImageUploadButton purpose="avatar" onUploaded={setAvatar} />
+            {avatar && (
+              <Button variant="ghost" icon="delete" onClick={() => setAvatar(null)}>
+                {t("editor.removePhoto")}
+              </Button>
+            )}
+          </div>
         </Field>
       </div>
     </Modal>

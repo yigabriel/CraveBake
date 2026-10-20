@@ -27,6 +27,7 @@ from app.shared.exceptions.domain_exceptions import (
     NotFoundError,
     TooManyRequestsError,
     UnauthorizedError,
+    ServiceUnavailableError,
     ValidationError,
 )
 
@@ -39,6 +40,7 @@ _STATUS_AND_CODE_BY_EXCEPTION: dict[type[DomainError], tuple[int, str]] = {
     UnauthorizedError: (401, "unauthorized"),
     ForbiddenError: (403, "forbidden"),
     TooManyRequestsError: (429, "too_many_requests"),
+    ServiceUnavailableError: (503, "service_unavailable"),
 }
 
 _CODE_BY_HTTP_STATUS = {

@@ -39,5 +39,9 @@ class TooManyRequestsError(DomainError):
         super().__init__(message)
         self.retry_after_seconds = retry_after_seconds
 
+
+class ServiceUnavailableError(DomainError):
+    """Raised when a dependency the request needs (e.g. image storage) is missing or down."""
+
 class InvalidCredentialsException(UnauthorizedError):
     """Raised when the provided credentials are invalid."""

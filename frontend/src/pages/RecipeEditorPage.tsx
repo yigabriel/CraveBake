@@ -25,6 +25,7 @@ import {
   Switch,
 } from "../components/ui";
 import { EquipmentIcon } from "../lib/equipment";
+import { ImageUploadButton } from "../components/ImageUploadButton";
 
 const MAX_TAGS = 10;
 const MAX_COVERS = 3;
@@ -338,17 +339,11 @@ function StepPhotoSlot({ recipeId, stepId, photo }: { recipeId: string; stepId: 
   const toast = useToast();
   const errorMessage = useErrorMessage();
   const queryClient = useQueryClient();
-  const [url, setUrl] = useState("");
-  const [broken, setBroken] = useState(false);
   const run = useMutation({
     mutationFn: (action: () => Promise<unknown>) => action(),
-    onSuccess: () => {
-      setUrl("");
-      void queryClient.invalidateQueries({ queryKey: ["recipe", recipeId] });
-    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["recipe", recipeId] }),
     onError: (error) => toast(errorMessage(error), "error"),
   });
-  const valid = /^https?:\/\/\S+$/.test(url.trim());
 
   if (photo)
     return (
@@ -366,33 +361,18 @@ function StepPhotoSlot({ recipeId, stepId, photo }: { recipeId: string; stepId: 
     );
 
   return (
-    <div className="flex items-center gap-xs rounded-lg border border-dashed border-outline-variant p-xs">
-      {valid && !broken ? (
-        <img src={url.trim()} alt="" onError={() => setBroken(true)} className="h-12 w-12 shrink-0 rounded object-cover" />
-      ) : (
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-surface-container-high text-outline">
-          <Icon name="add_photo_alternate" className="text-[22px]" />
-        </span>
-      )}
-      <Input
-        type="url"
-        placeholder={t("editor.stepPhotoPlaceholder")}
-        aria-label={t("editor.stepPhotoPlaceholder")}
-        value={url}
-        onChange={(e) => {
-          setUrl(e.target.value);
-          setBroken(false);
-        }}
-      />
-      <Button
-        icon="add_a_photo"
+    <div className="flex items-center gap-sm rounded-lg border border-dashed border-outline-variant p-xs">
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-surface-container-high text-outline">
+        <Icon name="add_photo_alternate" className="text-[22px]" />
+      </span>
+      <span className="flex-1 text-label-md text-on-surface-variant">{t("editor.stepPhotoHint")}</span>
+      <ImageUploadButton
+        purpose="recipe"
         className="shrink-0 px-sm py-xs"
-        disabled={!valid || run.isPending}
-        loading={run.isPending}
-        onClick={() => run.mutate(() => recipesApi.addPhoto(recipeId, { photo_type: "step", photo_url: url.trim(), step_id: stepId }))}
-      >
-        <span className="hidden sm:inline">{t("common.add")}</span>
-      </Button>
+        onUploaded={(url) =>
+          run.mutateAsync(() => recipesApi.addPhoto(recipeId, { photo_type: "step", photo_url: url, step_id: stepId }))
+        }
+      />
     </div>
   );
 }
@@ -516,7 +496,6 @@ function PhotosSection({ recipe }: { recipe: RecipeDetail }) {
   const toast = useToast();
   const errorMessage = useErrorMessage();
   const queryClient = useQueryClient();
-  const [coverUrl, setCoverUrl] = useState("");
   const refresh = () => void queryClient.invalidateQueries({ queryKey: ["recipe", recipe.id] });
   const run = useMutation({
     mutationFn: (action: () => Promise<unknown>) => action(),
@@ -524,13 +503,12 @@ function PhotosSection({ recipe }: { recipe: RecipeDetail }) {
     onError: (error) => toast(errorMessage(error), "error"),
   });
   const covers = recipe.cover_photos;
-  const isUrl = (url: string) => /^https?:\/\/\S+$/.test(url.trim());
 
   return (
     <div className="flex flex-col gap-md">
       {/* No uploads yet (§17): photos are registered by URL. */}
       <p className="flex items-start gap-xs rounded bg-secondary-container/50 p-sm text-label-md">
-        <Icon name="info" className="text-[18px]" /> {t("editor.photosByUrl")}
+        <Icon name="info" className="text-[18px]" /> {t("editor.photosHint")}
       </p>
       <section>
         <h3 className="mb-xs text-title-lg">
@@ -562,19 +540,11 @@ function PhotosSection({ recipe }: { recipe: RecipeDetail }) {
           ))}
         </div>
         {covers.length < MAX_COVERS ? (
-          <div className="flex gap-xs">
-            <Input type="url" placeholder="https://…" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} />
-            <Button
-              icon="add_a_photo"
-              disabled={!isUrl(coverUrl) || run.isPending}
-              onClick={() => run.mutate(async () => {
-                await recipesApi.addPhoto(recipe.id, { photo_type: "cover", photo_url: coverUrl.trim() });
-                setCoverUrl("");
-              })}
-            >
-              {t("common.add")}
-            </Button>
-          </div>
+          <ImageUploadButton
+            purpose="recipe"
+            label={t("editor.addCover")}
+            onUploaded={(url) => run.mutateAsync(() => recipesApi.addPhoto(recipe.id, { photo_type: "cover", photo_url: url }))}
+          />
         ) : (
           <p className="text-label-md text-on-surface-variant">{t("editor.coversFull")}</p>
         )}

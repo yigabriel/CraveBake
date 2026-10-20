@@ -32,6 +32,12 @@ class Settings(BaseSettings):
         "http://localhost:4200",
     ]
 
+    # Photo uploads (Supabase Storage). The secret key stays on the server: browsers
+    # only ever get single-use signed URLs. Unset = uploads answer 503.
+    supabase_url: str | None = None
+    supabase_service_key: str | None = None
+    supabase_storage_bucket: str = "recipe-photos"
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
