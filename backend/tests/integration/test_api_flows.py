@@ -11,7 +11,7 @@ from decimal import Decimal
 
 import pytest
 from httpx2 import ASGITransport, AsyncClient
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.iam.infraestructure.security.login_rate_limiter import LoginRateLimiter
 from app.iam.presentation.http.dependencies import get_login_rate_limiter
@@ -234,6 +234,34 @@ class TestRecipeLifecycle:
 
         assert response.status_code == 404
         assert (await ok(await client.get("/v1/recipes/mine", headers=headers)))["total"] == 0
+
+
+class TestEnglishBase:
+    """English is the base: stable codes are English and the seeded catalog was originally written in English."""
+
+    async def test_seeded_codes_and_base_language(self, client, catalog, db_session):
+        headers = await sign_up(client, "base@example.com")
+
+        categories = await ok(await client.get("/v1/categories", headers=headers))
+        assert {c["name"] for c in categories} == {
+            "flour", "sugar", "sweetener", "fat", "dairy", "leavener", "fruit", "nut", "spice", "extract", "other"
+        }
+        equipment = await ok(await client.get("/v1/equipment", params={"limit": 100}, headers=headers))
+        assert {e["equipment_type"] for e in equipment["items"]} == {"mold", "utensil", "appliance", "other"}
+        tags = await ok(await client.get("/v1/recipe-tags", headers=headers))
+        assert {t["group"] for t in tags} == {"flavor", "diet", "technique", "time", "celebrations"}
+        assert (await client.get("/v1/recipe-tags", params={"group": "sabor"}, headers=headers)).status_code == 422
+
+        # Every seeded row has both languages and was originally written in English.
+        for table in ("ingredients", "ingredient_categories", "equipment", "recipe_categories", "difficulties", "units", "tags"):
+            rows = (await db_session.execute(text(f"SELECT DISTINCT name_language FROM {table}"))).scalars().all()
+            assert rows == ["en"], table
+
+    async def test_new_names_fall_back_to_english_when_the_creator_has_no_language(self, client, catalog, db_session):
+        headers = await sign_up(client, "fallback@example.com")
+        created = await ok(await client.post("/v1/ingredients", json={"name": "Cardamom"}, headers=headers), 201)
+        row = (await db_session.execute(text("SELECT name_language FROM ingredients WHERE id = :id"), {"id": created["id"]})).scalar_one()
+        assert row == "en"  # the register default; a Spanish speaker's names are stored as "es" (see the other tests)
 
 
 class TestRecipeSections:
@@ -513,6 +541,66 @@ class TestLocalizedIngredients:
             response = await client.post("/v1/ingredients", json={"name": name}, headers=spanish)
             assert response.status_code == 409, name
 
+    async def test_reviewed_translations_are_stored_and_guard_uniqueness(self, client, catalog):
+        spanish = await self.speaker(client, "es-reviewed@example.com", "es")
+        english = await self.speaker(client, "en-reviewed@example.com", "en")
+
+        created = await ok(
+            await client.post("/v1/ingredients", json={"name": "Pistacho", "translations": {"en": "Pistachio"}}, headers=spanish), 201
+        )
+        assert created["name"] == "Pistacho"
+        seen = await ok(await client.get(f"/v1/ingredients/{created['id']}", headers=english))
+        assert seen["name"] == "Pistachio"  # translated, not "shown as written"
+
+        # The translation counts against uniqueness, in either language.
+        clash = await client.post("/v1/ingredients", json={"name": "Nuevo", "translations": {"en": "pistachio"}}, headers=spanish)
+        assert clash.status_code == 409
+        # An unsupported language is a validation error, not a stored junk key.
+        bad = await client.post("/v1/ingredients", json={"name": "Otro", "translations": {"fr": "Pistache"}}, headers=spanish)
+        assert bad.status_code == 422
+
+        equipment = await ok(
+            await client.post(
+                "/v1/equipment",
+                json={"name": "Rodillo de repostería", "equipment_type": "utensil", "translations": {"en": "Pastry rolling pin"}},
+                headers=spanish,
+            ),
+            201,
+        )
+        assert (await ok(await client.get(f"/v1/equipment/{equipment['id']}", headers=english)))["name"] == "Pastry rolling pin"
+
+    async def test_search_ignores_accents_and_case(self, client, catalog):
+        headers = await self.speaker(client, "accents@example.com", "es")
+
+        async def names(path, q):
+            page = await ok(await client.get(path, params={"q": q}, headers=headers))
+            return [item.get("name") or item["title"] for item in page["items"]]
+
+        # Typed without accent / in capitals / half a word: the accented name is still found.
+        for q in ("azucar", "AZUCAR", "azúcar", "Azúc"):
+            assert "Azúcar blanca" in await names("/v1/ingredients", q), q
+        assert "Huevo" in await names("/v1/ingredients", "HUEVO")
+
+        # The same for equipment and for recipes (title and description).
+        await ok(await client.post("/v1/equipment", json={"name": "Rodillo de repostería", "equipment_type": "utensil"}, headers=headers), 201)
+        assert "Rodillo de repostería" in await names("/v1/equipment", "reposteria")
+        await ok(
+            await client.post("/v1/recipes", json=recipe_body(catalog, "Tarta de limón", description="Con ralladura de limón"), headers=headers),
+            201,
+        )
+        assert "Tarta de limón" in await names("/v1/recipes", "LIMON")
+        assert await names("/v1/recipes", "lima") == []  # folding does not make unrelated words match
+
+        # A typed '%' is a plain character, not a wildcard that matches everything.
+        assert await names("/v1/ingredients", "100%") == []
+
+    async def test_a_name_without_accents_is_the_same_name(self, client, catalog):
+        headers = await self.speaker(client, "same-name@example.com", "es")
+
+        response = await client.post("/v1/ingredients", json={"name": "Azucar blanca"}, headers=headers)
+
+        assert response.status_code == 409  # "Azúcar blanca" already exists
+
     async def test_recipe_pantry_and_cooking_follow_the_viewer(self, client, catalog):
         author = await self.speaker(client, "es-author@example.com", "es")
         english = await self.speaker(client, "en-cook@example.com", "en")
@@ -550,10 +638,10 @@ class TestLocalizedIngredients:
         assert {"cup", "gram"} <= await names("/v1/units", english)
         assert {"Flours & starches", "Dairy & eggs"} <= await names("/v1/categories", english, key="label")
         # The category code stays stable whatever the language: it is what clients filter by.
-        assert "harina" in await names("/v1/categories", english)
+        assert "flour" in await names("/v1/categories", english)
 
         flour = await ok(await client.get(f"/v1/ingredients/{catalog['flour']}", headers=english))
-        assert (flour["default_category"], flour["category_name"]) == ("harina", "Flours & starches")
+        assert (flour["default_category"], flour["category_name"]) == ("flour", "Flours & starches")
 
         # Names that travel inside other modules' responses are translated too.
         recipe = await ok(await client.post("/v1/recipes", json=recipe_body(catalog), headers=spanish), 201)
@@ -569,5 +657,5 @@ class TestLocalizedIngredients:
     async def test_new_equipment_is_unique_across_languages(self, client, catalog):
         spanish = await self.speaker(client, "es-equipment@example.com", "es")
         for name in ("oven", "HORNO"):
-            response = await client.post("/v1/equipment", json={"name": name, "equipment_type": "otro"}, headers=spanish)
+            response = await client.post("/v1/equipment", json={"name": name, "equipment_type": "other"}, headers=spanish)
             assert response.status_code == 409, name

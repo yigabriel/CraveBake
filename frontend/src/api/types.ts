@@ -51,7 +51,7 @@ export interface Ingredient {
   id: string;
   name: string;
   description: string | null;
-  default_category: string | null; // stable code, e.g. "harina"
+  default_category: string | null; // stable code, e.g. "flour"
   category_name: string | null; // its name in the user's language
 }
 
@@ -78,7 +78,7 @@ export interface ConversionResult {
 
 // --- Equipment -----------------------------------------------------------------------
 
-export type EquipmentType = "molde" | "utensilio" | "electrodomestico" | "otro";
+export type EquipmentType = "mold" | "utensil" | "appliance" | "other";
 
 export interface Equipment {
   id: string;
@@ -106,7 +106,7 @@ export interface Difficulty extends NamedRef {
   level_order: number;
 }
 
-export type TagGroup = "sabor" | "dieta" | "tecnica" | "tiempo" | "celebraciones";
+export type TagGroup = "flavor" | "diet" | "technique" | "time" | "celebrations";
 
 export interface RecipeTag extends NamedRef {
   group: TagGroup;

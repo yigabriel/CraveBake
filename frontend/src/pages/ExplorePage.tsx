@@ -24,7 +24,7 @@ import { formatMinutes } from "../lib/time";
 
 const PAGE_SIZE = 12;
 const TIME_OPTIONS = [15, 30, 60, 120, 240];
-const TAG_GROUPS = ["sabor", "dieta", "tecnica", "tiempo", "celebraciones"] as const;
+const TAG_GROUPS = ["flavor", "diet", "technique", "time", "celebrations"] as const;
 
 /** Filters live in the URL so a search can be shared and survives "back" (§4). */
 function useFilters() {
@@ -86,8 +86,10 @@ function Hero({ recipe, saved, isOwn }: { recipe: RecipeSummary; saved: boolean 
   const { t } = useTranslation();
   return (
     <section className="mb-lg grid overflow-hidden rounded-xl bg-surface-container-low shadow-card lg:grid-cols-[1.4fr_1fr]">
-      <Link to={`/recipes/${recipe.id}`} className="relative block aspect-[16/10] lg:aspect-auto">
-        <Cover url={recipe.cover_photo_url} alt={recipe.title} className="h-full w-full" />
+      {/* The photo is absolutely positioned: its own size never sets the row's height, so a
+          huge picture cannot push the hero past the screen. On desktop the text column decides. */}
+      <Link to={`/recipes/${recipe.id}`} className="relative block aspect-[16/10] lg:aspect-auto lg:min-h-[380px]">
+        <Cover url={recipe.cover_photo_url} alt={recipe.title} className="absolute inset-0 h-full w-full" />
         <span className="absolute left-sm top-sm rounded-full bg-surface/90 px-sm py-[2px] text-label-sm uppercase text-primary">
           {t("explore.newest")}
         </span>

@@ -38,6 +38,13 @@ class Settings(BaseSettings):
     supabase_service_key: str | None = None
     supabase_storage_bucket: str = "recipe-photos"
 
+    # Suggested translations of new catalog names (Google Cloud Translation, Basic v2).
+    # The key stays on the server. Unset = suggestions answer 503 and users type the translation.
+    google_translate_api_key: str | None = None
+    # Each suggestion is billable per character: requests allowed per user in the window.
+    translation_max_requests: int = 20
+    translation_window_seconds: int = 60
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 

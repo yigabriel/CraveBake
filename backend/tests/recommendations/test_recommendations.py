@@ -99,10 +99,10 @@ class FakeKitchen(KitchenCatalog):
 
     async def ingredient_names(self, ids):
         # Localized, like the real ingredients context.
-        return {i: LocalizedText({"es": self.names[i], "en": f"{self.names[i]} (en)"}) for i in ids if i in self.names}
+        return {i: LocalizedText({"es": self.names[i], "en": f"{self.names[i]} (en)"}, original="es") for i in ids if i in self.names}
 
     async def equipment_names(self, ids):
-        return {i: LocalizedText.of(self.names[i]) for i in ids if i in self.names}
+        return {i: LocalizedText.of(self.names[i], "es") for i in ids if i in self.names}
 
 
 class FakeRecipeSource(RecipeCandidateSource):
@@ -138,10 +138,10 @@ class FakeRecipeSource(RecipeCandidateSource):
         return recipe if self._visible(recipe, viewer_user_id) else None
 
     async def category_names(self):
-        return {CATEGORY: LocalizedText({"es": "Tortas", "en": "Cakes"})}
+        return {CATEGORY: LocalizedText({"es": "Tortas", "en": "Cakes"}, original="es")}
 
     async def tag_names(self):
-        return {TAG_VEGAN: LocalizedText({"es": "Vegano", "en": "Vegan"})}
+        return {TAG_VEGAN: LocalizedText({"es": "Vegano", "en": "Vegan"}, original="es")}
 
 
 class FakeFavorites(FavoritesGateway):

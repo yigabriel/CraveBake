@@ -12,7 +12,7 @@ class EquipmentModel(LocalizedNameMixin, Base):
     __tablename__ = "equipment"
     __table_args__ = (
         CheckConstraint(
-            "equipment_type IN ('molde', 'utensilio', 'electrodomestico', 'otro')", name="ck_equipment_type"
+            "equipment_type IN ('mold', 'utensil', 'appliance', 'other')", name="ck_equipment_type"
         ),
     )
 

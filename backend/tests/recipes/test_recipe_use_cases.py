@@ -373,10 +373,10 @@ class TestCatalogs:
 
     async def test_tags_grouped_then_alphabetical(self, world):
         tags = await ListRecipeTagsUseCase(world.tags).execute()
-        assert [(t.group, str(t.name)) for t in tags] == [("sabor", "chocolate"), ("dieta", "vegano"), ("celebraciones", "Navidad")]
+        assert [(t.group, str(t.name)) for t in tags] == [("flavor", "chocolate"), ("diet", "vegano"), ("celebrations", "Navidad")]
 
     async def test_tags_of_one_group(self, world):
-        assert [str(t.name) for t in await ListRecipeTagsUseCase(world.tags).execute("dieta")] == ["vegano"]
+        assert [str(t.name) for t in await ListRecipeTagsUseCase(world.tags).execute("diet")] == ["vegano"]
 
 
 class TestRecipeQueryService:

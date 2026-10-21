@@ -17,11 +17,11 @@ from app.shared.domain.value_objects.localized_text import LocalizedText
 
 
 class TagGroup(str, Enum):
-    SABOR = "sabor"
-    DIETA = "dieta"
-    TECNICA = "tecnica"
-    TIEMPO = "tiempo"
-    CELEBRACIONES = "celebraciones"
+    FLAVOR = "flavor"
+    DIET = "diet"
+    TECHNIQUE = "technique"
+    TIME = "time"
+    CELEBRATIONS = "celebrations"
 
     @property
     def label(self) -> LocalizedText:
@@ -30,11 +30,11 @@ class TagGroup(str, Enum):
 
 # Fixed by the enum (not data), so they live here rather than in a table.
 _LABELS = {
-    TagGroup.SABOR: LocalizedText({"es": "Sabor", "en": "Flavor"}),
-    TagGroup.DIETA: LocalizedText({"es": "Dieta", "en": "Diet"}),
-    TagGroup.TECNICA: LocalizedText({"es": "Técnica y equipo", "en": "Technique & equipment"}),
-    TagGroup.TIEMPO: LocalizedText({"es": "Tiempo", "en": "Time"}),
-    TagGroup.CELEBRACIONES: LocalizedText({"es": "Celebraciones", "en": "Celebrations"}),
+    TagGroup.FLAVOR: LocalizedText({"es": "Sabor", "en": "Flavor"}),
+    TagGroup.DIET: LocalizedText({"es": "Dieta", "en": "Diet"}),
+    TagGroup.TECHNIQUE: LocalizedText({"es": "Técnica y equipo", "en": "Technique & equipment"}),
+    TagGroup.TIME: LocalizedText({"es": "Tiempo", "en": "Time"}),
+    TagGroup.CELEBRATIONS: LocalizedText({"es": "Celebraciones", "en": "Celebrations"}),
 }
 
 

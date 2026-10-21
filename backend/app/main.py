@@ -17,6 +17,7 @@ from app.equipment.module import create_equipment_router
 from app.recommendations.module import create_recommendations_router
 from app.preparation.module import create_preparation_router
 from app.media.module import create_media_router
+from app.translation.module import create_translation_router
 
 from app.shared.config.settings import get_settings
 from app.shared.exceptions.exception_handlers import register_exception_handlers
@@ -50,6 +51,7 @@ api_v1.include_router(create_equipment_router())
 api_v1.include_router(create_recommendations_router())
 api_v1.include_router(create_preparation_router())
 api_v1.include_router(create_media_router())
+api_v1.include_router(create_translation_router())
 app.include_router(api_v1)
 
 

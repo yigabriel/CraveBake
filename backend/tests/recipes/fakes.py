@@ -153,11 +153,11 @@ class RecipesWorld:
     grams: str = field(default_factory=_id)
     units: str = field(default_factory=_id)
     mold: str = field(default_factory=_id)
-    cakes: RecipeCategory = field(default_factory=lambda: RecipeCategory(RecipeCategoryId(), LocalizedText({"es": "Tortas", "en": "Cakes"})))
-    easy: Difficulty = field(default_factory=lambda: Difficulty(DifficultyId(), LocalizedText({"es": "Fácil", "en": "Easy"}), 1))
-    chocolate: RecipeTag = field(default_factory=lambda: RecipeTag(RecipeTagId(), LocalizedText.of("chocolate"), TagGroup.SABOR))
-    vegan: RecipeTag = field(default_factory=lambda: RecipeTag(RecipeTagId(), LocalizedText({"es": "vegano", "en": "vegan"}), TagGroup.DIETA))
-    holiday: RecipeTag = field(default_factory=lambda: RecipeTag(RecipeTagId(), LocalizedText({"es": "Navidad", "en": "Christmas"}), TagGroup.CELEBRACIONES))
+    cakes: RecipeCategory = field(default_factory=lambda: RecipeCategory(RecipeCategoryId(), LocalizedText({"es": "Tortas", "en": "Cakes"}, original="es")))
+    easy: Difficulty = field(default_factory=lambda: Difficulty(DifficultyId(), LocalizedText({"es": "Fácil", "en": "Easy"}, original="es"), 1))
+    chocolate: RecipeTag = field(default_factory=lambda: RecipeTag(RecipeTagId(), LocalizedText.of("chocolate"), TagGroup.FLAVOR))
+    vegan: RecipeTag = field(default_factory=lambda: RecipeTag(RecipeTagId(), LocalizedText({"es": "vegano", "en": "vegan"}, original="es"), TagGroup.DIET))
+    holiday: RecipeTag = field(default_factory=lambda: RecipeTag(RecipeTagId(), LocalizedText({"es": "Navidad", "en": "Christmas"}, original="es"), TagGroup.CELEBRATIONS))
 
     def __post_init__(self) -> None:
         self.recipes = InMemoryRecipeRepository()

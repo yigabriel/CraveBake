@@ -50,10 +50,10 @@ const RULES: [string[], string][] = [
   [["molde", "pan"], "m:cake"],
 ];
 const BY_TYPE: Record<EquipmentType, string> = {
-  molde: "m:cake",
-  utensilio: "m:flatware",
-  electrodomestico: "m:kitchen",
-  otro: "m:category",
+  mold: "m:cake",
+  utensil: "m:flatware",
+  appliance: "m:kitchen",
+  other: "m:category",
 };
 
 const normalize = (text: string) =>

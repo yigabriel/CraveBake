@@ -18,12 +18,13 @@ from sqlalchemy import String, func, or_
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.shared.database.text_search import contains_folded, equals_folded
 from app.shared.domain.value_objects.localized_text import SUPPORTED_LANGUAGES, LocalizedText
 
 
 class LocalizedNameMixin:
     names: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    name_language: Mapped[str] = mapped_column(String(2), nullable=False, server_default="es")
+    name_language: Mapped[str] = mapped_column(String(2), nullable=False, server_default="en")
 
     @property
     def localized_name(self) -> LocalizedText:
@@ -36,19 +37,17 @@ def name_columns(name: LocalizedText) -> dict[str, Any]:
 
 
 def _name_in(model: Any, language: str):
-    return func.lower(model.names[language].astext)
+    return model.names[language].astext
 
 
 def name_equals(model: Any, name: str):
-    """WHERE clause: `model` is called `name` in any language, ignoring case."""
-    wanted = name.strip().lower()
-    return or_(*(_name_in(model, language) == wanted for language in SUPPORTED_LANGUAGES))
+    """WHERE clause: `model` is called `name` in any language, ignoring case and accents."""
+    return or_(*(equals_folded(_name_in(model, language), name) for language in SUPPORTED_LANGUAGES))
 
 
 def name_contains(model: Any, text: str):
-    """WHERE clause: `text` appears in the name in any language, ignoring case."""
-    pattern = f"%{text.strip().lower()}%"
-    return or_(*(_name_in(model, language).like(pattern) for language in SUPPORTED_LANGUAGES))
+    """WHERE clause: `text` appears in the name in any language, ignoring case and accents."""
+    return or_(*(contains_folded(_name_in(model, language), text) for language in SUPPORTED_LANGUAGES))
 
 
 def original_name(model: Any):

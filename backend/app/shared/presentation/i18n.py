@@ -14,7 +14,7 @@ from typing import Annotated, Any
 
 from pydantic import BeforeValidator, ValidationInfo
 
-from app.shared.domain.value_objects.localized_text import SUPPORTED_LANGUAGES, LocalizedText
+from app.shared.domain.value_objects.localized_text import DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES, LocalizedText
 
 
 def _localize(value: Any, info: ValidationInfo) -> Any:
@@ -42,4 +42,4 @@ def language_from_header(accept_language: str | None) -> str | None:
 
 def language_context(user: Any) -> dict[str, str]:
     """Validation context for a response, from the signed-in user's preference."""
-    return {"language": getattr(user, "preferred_language", None) or "es"}
+    return {"language": getattr(user, "preferred_language", None) or DEFAULT_LANGUAGE}

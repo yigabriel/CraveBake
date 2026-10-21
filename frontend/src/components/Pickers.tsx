@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { catalogApi } from "../api/endpoints";
-import { useErrorMessage } from "../api/queries";
 import type { Equipment, EquipmentType, Ingredient } from "../api/types";
-import { useToast } from "./Toast";
+import { fold } from "../lib/text";
+import { NewCatalogItemModal } from "./NewCatalogItemModal";
 import { Icon, inputClass } from "./ui";
 
 function useDebounced<T>(value: T, delay = 300): T {
@@ -32,6 +32,7 @@ function SearchPicker<T extends Option>({
   search,
   onPick,
   onCreate,
+  createKind,
   excludeIds = [],
   autoFocus,
 }: {
@@ -39,23 +40,25 @@ function SearchPicker<T extends Option>({
   queryKey: string;
   search: (q: string) => Promise<T[]>;
   onPick: (item: T) => void;
-  onCreate?: (name: string) => Promise<T>;
+  /** Adds a new item, after the person reviewed its name and translations. */
+  onCreate?: (name: string, translations: Record<string, string>) => Promise<T>;
+  createKind?: "ingredient" | "equipment";
   excludeIds?: string[];
   autoFocus?: boolean;
 }) {
   const { t } = useTranslation();
-  const toast = useToast();
-  const errorMessage = useErrorMessage();
   const [text, setText] = useState("");
   const [open, setOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
+  // The name being reviewed before it is added to the catalog (null: no review open).
+  const [reviewing, setReviewing] = useState<string | null>(null);
   const q = useDebounced(text.trim());
   const results = useQuery({ queryKey: [queryKey, "search", q], queryFn: () => search(q), enabled: open });
   // While the debounced search catches up with what is typed, old results would be
   // clickable and "Create" would use the previous text: show neither until it settles.
   const settled = text.trim() === q;
   const options = settled ? (results.data ?? []).filter((item) => !excludeIds.includes(item.id)) : [];
-  const exact = settled && results.data?.some((item) => item.name.toLowerCase() === q.toLowerCase());
+  // Typing "azucar" when "Azúcar" exists is the same name: do not offer to create a duplicate.
+  const exact = settled && results.data?.some((item) => fold(item.name) === fold(q));
   const loading = results.isLoading || !settled;
 
   const pick = (item: T) => {
@@ -103,18 +106,8 @@ function SearchPicker<T extends Option>({
             <li>
               <button
                 type="button"
-                disabled={creating}
                 onMouseDown={(event) => event.preventDefault()}
-                onClick={async () => {
-                  setCreating(true);
-                  try {
-                    pick(await onCreate(q));
-                  } catch (error) {
-                    toast(errorMessage(error), "error");
-                  } finally {
-                    setCreating(false);
-                  }
-                }}
+                onClick={() => setReviewing(q)}
                 className="flex w-full items-center gap-xs px-sm py-xs text-left text-label-md text-primary hover:bg-surface-container-high"
               >
                 <Icon name="add_circle" className="text-[18px]" /> {t("common.createNamed", { name: q })}
@@ -122,6 +115,19 @@ function SearchPicker<T extends Option>({
             </li>
           )}
         </ul>
+      )}
+      {onCreate && createKind && (
+        <NewCatalogItemModal
+          open={reviewing !== null}
+          kind={createKind}
+          name={reviewing ?? ""}
+          onClose={() => setReviewing(null)}
+          onConfirm={async (name, translations) => {
+            const created = await onCreate(name, translations);
+            setReviewing(null);
+            pick(created);
+          }}
+        />
       )}
     </div>
   );
@@ -149,7 +155,8 @@ export function IngredientPicker({
         (await catalogApi.searchIngredients(q, 10)).items.map((item) => ({ ...item, hint: item.category_name }))
       }
       onPick={onPick}
-      onCreate={allowCreate ? (name) => catalogApi.createIngredient({ name }) : undefined}
+      onCreate={allowCreate ? (name, translations) => catalogApi.createIngredient({ name, translations }) : undefined}
+      createKind="ingredient"
       excludeIds={excludeIds}
       autoFocus={autoFocus}
     />
@@ -180,7 +187,8 @@ export function EquipmentPicker({
         }))
       }
       onPick={onPick}
-      onCreate={allowCreateAs ? (name) => catalogApi.createEquipment({ name, equipment_type: allowCreateAs }) : undefined}
+      onCreate={allowCreateAs ? (name, translations) => catalogApi.createEquipment({ name, equipment_type: allowCreateAs, translations }) : undefined}
+      createKind="equipment"
       excludeIds={excludeIds}
     />
   );

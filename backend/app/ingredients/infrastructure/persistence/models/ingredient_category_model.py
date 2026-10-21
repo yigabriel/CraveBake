@@ -9,7 +9,7 @@ from app.shared.database.localized_name import LocalizedNameMixin
 
 
 class IngredientCategoryModel(LocalizedNameMixin, Base):
-    """`ingredients.default_category` holds the stable `code` ("harina"); this table names it per language.
+    """`ingredients.default_category` holds the stable `code` ("flour"); this table names it per language.
 
     Not a foreign key on purpose: a code without a row here is still valid and is
     shown as written (categories used to be free text, see migration 0017).

@@ -5,6 +5,6 @@ from app.shared.domain.value_objects.localized_text import LocalizedText
 
 @dataclass(frozen=True)
 class CategoryDTO:
-    name: str  # stable code, e.g. "harina" (used in /categories/{name}/ingredients)
+    name: str  # stable code, e.g. "flour" (used in /categories/{name}/ingredients)
     label: LocalizedText
     ingredient_count: int

@@ -1,7 +1,7 @@
 """DTOs for the equipment catalog and the user's kitchen."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from app.shared.domain.value_objects.localized_text import DEFAULT_LANGUAGE, LocalizedText
 
@@ -12,6 +12,8 @@ class CreateEquipmentDTO:
     equipment_type: str
     description: str | None = None
     language: str = DEFAULT_LANGUAGE  # the language `name` is written in
+    # Reviewed translations of `name`, by language (the other languages' names).
+    translations: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

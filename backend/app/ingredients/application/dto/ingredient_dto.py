@@ -1,5 +1,5 @@
 """DTOs for the ingredients catalog."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from app.shared.domain.value_objects.localized_text import DEFAULT_LANGUAGE, LocalizedText
 
@@ -10,6 +10,8 @@ class CreateIngredientDTO:
     description: str | None = None
     default_category: str | None = None
     language: str = DEFAULT_LANGUAGE  # the language `name` is written in
+    # Reviewed translations of `name`, by language (the other languages' names).
+    translations: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

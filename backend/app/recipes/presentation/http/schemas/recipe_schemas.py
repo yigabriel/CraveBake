@@ -116,7 +116,7 @@ class DifficultyResponse(BaseModel):
 class RecipeTagResponse(BaseModel):
     id: str
     name: LocalizedStr
-    group: str  # sabor | dieta | tecnica | tiempo | celebraciones
+    group: str  # flavor | diet | technique | time | celebrations
     group_name: LocalizedStr
 
 

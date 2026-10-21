@@ -428,7 +428,7 @@ function EquipmentSection({ rows, onChange }: { rows: EquipmentRow[]; onChange: 
     <div className="flex flex-col gap-sm">
       {/* The same equipment cannot be repeated: picked ones are excluded. */}
       <EquipmentPicker
-        allowCreateAs="utensilio"
+        allowCreateAs="utensil"
         placeholder={t("editor.addEquipment")}
         excludeIds={rows.map((row) => row.equipment_id)}
         onPick={(equipment) => onChange([...rows, { key: newKey(), equipment_id: equipment.id, name: equipment.name, notes: "" }])}

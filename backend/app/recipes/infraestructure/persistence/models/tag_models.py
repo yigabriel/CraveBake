@@ -15,7 +15,7 @@ class TagModel(LocalizedNameMixin, Base):
     __tablename__ = "tags"
     __table_args__ = (
         CheckConstraint(
-            "tag_group IN ('sabor', 'dieta', 'tecnica', 'tiempo', 'celebraciones')", name="ck_tags_group"
+            "tag_group IN ('flavor', 'diet', 'technique', 'time', 'celebrations')", name="ck_tags_group"
         ),
     )
 

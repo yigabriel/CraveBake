@@ -17,7 +17,7 @@ from typing import Mapping
 from app.shared.exceptions.domain_exceptions import ValidationError
 
 SUPPORTED_LANGUAGES = ("es", "en")
-DEFAULT_LANGUAGE = "es"
+DEFAULT_LANGUAGE = "en"
 
 
 @dataclass(frozen=True)
@@ -42,6 +42,17 @@ class LocalizedText:
     @classmethod
     def of(cls, text: str, language: str = DEFAULT_LANGUAGE) -> "LocalizedText":
         return cls({language: text}, original=language)
+
+    @classmethod
+    def written(cls, text: str, language: str, translations: Mapping[str, str] | None = None) -> "LocalizedText":
+        """A name written in `language`, together with the translations the author reviewed.
+
+        A blank translation means "not translated": that language falls back to the original.
+        """
+        reviewed = {lang: translated for lang, translated in (translations or {}).items() if (translated or "").strip()}
+        if language in reviewed:
+            raise ValidationError("The translations cannot include the language the name was written in")
+        return cls({language: text, **reviewed}, original=language)
 
     def in_(self, language: str | None) -> str:
         """The text in `language`, or in the original language when it has no translation."""

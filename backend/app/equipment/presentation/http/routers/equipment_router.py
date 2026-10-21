@@ -69,6 +69,7 @@ async def create_equipment(
         name=request.name,
         equipment_type=request.equipment_type,
         description=request.description,
+        translations=dict(request.translations),
         # The name is taken as written in the creator's language.
         language=current_user.preferred_language,
     )

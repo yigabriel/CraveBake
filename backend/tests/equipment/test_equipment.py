@@ -38,14 +38,14 @@ def kitchen():
 
 @pytest.fixture
 async def mixer(catalog):
-    item = Equipment.create("Batidora planetaria", EquipmentType.ELECTRODOMESTICO)
+    item = Equipment.create("Batidora planetaria", EquipmentType.APPLIANCE)
     await catalog.add(item)
     return item
 
 
 @pytest.fixture
 async def mold(catalog):
-    item = Equipment.create("Molde redondo 20cm", EquipmentType.MOLDE)
+    item = Equipment.create("Molde redondo 20cm", EquipmentType.MOLD)
     await catalog.add(item)
     return item
 
@@ -53,14 +53,14 @@ async def mold(catalog):
 class TestEquipmentEntity:
 
     def test_create_cleans_fields(self):
-        item = Equipment.create("  Espátula  ", EquipmentType.UTENSILIO, description="   ")
+        item = Equipment.create("  Espátula  ", EquipmentType.UTENSIL, description="   ")
         assert item.name.text == "Espátula"
         assert item.description is None
 
     @pytest.mark.parametrize("name", ["", "   ", None])
     def test_rejects_empty_name(self, name):
         with pytest.raises(ValidationError):
-            Equipment.create(name, EquipmentType.OTRO)
+            Equipment.create(name, EquipmentType.OTHER)
 
 
 class TestUserEquipmentEntity:
@@ -91,16 +91,28 @@ class TestCatalogUseCases:
 
     async def test_create(self, catalog):
         result = await CreateEquipmentUseCase(catalog).execute(
-            CreateEquipmentDTO(name="Rodillo", equipment_type="utensilio")
+            CreateEquipmentDTO(name="Rodillo", equipment_type="utensil")
         )
         assert result.name.text == "Rodillo"
-        assert result.equipment_type == "utensilio"
+        assert result.equipment_type == "utensil"
         assert len(catalog.items) == 1
+
+    async def test_create_with_reviewed_translations(self, catalog):
+        result = await CreateEquipmentUseCase(catalog).execute(
+            CreateEquipmentDTO(name="Rodillo", equipment_type="utensil", language="es", translations={"en": "Rolling pin"})
+        )
+        assert (result.name.in_("es"), result.name.in_("en")) == ("Rodillo", "Rolling pin")
+
+    async def test_create_rejects_a_translation_that_clashes_with_an_existing_name(self, catalog, mixer):
+        with pytest.raises(EquipmentAlreadyExistsError):
+            await CreateEquipmentUseCase(catalog).execute(
+                CreateEquipmentDTO(name="Stand mixer", language="en", equipment_type="appliance", translations={"es": "Batidora planetaria"})
+            )
 
     async def test_create_rejects_duplicate_name_case_insensitive(self, catalog, mixer):
         with pytest.raises(EquipmentAlreadyExistsError):
             await CreateEquipmentUseCase(catalog).execute(
-                CreateEquipmentDTO(name="  batidora PLANETARIA ", equipment_type="electrodomestico")
+                CreateEquipmentDTO(name="  batidora PLANETARIA ", equipment_type="appliance")
             )
 
     async def test_get(self, catalog, mixer):
@@ -113,7 +125,7 @@ class TestCatalogUseCases:
             await GetEquipmentUseCase(catalog).execute(raw)
 
     async def test_search_filters_by_type_and_paginates(self, catalog, mixer, mold):
-        page = await SearchEquipmentUseCase(catalog).execute(SearchEquipmentDTO(equipment_type="molde"))
+        page = await SearchEquipmentUseCase(catalog).execute(SearchEquipmentDTO(equipment_type="mold"))
         assert [item.name.text for item in page.items] == ["Molde redondo 20cm"]
         assert page.total == 1
 

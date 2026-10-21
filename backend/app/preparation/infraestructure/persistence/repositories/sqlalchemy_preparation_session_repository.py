@@ -24,7 +24,7 @@ from app.preparation.infraestructure.persistence.models.preparation_models impor
     PreparationStepModel,
 )
 from app.shared.domain.value_objects.entity_id import EntityId
-from app.shared.domain.value_objects.localized_text import LocalizedText
+from app.shared.domain.value_objects.localized_text import DEFAULT_LANGUAGE, LocalizedText
 
 
 class SqlAlchemyPreparationSessionRepository(PreparationSessionRepository):
@@ -181,7 +181,7 @@ class SqlAlchemyPreparationSessionRepository(PreparationSessionRepository):
                     PreparedIngredient(
                         ingredient_id=str(line.ingredient_id),
                         ingredient_name=(
-                            LocalizedText(line.ingredient_names, original=line.ingredient_name_language or "es")
+                            LocalizedText(line.ingredient_names, original=line.ingredient_name_language or DEFAULT_LANGUAGE)
                             if line.ingredient_names
                             else None
                         ),

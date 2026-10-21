@@ -25,6 +25,7 @@ from sqlalchemy import Float, cast, distinct, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from app.shared.database.text_search import contains_folded
 from app.shared.domain.value_objects.entity_id import EntityId
 
 from app.recipes.domain.entities.recipe import Recipe
@@ -254,8 +255,9 @@ class SqlAlchemyRecipeRepository(RecipeRepository):
     async def search_public(self, criteria: RecipeSearchCriteria) -> RecipePage:
         conditions = [RecipeModel.is_public.is_(True), RecipeModel.deleted_at.is_(None)]
         if criteria.query:
-            pattern = f"%{criteria.query}%"
-            conditions.append(or_(RecipeModel.title.ilike(pattern), RecipeModel.description.ilike(pattern)))
+            conditions.append(
+                or_(contains_folded(RecipeModel.title, criteria.query), contains_folded(RecipeModel.description, criteria.query))
+            )
         if criteria.category_id:
             conditions.append(RecipeModel.category_id == criteria.category_id.value)
         if criteria.difficulty_id:

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import Mapping
 
 from app.ingredients.domain.value_objects.ingredient_id import IngredientId
 from app.shared.domain.value_objects.localized_text import DEFAULT_LANGUAGE, LocalizedText
@@ -26,7 +27,7 @@ class Ingredient:
     id: IngredientId
     name: LocalizedText
     description: str | None = None
-    default_category: str | None = None  # stable code, e.g. "harina"
+    default_category: str | None = None  # stable code, e.g. "flour"
     # Display name of `default_category` (read-only, resolved by the repository).
     category_name: LocalizedText | None = None
     created_at: datetime = field(default_factory=_utc_now)
@@ -38,11 +39,12 @@ class Ingredient:
         language: str = DEFAULT_LANGUAGE,
         description: str | None = None,
         default_category: str | None = None,
+        translations: Mapping[str, str] | None = None,
     ) -> "Ingredient":
-        """`language`: the language `name` is written in (the creator's)."""
+        """`language`: the language `name` is written in (the creator's); `translations`: its other-language names."""
         return cls(
             id=IngredientId(),
-            name=LocalizedText.of(name, language),
+            name=LocalizedText.written(name, language, translations),
             description=description,
             default_category=default_category,
         )

@@ -5,7 +5,8 @@ Adds a new item to the shared ingredients catalog. Any authenticated user
 can contribute new ingredients (there is no admin role yet), but uniqueness
 of the name is enforced — against every language's name — so recipes and
 pantries always reference the same underlying `Ingredient` row instead of
-accumulating near-duplicates. The name is stored in the creator's language.
+accumulating near-duplicates. The name is stored in the creator's language,
+with the translations the creator reviewed (suggested by the translation module).
 """
 from __future__ import annotations
 
@@ -21,11 +22,17 @@ class CreateIngredientUseCase:
         self._ingredient_repository = ingredient_repository
 
     async def execute(self, dto: CreateIngredientDTO) -> IngredientDTO:
-        if await self._ingredient_repository.exists_by_name(dto.name.strip()):
-            raise IngredientAlreadyExistsError(dto.name)
+        # The name and every reviewed translation must be free, in any language.
+        for name in (dto.name, *dto.translations.values()):
+            if name.strip() and await self._ingredient_repository.exists_by_name(name.strip()):
+                raise IngredientAlreadyExistsError(name.strip())
 
         ingredient = Ingredient.create(
-            name=dto.name, language=dto.language, description=dto.description, default_category=dto.default_category
+            name=dto.name,
+            language=dto.language,
+            description=dto.description,
+            default_category=dto.default_category,
+            translations=dto.translations,
         )
         await self._ingredient_repository.add(ingredient)
 

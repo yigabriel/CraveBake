@@ -44,10 +44,16 @@ class CreateEquipmentUseCase:
         self._equipment_repository = equipment_repository
 
     async def execute(self, dto: CreateEquipmentDTO) -> EquipmentDTO:
-        if await self._equipment_repository.exists_by_name(dto.name.strip()):
-            raise EquipmentAlreadyExistsError(dto.name)
+        # The name and every reviewed translation must be free, in any language.
+        for name in (dto.name, *dto.translations.values()):
+            if name.strip() and await self._equipment_repository.exists_by_name(name.strip()):
+                raise EquipmentAlreadyExistsError(name.strip())
         equipment = Equipment.create(
-            name=dto.name, equipment_type=EquipmentType(dto.equipment_type), description=dto.description, language=dto.language
+            name=dto.name,
+            equipment_type=EquipmentType(dto.equipment_type),
+            description=dto.description,
+            language=dto.language,
+            translations=dto.translations,
         )
         await self._equipment_repository.add(equipment)
         return equipment_to_dto(equipment)

@@ -24,12 +24,12 @@ import {
 } from "../components/ui";
 import { EquipmentIcon } from "../lib/equipment";
 
-const TYPES: EquipmentType[] = ["molde", "utensilio", "electrodomestico", "otro"];
+const TYPES: EquipmentType[] = ["mold", "utensil", "appliance", "other"];
 const TYPE_ICONS: Record<EquipmentType, string> = {
-  molde: "cake",
-  utensilio: "flatware",
-  electrodomestico: "kitchen",
-  otro: "category",
+  mold: "cake",
+  utensil: "flatware",
+  appliance: "kitchen",
+  other: "category",
 };
 const KEY = ["kitchen"];
 
@@ -98,7 +98,7 @@ function EquipmentModal({ onClose, existing }: { onClose: () => void; existing: 
   const [picked, setPicked] = useState<Equipment | null>(existing?.equipment ?? null);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
-  const [type, setType] = useState<EquipmentType>("utensilio");
+  const [type, setType] = useState<EquipmentType>("utensil");
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState(existing?.quantity ?? 1);
   const [notes, setNotes] = useState(existing?.notes ?? "");

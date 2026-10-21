@@ -82,6 +82,7 @@ async def create_ingredient(
         name=request.name,
         description=request.description,
         default_category=request.default_category,
+        translations=dict(request.translations),
         # The name is taken as written in the creator's language.
         language=current_user.preferred_language,
     )

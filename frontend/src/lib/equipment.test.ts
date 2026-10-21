@@ -62,7 +62,7 @@ describe("equipment icons", () => {
   });
 
   it("falls back to the equipment type for unknown names", () => {
-    expect(equipmentIconKey("Cosa rara", "electrodomestico")).toBe("m:kitchen");
+    expect(equipmentIconKey("Cosa rara", "appliance")).toBe("m:kitchen");
   });
 });
 

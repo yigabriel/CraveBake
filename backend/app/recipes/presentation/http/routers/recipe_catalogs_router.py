@@ -47,7 +47,7 @@ async def list_difficulties(
 
 @router.get("/recipe-tags", response_model=list[RecipeTagResponse], tags=["Recipe tags"])
 async def list_recipe_tags(
-    group: Literal["sabor", "dieta", "tecnica", "tiempo", "celebraciones"] | None = Query(
+    group: Literal["flavor", "diet", "technique", "time", "celebrations"] | None = Query(
         default=None, description="Only the tags of this group"
     ),
     current_user: UserDTO = Depends(get_current_user),

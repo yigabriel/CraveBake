@@ -99,7 +99,7 @@ class TestDomain:
         assert (item.name.original, item.name.in_("es")) == ("en", "Butter")
 
     def test_translate_keeps_the_original(self):
-        item = Ingredient.create("Manteca")
+        item = Ingredient.create("Manteca", language="es")
         item.translate("en", " Butter ")
         assert (item.name.in_("en"), item.name.in_("es"), item.name.original) == ("Butter", "Manteca", "es")
 
@@ -119,6 +119,19 @@ class TestCatalog:
         flour.translate("en", "All-purpose flour")
         with pytest.raises(IngredientAlreadyExistsError):
             await CreateIngredientUseCase(ingredients).execute(CreateIngredientDTO(name="all-purpose FLOUR", language="en"))
+
+    async def test_create_with_reviewed_translations(self, ingredients):
+        created = await CreateIngredientUseCase(ingredients).execute(
+            CreateIngredientDTO(name="Pistacho", language="es", translations={"en": "Pistachio"})
+        )
+        assert (created.name.in_("es"), created.name.in_("en"), created.name.original) == ("Pistacho", "Pistachio", "es")
+
+    async def test_a_translation_that_clashes_with_an_existing_name_is_a_duplicate(self, ingredients, flour):
+        # "Wheat flour" is new, but its Spanish translation is the existing "Harina todo uso (0000)".
+        with pytest.raises(IngredientAlreadyExistsError, match="Harina todo uso"):
+            await CreateIngredientUseCase(ingredients).execute(
+                CreateIngredientDTO(name="Wheat flour", language="en", translations={"es": "Harina todo uso (0000)"})
+            )
 
     async def test_duplicate_name(self, ingredients, flour):
         with pytest.raises(IngredientAlreadyExistsError):

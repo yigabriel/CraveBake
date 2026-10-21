@@ -72,14 +72,25 @@ export const catalogApi = {
   getIngredient: (id: string) => api<Ingredient>(`/ingredients/${id}`),
   ingredientsByCategory: (category: string) =>
     api<Page<Ingredient>>(`/categories/${encodeURIComponent(category)}/ingredients`, { query: { limit: 100 } }),
-  createIngredient: (body: { name: string; default_category?: string | null }) =>
+  createIngredient: (body: { name: string; default_category?: string | null; translations?: Record<string, string> }) =>
     api<Ingredient>("/ingredients", { method: "POST", json: body }),
   searchEquipment: (q: string, equipment_type?: EquipmentType, limit = 20) =>
     api<Page<Equipment>>("/equipment", { query: { q, equipment_type, limit } }),
-  createEquipment: (body: { name: string; equipment_type: EquipmentType; description?: string | null }) =>
+  createEquipment: (body: {
+    name: string;
+    equipment_type: EquipmentType;
+    description?: string | null;
+    translations?: Record<string, string>;
+  }) =>
     api<Equipment>("/equipment", { method: "POST", json: body }),
   convert: (body: { quantity: string; from_unit_id: string; to_unit_id: string; ingredient_id?: string | null }) =>
     api<ConversionResult>("/converter", { method: "POST", json: body }),
+};
+
+/** Suggested names in the other languages, for the review step of a new catalog item. */
+export const translationApi = {
+  suggest: (body: { text: string; source: Language }) =>
+    api<{ translations: Record<string, string> }>("/translations", { method: "POST", json: body }),
 };
 
 // --- Pantry & kitchen ----------------------------------------------------------------
