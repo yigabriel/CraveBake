@@ -5,6 +5,8 @@ Centralizes all environment-driven configuration in a single place so that
 no module needs to read `os.environ` directly. This keeps Infrastructure
 concerns (secrets, connection strings) out of Domain and Application code.
 """
+from typing import Literal
+
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -50,8 +52,12 @@ class Settings(BaseSettings):
     supadata_api_key: str | None = None
     # The free plan allows 1 request per second; each import makes 2 calls, spaced this far apart.
     supadata_min_interval_seconds: float = 1.1
+    # Which model reads the text. Gemini for now; Claude (the smallest model is enough) is a switch away.
+    import_extractor: Literal["gemini", "claude"] = "gemini"
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-3.5-flash-lite"
+    anthropic_api_key: str | None = None
+    anthropic_model: str = "claude-haiku-5-5"
     import_max_requests: int = 5
     import_window_seconds: int = 600
 

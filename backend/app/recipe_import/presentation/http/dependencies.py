@@ -11,6 +11,7 @@ from app.ingredients.presentation.http.dependencies import get_ingredient_query_
 from app.recipe_import.application.use_cases.import_recipe_from_video_use_case import ImportRecipeFromVideoUseCase
 from app.recipe_import.domain.services.ports import ImportCatalog, RecipeExtractor, VideoTextSource
 from app.recipe_import.domain.video_text import ImportUnavailableError
+from app.recipe_import.infrastructure.claude_recipe_extractor import ClaudeRecipeExtractor
 from app.recipe_import.infrastructure.gemini_recipe_extractor import GeminiRecipeExtractor
 from app.recipe_import.infrastructure.ingredients_module_catalog import IngredientsModuleCatalog
 from app.recipe_import.infrastructure.supadata_video_text_source import SupadataVideoTextSource
@@ -31,6 +32,11 @@ def get_video_text_source() -> VideoTextSource:
 
 def get_recipe_extractor() -> RecipeExtractor:
     settings = get_settings()
+    if settings.import_extractor == "claude":
+        if not settings.anthropic_api_key:
+            logger.error("Recipe import unavailable: ANTHROPIC_API_KEY is not set in this environment")
+            raise ImportUnavailableError()
+        return ClaudeRecipeExtractor(settings.anthropic_api_key, settings.anthropic_model)
     if not settings.gemini_api_key:
         logger.error("Recipe import unavailable: GEMINI_API_KEY is not set in this environment")
         raise ImportUnavailableError()
