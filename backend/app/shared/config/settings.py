@@ -48,6 +48,8 @@ class Settings(BaseSettings):
     # Recipe import from a TikTok / Instagram Reel link. Keys stay on the server; unset = the
     # feature answers 503. Every import costs provider credits, hence the per-user limit.
     supadata_api_key: str | None = None
+    # The free plan allows 1 request per second; each import makes 2 calls, spaced this far apart.
+    supadata_min_interval_seconds: float = 1.1
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-3.5-flash-lite"
     import_max_requests: int = 5

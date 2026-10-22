@@ -4,6 +4,7 @@ network, and the HTTP endpoint. Nothing here talks to Supadata or Gemini.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 from decimal import Decimal
 
@@ -238,8 +239,9 @@ class TestImportUseCase:
 # --- Supadata ---------------------------------------------------------------------------------
 
 
-def supadata(handler) -> SupadataVideoTextSource:
-    return SupadataVideoTextSource("sk_test", client=httpx2.AsyncClient(transport=httpx2.MockTransport(handler)))
+def supadata(handler, **options) -> SupadataVideoTextSource:
+    options = {"min_interval": 0, **options}  # the spacing has its own tests: the others should not wait
+    return SupadataVideoTextSource("sk_test", client=httpx2.AsyncClient(transport=httpx2.MockTransport(handler)), **options)
 
 
 SOURCE = SourceUrl(VideoPlatform.TIKTOK, TIKTOK)
@@ -300,6 +302,99 @@ class TestSupadata:
 
         with pytest.raises(ImportUnavailableError):
             await supadata(handler).fetch(SOURCE)
+
+
+class FakeTime:
+    """A clock that only moves when something sleeps: the spacing and the waits can be asserted exactly."""
+
+    def __init__(self) -> None:
+        self.now = 100.0
+        self.sleeps: list[float] = []
+
+    def clock(self) -> float:
+        return self.now
+
+    async def sleep(self, seconds: float) -> None:
+        self.sleeps.append(round(seconds, 3))
+        self.now += seconds
+
+
+class TestSupadataRateLimit:
+    """The free plan allows 1 request per second: two calls made together get a 429."""
+
+    @pytest.fixture(autouse=True)
+    def fresh_slot(self):
+        SupadataVideoTextSource._next_slot = 0.0
+        yield
+        SupadataVideoTextSource._next_slot = 0.0
+
+    async def test_the_two_calls_are_one_interval_apart_and_in_sequence(self):
+        time_ = FakeTime()
+        starts = []
+
+        def handler(request):
+            starts.append((request.url.path, time_.now))
+            return answer()(request)
+
+        await supadata(handler, min_interval=1.1, clock=time_.clock, sleep=time_.sleep).fetch(SOURCE)
+
+        (first, t1), (second, t2) = starts
+        assert (first, second) == ("/v1/metadata", "/v1/transcript")
+        assert t2 - t1 >= 1.1 - 1e-9
+
+    async def test_imports_that_arrive_together_queue_up_instead_of_colliding(self):
+        time_ = FakeTime()
+        starts = []
+
+        def handler(request):
+            starts.append(time_.now)
+            return answer()(request)
+
+        source = supadata(handler, min_interval=1.1, clock=time_.clock, sleep=time_.sleep)
+        await asyncio.gather(source.fetch(SOURCE), source.fetch(SOURCE))
+
+        assert len(starts) == 4
+        assert all(later - earlier >= 1.1 - 1e-9 for earlier, later in zip(starts, starts[1:]))
+
+    async def test_a_429_is_waited_out_and_retried(self):
+        time_ = FakeTime()
+        calls = {"metadata": 0}
+
+        def handler(request):
+            if request.url.path.endswith("/metadata"):
+                calls["metadata"] += 1
+                if calls["metadata"] == 1:
+                    return httpx2.Response(429, json={"error": "limit-exceeded"}, headers={"retry-after": "2"})
+            return answer()(request)
+
+        text = await supadata(handler, min_interval=1.1, clock=time_.clock, sleep=time_.sleep).fetch(SOURCE)
+
+        assert text.description == LONG_TEXT and calls["metadata"] == 2
+        assert 2.0 in time_.sleeps  # it honoured Retry-After
+
+    async def test_it_gives_up_after_a_few_429s(self):
+        time_ = FakeTime()
+        calls = []
+
+        def handler(request):
+            calls.append(request.url.path)
+            return httpx2.Response(429, json={"error": "limit-exceeded"})
+
+        with pytest.raises(ImportUnavailableError):
+            await supadata(handler, min_interval=1.1, clock=time_.clock, sleep=time_.sleep).fetch(SOURCE)
+
+        assert len(calls) == 3  # the first try and two retries, then it stops: credits and time are not unlimited
+
+    async def test_a_huge_retry_after_is_capped(self):
+        time_ = FakeTime()
+
+        def handler(request):
+            return httpx2.Response(429, json={}, headers={"retry-after": "3600"})
+
+        with pytest.raises(ImportUnavailableError):
+            await supadata(handler, min_interval=1.1, clock=time_.clock, sleep=time_.sleep).fetch(SOURCE)
+
+        assert max(time_.sleeps) <= 5.0
 
 
 # --- Gemini -----------------------------------------------------------------------------------
@@ -470,3 +565,20 @@ class TestEndpoint:
         app.dependency_overrides[get_video_text_source] = unconfigured
         response = client.post("/v1/recipe-imports", json={"url": TIKTOK}, headers=headers)
         assert (response.status_code, response.json()["code"]) == (503, "service_unavailable")
+
+
+class TestMissingKeysAreLogged:
+    """A 503 alone does not say why: the log must name the missing variable (never its value)."""
+
+    @pytest.mark.parametrize("name, provider", [("SUPADATA_API_KEY", get_video_text_source), ("GEMINI_API_KEY", get_recipe_extractor)])
+    def test_names_the_missing_variable(self, name, provider, monkeypatch, caplog):
+        from app.shared.config.settings import get_settings
+
+        monkeypatch.delenv("SUPADATA_API_KEY", raising=False)
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.setattr("app.recipe_import.presentation.http.dependencies.get_settings", lambda: get_settings().model_copy(update={"supadata_api_key": None, "gemini_api_key": None}))
+
+        with pytest.raises(ImportUnavailableError), caplog.at_level("ERROR"):
+            provider()
+
+        assert name in caplog.text

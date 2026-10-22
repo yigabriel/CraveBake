@@ -1,6 +1,7 @@
 """Wiring of the recipe-import module: the providers come from settings."""
 from __future__ import annotations
 
+import logging
 from functools import lru_cache
 
 from fastapi import Depends
@@ -16,17 +17,22 @@ from app.recipe_import.infrastructure.supadata_video_text_source import Supadata
 from app.shared.config.settings import get_settings
 from app.shared.presentation.request_rate_limiter import RequestRateLimiter
 
+logger = logging.getLogger(__name__)
+
 
 def get_video_text_source() -> VideoTextSource:
     key = get_settings().supadata_api_key
     if not key:
+        # The client only sees a 503: say here what is missing (the value is never logged).
+        logger.error("Recipe import unavailable: SUPADATA_API_KEY is not set in this environment")
         raise ImportUnavailableError()
-    return SupadataVideoTextSource(key)
+    return SupadataVideoTextSource(key, min_interval=get_settings().supadata_min_interval_seconds)
 
 
 def get_recipe_extractor() -> RecipeExtractor:
     settings = get_settings()
     if not settings.gemini_api_key:
+        logger.error("Recipe import unavailable: GEMINI_API_KEY is not set in this environment")
         raise ImportUnavailableError()
     return GeminiRecipeExtractor(settings.gemini_api_key, settings.gemini_model)
 
