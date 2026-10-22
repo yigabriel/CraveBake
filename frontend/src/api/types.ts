@@ -181,6 +181,43 @@ export interface RecipeSummary extends RecipeCommon {
   cover_photo_url: string | null;
 }
 
+// --- Recipe import (a TikTok / Reel link -> a draft to review) --------------------------
+
+export interface DraftCatalogItem {
+  id: string;
+  name: string;
+  abbreviation: string | null;
+}
+
+export interface DraftIngredient {
+  raw_name: string; // as the video says it
+  ingredient: DraftCatalogItem | null; // null: not in the catalog, the person picks or creates it
+  quantity: Decimalish | null;
+  unit: DraftCatalogItem | null;
+  notes: string | null;
+  section: string | null;
+}
+
+export interface DraftStep {
+  instructions: string;
+  title: string | null;
+  timer_minutes: Decimalish | null;
+  section: string | null;
+}
+
+export interface RecipeDraft {
+  title: string;
+  description: string | null;
+  servings: number | null;
+  prep_time_minutes: number | null;
+  source_url: string;
+  platform: "tiktok" | "instagram";
+  author: string | null;
+  read: { title: boolean; description: boolean; transcript: boolean };
+  ingredients: DraftIngredient[];
+  steps: DraftStep[];
+}
+
 export interface RecipeDetail extends RecipeCommon {
   video_url: string | null;
   is_owner: boolean;

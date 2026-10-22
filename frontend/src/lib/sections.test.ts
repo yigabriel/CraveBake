@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupBySection, headingProblems, isHeading, rowsOf, withHeadings, withSections, type Sectioned } from "./sections";
+import { groupBySection, headingProblems, inStorageOrder, isHeading, rowsOf, withHeadings, withSections, type Sectioned } from "./sections";
 
 interface Row {
   key: string;
@@ -76,5 +76,21 @@ describe("headingProblems", () => {
 
   it("is empty when every heading is fine", () => {
     expect(headingProblems<Row>([{ key: "a", heading: "Masa" }, { key: "b", heading: "Manjar" }])).toEqual({});
+  });
+});
+
+describe("inStorageOrder", () => {
+  it("puts section-less lines first and keeps each section together, in order of appearance", () => {
+    const lines = [section("a", "Filling"), section("b", "Dough"), section("c", null), section("d", " filling "), section("e", null)];
+
+    expect(inStorageOrder(lines, (l) => l.section).map((l) => l.name)).toEqual(["c", "e", "a", "d", "b"]);
+  });
+
+  it("changes nothing when the order is already right, and does not mutate its input", () => {
+    const lines = [section("a", null), section("b", "Dough"), section("c", "Dough")];
+    const before = [...lines];
+
+    expect(inStorageOrder(lines, (l) => l.section)).toEqual(before);
+    expect(lines).toEqual(before);
   });
 });

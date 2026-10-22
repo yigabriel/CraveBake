@@ -10,7 +10,7 @@ from app.translation.application.use_cases.suggest_translations_use_case import 
 from app.translation.domain.exceptions import TranslationUnavailableError
 from app.translation.domain.services.text_translator import TextTranslator
 from app.translation.infrastructure.google_cloud_translator import GoogleCloudTranslator
-from app.translation.infrastructure.request_rate_limiter import RequestRateLimiter
+from app.shared.presentation.request_rate_limiter import RequestRateLimiter
 
 
 def get_translator() -> TextTranslator:

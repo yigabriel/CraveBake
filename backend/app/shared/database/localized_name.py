@@ -18,7 +18,7 @@ from sqlalchemy import String, func, or_
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.shared.database.text_search import contains_folded, equals_folded
+from app.shared.database.text_search import contains_folded, matches_name
 from app.shared.domain.value_objects.localized_text import SUPPORTED_LANGUAGES, LocalizedText
 
 
@@ -41,8 +41,8 @@ def _name_in(model: Any, language: str):
 
 
 def name_equals(model: Any, name: str):
-    """WHERE clause: `model` is called `name` in any language, ignoring case and accents."""
-    return or_(*(equals_folded(_name_in(model, language), name) for language in SUPPORTED_LANGUAGES))
+    """WHERE clause: `model` is called `name` (or one of its " / " synonyms) in any language, ignoring case and accents."""
+    return or_(*(matches_name(_name_in(model, language), name) for language in SUPPORTED_LANGUAGES))
 
 
 def name_contains(model: Any, text: str):

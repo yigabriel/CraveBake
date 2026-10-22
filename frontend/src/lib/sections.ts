@@ -25,6 +25,21 @@ export function groupBySection<T>(items: T[], sectionOf: (item: T) => string | n
   return groups;
 }
 
+/**
+ * Lines without a section first, then each section's lines together, in order of first appearance.
+ * The API already answers that way; an imported draft is reordered here too, because a list that
+ * has a section-less line after a section would silently make it part of that section.
+ */
+export function inStorageOrder<T>(items: T[], sectionOf: (item: T) => string | null): T[] {
+  const key = (item: T) => sectionOf(item)?.trim().replace(/\s+/g, " ").toLowerCase() ?? null;
+  const order = new Map<string, number>();
+  for (const item of items) {
+    const k = key(item);
+    if (k !== null && !order.has(k)) order.set(k, order.size);
+  }
+  return [...items].sort((a, b) => (key(a) === null ? -1 : order.get(key(a)!)!) - (key(b) === null ? -1 : order.get(key(b)!)!));
+}
+
 // --- Editor ---------------------------------------------------------------------------
 
 /** A group heading inside an editable list. */

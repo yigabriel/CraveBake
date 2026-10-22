@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ApiError } from "../api/client";
 import { recipesApi } from "../api/endpoints";
 import { useDifficulties, useErrorMessage, useRecipeCategories, useTags, useUnits } from "../api/queries";
-import type { RecipeBasics, RecipeDetail, RecipePhoto, RecipeStepInput } from "../api/types";
+import type { RecipeBasics, RecipeDetail, RecipeDraft, RecipePhoto, RecipeStepInput } from "../api/types";
 import { EquipmentPicker, IngredientPicker } from "../components/Pickers";
 import { useToast } from "../components/Toast";
 import {
@@ -25,14 +25,16 @@ import {
   Switch,
 } from "../components/ui";
 import { EquipmentIcon } from "../lib/equipment";
-import { headingProblems, isHeading, rowsOf, withHeadings, withSections, type Heading, type Sectioned } from "../lib/sections";
+import { headingProblems, inStorageOrder, isHeading, rowsOf, withHeadings, withSections, type Heading, type Sectioned } from "../lib/sections";
 import { ImageUploadButton } from "../components/ImageUploadButton";
+import { ImportFromVideoCard, ImportReport } from "../components/ImportFromVideoCard";
 
 const MAX_TAGS = 10;
 const MAX_COVERS = 3;
 
 interface IngredientRow {
   key: string;
+  /** Empty while an imported line is still not matched to a catalog ingredient. */
   ingredient_id: string;
   name: string;
   quantity: string;
@@ -81,6 +83,50 @@ const emptyDraft = (): Draft => ({
   steps: [{ key: newKey(), title: "", instructions: "", timerMinutes: "", hasPhoto: false }],
   tagIds: [],
 });
+
+/** An imported draft in the editor's shape. Lines the catalog did not match keep the video's word, to be picked or created. */
+function draftFromImport(imported: RecipeDraft): Draft {
+  const text = (value: string | number | null | undefined) => (value === null || value === undefined ? "" : String(Number(value)));
+  return {
+    basics: {
+      ...emptyDraft().basics,
+      title: imported.title,
+      description: imported.description,
+      // The source stays attached to the recipe, and an imported recipe starts private.
+      video_url: imported.source_url,
+      prep_time_minutes: imported.prep_time_minutes,
+      servings: imported.servings,
+      is_public: false,
+    },
+    ingredients: withHeadings(
+      inStorageOrder(imported.ingredients, (line) => line.section),
+      (line) => line.section,
+      (line): IngredientRow => ({
+        key: newKey(),
+        ingredient_id: line.ingredient?.id ?? "",
+        name: line.ingredient?.name ?? line.raw_name,
+        quantity: text(line.quantity),
+        unit_id: line.unit?.id ?? "",
+        notes: line.notes ?? "",
+      }),
+      newKey,
+    ),
+    equipment: [],
+    steps: withHeadings(
+      inStorageOrder(imported.steps, (step) => step.section),
+      (step) => step.section,
+      (step): StepRow => ({
+        key: newKey(),
+        title: step.title ?? "",
+        instructions: step.instructions,
+        timerMinutes: text(step.timer_minutes),
+        hasPhoto: false,
+      }),
+      newKey,
+    ),
+    tagIds: [],
+  };
+}
 
 function draftFrom(recipe: RecipeDetail): Draft {
   return {
@@ -155,7 +201,8 @@ function validateHeadings<T extends object>(items: Sectioned<T>[], t: (key: stri
 function validateIngredients(items: Sectioned<IngredientRow>[], t: (key: string) => string): Errors {
   const errors: Errors = validateHeadings(items, t);
   rowsOf(items).forEach((row) => {
-    if (!(Number(row.quantity) > 0)) errors[row.key] = t("editor.errors.quantity");
+    if (!row.ingredient_id) errors[row.key] = t("editor.errors.ingredient");
+    else if (!(Number(row.quantity) > 0)) errors[row.key] = t("editor.errors.quantity");
     else if (!row.unit_id) errors[row.key] = t("editor.errors.unit");
   });
   return errors;
@@ -398,6 +445,14 @@ function IngredientsSection({
               </span>
               <RowControls {...controls} onGroupHere={() => onChange([...items.slice(0, index), newHeading(), ...items.slice(index)])} />
             </div>
+            {!row.ingredient_id && (
+              // An imported line the catalog did not match: pick (or create) the real ingredient.
+              <IngredientPicker
+                allowCreate
+                placeholder={t("editor.pickIngredientFor", { name: row.name })}
+                onPick={(ingredient) => update(row.key, { ingredient_id: ingredient.id, name: ingredient.name })}
+              />
+            )}
             <div className="grid grid-cols-[100px_1fr] gap-xs sm:grid-cols-[100px_160px_1fr]">
               <Input type="number" min="0" step="any" inputMode="decimal" aria-label={t("pantry.quantity")} placeholder={t("pantry.quantity")} value={row.quantity} onChange={(e) => update(row.key, { quantity: e.target.value })} />
               <select aria-label={t("pantry.unit")} value={row.unit_id} onChange={(e) => update(row.key, { unit_id: e.target.value })} className={inputClass}>
@@ -759,6 +814,8 @@ export function RecipeEditorPage() {
   const section = (params.get("section") as Section) ?? "basics";
   const setSection = (next: Section) => setParams({ section: next }, { replace: true });
   const [draft, setDraft] = useState<Draft>(emptyDraft);
+  // Set when the draft came from a video link: what was read, to show next to the review.
+  const [imported, setImported] = useState<Pick<RecipeDraft, "platform" | "author" | "read"> | null>(null);
   const [errors, setErrors] = useState<Errors>({});
 
   const recipe = useQuery({ queryKey: ["recipe", id, "original"], queryFn: () => recipesApi.get(id!, "original"), enabled: editing });
@@ -926,6 +983,23 @@ export function RecipeEditorPage() {
         title={editing ? t("editor.editTitle") : t("editor.newTitle")}
         subtitle={editing ? recipe.data?.title : t("editor.newSubtitle")}
       />
+      {!editing && !imported && section === "basics" && (
+        <ImportFromVideoCard
+          onImported={(result) => {
+            setDraft(draftFromImport(result));
+            setImported({ platform: result.platform, author: result.author, read: result.read });
+            setErrors({});
+          }}
+        />
+      )}
+      {!editing && imported && (
+        <ImportReport
+          platform={imported.platform}
+          author={imported.author}
+          read={imported.read}
+          unmatched={rowsOf(draft.ingredients).filter((row) => !row.ingredient_id).length}
+        />
+      )}
       <nav className="-mx-margin-mobile mb-md flex gap-xs overflow-x-auto px-margin-mobile pb-xs lg:mx-0 lg:px-0">
         {sections.map((item, i) => (
           <button

@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
  * The interactive pastry table behind sign in / sign up.
  *
  * public/images/auth-scene holds the background and each dessert cropped to its
- * visible pixels (from the 2736x1536 layers in public/images/auth_page). BOXES says
+ * visible pixels (from the 2736x1536 layers in design-sources/auth_page). BOXES says
  * where each dessert sat on that canvas, in percent, so the layers recompose
  * exactly at any size. Pointing at a dessert (hover, focus or tap) zooms it 10%,
  * blurs everything behind it and shows its review on a liquid-glass card.

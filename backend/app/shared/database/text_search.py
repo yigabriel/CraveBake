@@ -12,21 +12,21 @@ explicitly, so it does not rely on `lower()` knowing about them).
 
 Python (`fold`) and SQL (`folded`) share the same character table, so what the
 application folds and what the database folds can never drift apart.
+
+Synonyms: a name may list regional words for the same thing, separated by " / "
+("Mantequilla / Manteca"). Searching finds it by any of them (it is a plain
+substring), and `matches_name` treats each one as the name too, so typing
+"manteca" is recognised as the existing ingredient instead of a new one.
 """
 from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
-_ACCENTED = "áàâäãåéèêëíìîïóòôöõúùûüñçÁÀÂÄÃÅÉÈÊËÍÌÎÏÓÒÔÖÕÚÙÛÜÑÇ"
-_PLAIN = "aaaaaaeeeeiiiiooooouuuuncaaaaaaeeeeiiiiooooouuuunc"
-_TABLE = str.maketrans(_ACCENTED, _PLAIN)
-
-
-def fold(text: str) -> str:
-    """"  Azúcar " -> "azucar": what two spellings of the same word have in common."""
-    return text.strip().translate(_TABLE).lower()
+from app.shared.domain.text_folding import ACCENTED as _ACCENTED
+from app.shared.domain.text_folding import PLAIN as _PLAIN
+from app.shared.domain.text_folding import SYNONYM_SEPARATOR, fold
 
 
 def folded(column: Any):
@@ -42,6 +42,23 @@ def _escape_like(text: str) -> str:
 def equals_folded(column: Any, text: str):
     """WHERE clause: `column` equals `text`, ignoring case and accents."""
     return folded(column) == fold(text)
+
+
+def matches_name(column: Any, text: str):
+    """WHERE clause: `text` is the name in `column` or one of its " / "-separated synonyms.
+
+    Ignores case and accents. "manteca" matches "Mantequilla / Manteca", but "mantequilla"
+    does not match "Mantequilla de maní": a synonym is a whole word group, not a prefix.
+    """
+    wanted = _escape_like(fold(text))
+    folded_column = folded(column)
+    separator = _escape_like(SYNONYM_SEPARATOR)
+    return or_(
+        folded_column == fold(text),
+        folded_column.like(f"{wanted}{separator}%", escape="\\"),
+        folded_column.like(f"%{separator}{wanted}", escape="\\"),
+        folded_column.like(f"%{separator}{wanted}{separator}%", escape="\\"),
+    )
 
 
 def contains_folded(column: Any, text: str):

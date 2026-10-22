@@ -36,6 +36,7 @@ import type {
   UnitSystem,
   User,
   UserEquipment,
+  RecipeDraft,
 } from "./types";
 
 // --- Auth & profile ------------------------------------------------------------------
@@ -85,6 +86,11 @@ export const catalogApi = {
     api<Equipment>("/equipment", { method: "POST", json: body }),
   convert: (body: { quantity: string; from_unit_id: string; to_unit_id: string; ingredient_id?: string | null }) =>
     api<ConversionResult>("/converter", { method: "POST", json: body }),
+};
+
+/** A TikTok / Reel link -> a recipe draft. Nothing is saved: the editor saves it after the review. */
+export const recipeImportApi = {
+  fromVideo: (url: string) => api<RecipeDraft>("/recipe-imports", { method: "POST", json: { url } }),
 };
 
 /** Suggested names in the other languages, for the review step of a new catalog item. */

@@ -66,7 +66,7 @@ async def catalog(client):
     return {
         "units": units,
         "flour": await ingredient("Harina todo uso (0000)"),
-        "butter": await ingredient("Manteca"),
+        "butter": await ingredient("Mantequilla / Manteca"),
         "egg_white": await ingredient("Huevo, clara"),
         "category": categories[0]["id"],
         "difficulty": difficulties[0]["id"],
@@ -262,6 +262,57 @@ class TestEnglishBase:
         created = await ok(await client.post("/v1/ingredients", json={"name": "Cardamom"}, headers=headers), 201)
         row = (await db_session.execute(text("SELECT name_language FROM ingredients WHERE id = :id"), {"id": created["id"]})).scalar_one()
         assert row == "en"  # the register default; a Spanish speaker's names are stored as "es" (see the other tests)
+
+
+class TestSynonyms:
+    """A name may list regional synonyms ("Mantequilla / Manteca"); any of them is the same ingredient."""
+
+    async def test_search_finds_it_by_any_word_and_a_synonym_is_not_a_new_ingredient(self, client, catalog):
+        spanish = await sign_up(client, "synonyms@example.com")
+        await ok(await client.patch("/v1/users/me/language", json={"preferred_language": "es"}, headers=spanish))
+
+        for query in ("manteca", "MANTEQUILLA", "butter"):
+            page = await ok(await client.get("/v1/ingredients", params={"q": query}, headers=spanish))
+            assert "Mantequilla / Manteca" in [item["name"] for item in page["items"]], query
+
+        # Either word is already taken ...
+        for name in ("Manteca", "mantequilla", "MANTEQUILLA / manteca"):
+            assert (await client.post("/v1/ingredients", json={"name": name}, headers=spanish)).status_code == 409, name
+        # ... but a longer name that merely starts with it is a different ingredient (and exists already).
+        page = await ok(await client.get("/v1/ingredients", params={"q": "mantequilla de mani"}, headers=spanish))
+        assert [item["name"] for item in page["items"]] == ["Mantequilla de maní"]
+        assert (await client.post("/v1/ingredients", json={"name": "Mantequilla de cacao"}, headers=spanish)).status_code == 201
+
+
+class TestImageReferences:
+    """The clean-up sweep reads every table that stores an image URL (real SQL)."""
+
+    async def test_every_stored_url_is_found_including_copies_and_deleted_recipes(self, client, catalog, db_session):
+        from app.media.infrastructure.sql_image_references import SqlImageReferences
+
+        author = await sign_up(client, "refs-author@example.com")
+        fan = await sign_up(client, "refs-fan@example.com")
+        await ok(await client.patch("/v1/users/me/profile", json={"avatar_url": "https://cdn/avatar.webp"}, headers=author))
+        recipe = await ok(await client.post("/v1/recipes", json=recipe_body(catalog), headers=author), 201)
+        await ok(await client.post(f"/v1/recipes/{recipe['id']}/photos", json={"photo_type": "cover", "photo_url": "https://cdn/cover.webp"}, headers=author), 201)
+        await ok(
+            await client.post(
+                f"/v1/recipes/{recipe['id']}/photos",
+                json={"photo_type": "step", "photo_url": "https://cdn/step.webp", "step_id": recipe["steps"][0]["id"]},
+                headers=author,
+            ),
+            201,
+        )
+        # A copy keeps the same URLs, and a preparation snapshots them: both still "use" the files.
+        await ok(await client.post(f"/v1/recipes/{recipe['id']}/personalizations", headers=fan), 201)
+        await ok(await client.post("/v1/preparations", json={"recipe_id": recipe["id"]}, headers=fan), 201)
+
+        urls = await SqlImageReferences(db_session).urls()
+        assert urls == {"https://cdn/avatar.webp", "https://cdn/cover.webp", "https://cdn/step.webp"}
+
+        # Deleting the recipe is logical: its photos stay referenced (and so are not swept) until they are removed.
+        await ok(await client.delete(f"/v1/recipes/{recipe['id']}", headers=author), 204)
+        assert "https://cdn/cover.webp" in await SqlImageReferences(db_session).urls()
 
 
 class TestRecipeSections:
@@ -537,7 +588,7 @@ class TestLocalizedIngredients:
         seen = await ok(await client.get(f"/v1/ingredients/{created['id']}", headers=spanish))
         assert seen["name"] == "Cardamom pods"  # untranslated: shown as written
 
-        for name in ("butter", "MANTECA", "Cardamom Pods"):
+        for name in ("butter", "MANTECA", "mantequilla", "Mantequilla / manteca", "Cardamom Pods"):
             response = await client.post("/v1/ingredients", json={"name": name}, headers=spanish)
             assert response.status_code == 409, name
 
@@ -609,7 +660,7 @@ class TestLocalizedIngredients:
         names = lambda lines: {line.get("ingredient_name") for line in lines}
         detail = await ok(await client.get(f"/v1/recipes/{recipe['id']}", headers=english))
         assert {"All-purpose flour", "Butter"} <= names(detail["ingredients"])
-        assert {"Harina todo uso (0000)", "Manteca"} <= names((await ok(await client.get(f"/v1/recipes/{recipe['id']}", headers=author)))["ingredients"])
+        assert {"Harina todo uso (0000)", "Mantequilla / Manteca"} <= names((await ok(await client.get(f"/v1/recipes/{recipe['id']}", headers=author)))["ingredients"])
 
         await ok(await client.put("/v1/pantry", json={"ingredient_id": catalog["butter"]}, headers=english))
         assert [item["ingredient"]["name"] for item in await ok(await client.get("/v1/pantry", headers=english))] == ["Butter"]
@@ -619,7 +670,7 @@ class TestLocalizedIngredients:
         # The snapshot keeps every language: switching language translates the history too.
         await ok(await client.patch("/v1/users/me/language", json={"preferred_language": "es"}, headers=english))
         again = await ok(await client.get(f"/v1/preparations/{cooking['id']}", headers=english))
-        assert "Manteca" in names(again["ingredients"])
+        assert "Mantequilla / Manteca" in names(again["ingredients"])
 
     async def test_every_catalog_follows_the_viewer(self, client, catalog):
         english = await self.speaker(client, "en-catalogs@example.com", "en")

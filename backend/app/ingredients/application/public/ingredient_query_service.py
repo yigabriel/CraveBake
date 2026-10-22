@@ -52,6 +52,13 @@ class IngredientQueryService:
         return [unit_to_dto(unit) for unit in await self._unit_repository.get_many_by_ids(parsed)]
 
 
+    async def list_catalog_ingredients(self, limit: int = 400) -> list[IngredientDTO]:
+        """The shared catalog, in name order (capped: callers use it to match free text against it)."""
+        return [ingredient_to_dto(item) for item in await self._ingredient_repository.search(None, None, limit, 0)]
+
+    async def list_units(self) -> list[UnitDTO]:
+        return [unit_to_dto(unit) for unit in await self._unit_repository.list_all()]
+
     async def list_pantry_ingredient_ids(self, user_id: str) -> list[str]:
         """Ids of the ingredients the user has registered in their pantry (quantities are not exposed)."""
         return [str(item.ingredient_id) for item in await self._user_ingredient_repository.list_by_user(user_id)]

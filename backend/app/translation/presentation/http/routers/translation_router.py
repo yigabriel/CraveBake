@@ -10,7 +10,7 @@ from app.iam.application.dto.user_dto import UserDTO
 from app.iam.presentation.http.dependencies import get_current_user
 from app.translation.application.dto.translation_dto import SuggestTranslationsDTO
 from app.translation.application.use_cases.suggest_translations_use_case import SuggestTranslationsUseCase
-from app.translation.infrastructure.request_rate_limiter import RequestRateLimiter
+from app.shared.presentation.request_rate_limiter import RequestRateLimiter
 from app.translation.presentation.http.dependencies import (
     get_suggest_translations_use_case,
     get_translation_rate_limiter,

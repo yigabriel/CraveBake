@@ -1,12 +1,15 @@
-fastapi
-uvicorn[standard]
-sqlalchemy[asyncio]
-asyncpg
-alembic
-pydantic-settings
-email-validator
-python-jose[cryptography]
-passlib[bcrypt]
+# Direct dependencies, pinned to the versions the tests run against.
+# `constraints.txt` pins the whole tree (transitive packages too):
+#   pip install -r requirements.txt -c constraints.txt
+fastapi==0.143.0
+uvicorn[standard]==0.54.0
+sqlalchemy[asyncio]==2.1.4
+asyncpg==0.32.0
+alembic==1.20.0
+pydantic-settings==2.15.0
+email-validator==2.3.0
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
-python-multipart
-httpx2
+python-multipart==0.0.32
+httpx2==2.14.0

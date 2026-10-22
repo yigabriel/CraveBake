@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { catalogApi } from "../api/endpoints";
 import type { Equipment, EquipmentType, Ingredient } from "../api/types";
-import { fold } from "../lib/text";
+import { isSameName } from "../lib/text";
 import { NewCatalogItemModal } from "./NewCatalogItemModal";
 import { Icon, inputClass } from "./ui";
 
@@ -58,7 +58,7 @@ function SearchPicker<T extends Option>({
   const settled = text.trim() === q;
   const options = settled ? (results.data ?? []).filter((item) => !excludeIds.includes(item.id)) : [];
   // Typing "azucar" when "Azúcar" exists is the same name: do not offer to create a duplicate.
-  const exact = settled && results.data?.some((item) => fold(item.name) === fold(q));
+  const exact = settled && results.data?.some((item) => isSameName(item.name, q));
   const loading = results.isLoading || !settled;
 
   const pick = (item: T) => {
