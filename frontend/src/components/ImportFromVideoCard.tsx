@@ -72,11 +72,14 @@ export function ImportReport({
   platform,
   author,
   read,
+  picked,
   unmatched,
 }: {
   platform: RecipeDraft["platform"];
   author: string | null;
   read: RecipeDraft["read"];
+  /** What was chosen from the catalogs, so the person knows to check it. */
+  picked: { category: string | null; difficulty: string | null; equipment: number };
   unmatched: number;
 }) {
   const { t } = useTranslation();
@@ -97,6 +100,9 @@ export function ImportReport({
         {seen(t("import.report.fields.title"), read.title)}
         {seen(t("import.report.fields.description"), read.description)}
         {seen(t("import.report.fields.transcript"), read.transcript)}
+      </p>
+      <p className="text-label-sm font-normal">
+        {t("import.report.picked", { category: picked.category ?? "—", difficulty: picked.difficulty ?? "—", count: picked.equipment })}
       </p>
       {!read.transcript && <p className="text-label-sm font-normal text-on-surface-variant">{t("import.report.noCaptions")}</p>}
       {unmatched > 0 && <p className="text-label-sm font-semibold text-primary">{t("import.report.unmatched", { count: unmatched })}</p>}

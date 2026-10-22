@@ -465,6 +465,8 @@ export const es = {
       title: "Importada de {{platform}} · {{author}}",
       read: "Leímos: ",
       fields: { title: "título", description: "descripción", transcript: "subtítulos" },
+      picked_one: "Elegimos: categoría {{category}}, dificultad {{difficulty}} y {{count}} utensilio (según lo que dice el video). Revísalo en las otras pestañas.",
+      picked_other: "Elegimos: categoría {{category}}, dificultad {{difficulty}} y {{count}} utensilios (según lo que dice el video). Revísalo en las otras pestañas.",
       noCaptions: "Ese video no tiene subtítulos propios, así que la receta sale solo de su título y descripción. Revisa que no falte nada.",
       unmatched_one: "{{count}} ingrediente no está en el catálogo: elígelo o créalo en la pestaña Ingredientes.",
       unmatched_other: "{{count}} ingredientes no están en el catálogo: elígelos o créalos en la pestaña Ingredientes.",

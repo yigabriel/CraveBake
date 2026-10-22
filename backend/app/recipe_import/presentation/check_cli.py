@@ -17,6 +17,7 @@ import time
 
 import httpx2
 
+from app.recipe_import.domain.services.ports import ExtractionCatalog
 from app.recipe_import.domain.source_url import parse_source_url
 from app.recipe_import.domain.video_text import ImportUnavailableError, VideoText, VideoUnavailableError
 from app.recipe_import.infrastructure.claude_recipe_extractor import ClaudeRecipeExtractor
@@ -27,9 +28,15 @@ from app.shared.config.settings import get_settings
 SAMPLE = VideoText(
     title="Brownies fudgy",
     description="Brownies de chocolate: 200 g de chocolate, 100 g de manteca, 3 huevos y 150 g de azúcar. "
-    "Derrite el chocolate con la manteca, mezcla con los huevos y el azúcar y hornea 25 minutos a 180 grados.",
+    "Derrite el chocolate con la manteca, bate a mano con los huevos y el azúcar y hornea 25 minutos a 180 grados.",
     transcript=None,
     author="@check",
+)
+SAMPLE_CATALOG = ExtractionCatalog(
+    ingredients=["Chocolate, chips", "Mantequilla / Manteca", "Huevo", "Azúcar blanca"],
+    units=["g", "cup", "u"],
+    equipment=["Batidor de globo", "Batidora de mano", "Horno", "Molde para tarta"],
+    categories=["Tortas", "Brownies y barras", "Galletas"],
 )
 
 
@@ -71,13 +78,14 @@ async def check_extractor() -> bool:
 
     started = time.monotonic()
     try:
-        recipe = await extractor.extract(SAMPLE, ["Chocolate, chips", "Manteca", "Huevo", "Azúcar blanca"], ["g", "cup", "u"])
+        recipe = await extractor.extract(SAMPLE, SAMPLE_CATALOG)
     except ImportUnavailableError:
         print("  extraction: FAILED (the line above or in the log has the status code)")
         return False
     print(f"  extraction: ok in {time.monotonic() - started:.1f}s — recipe={recipe.is_recipe}, {len(recipe.ingredients)} ingredients, {len(recipe.steps)} steps")
     for line in recipe.ingredients:
         print(f"    - {line.quantity or '?'} {line.unit or ''} {line.name}  (catalog: {line.catalog_name or '—'})")
+    print(f"    category: {recipe.category or '—'}   equipment: {', '.join(recipe.equipment) or '—'}  (hand-beating should give the whisk and the oven)")
     return recipe.is_recipe and len(recipe.ingredients) >= 3
 
 

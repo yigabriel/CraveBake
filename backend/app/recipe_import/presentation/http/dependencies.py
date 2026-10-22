@@ -6,6 +6,8 @@ from functools import lru_cache
 
 from fastapi import Depends
 
+from app.equipment.application.public.equipment_query_service import EquipmentQueryService
+from app.equipment.presentation.http.dependencies import get_equipment_query_service
 from app.ingredients.application.public.ingredient_query_service import IngredientQueryService
 from app.ingredients.presentation.http.dependencies import get_ingredient_query_service
 from app.recipe_import.application.use_cases.import_recipe_from_video_use_case import ImportRecipeFromVideoUseCase
@@ -13,8 +15,10 @@ from app.recipe_import.domain.services.ports import ImportCatalog, RecipeExtract
 from app.recipe_import.domain.video_text import ImportUnavailableError
 from app.recipe_import.infrastructure.claude_recipe_extractor import ClaudeRecipeExtractor
 from app.recipe_import.infrastructure.gemini_recipe_extractor import GeminiRecipeExtractor
-from app.recipe_import.infrastructure.ingredients_module_catalog import IngredientsModuleCatalog
+from app.recipe_import.infrastructure.modules_import_catalog import ModulesImportCatalog
 from app.recipe_import.infrastructure.supadata_video_text_source import SupadataVideoTextSource
+from app.recipes.application.public.recipe_query_service import RecipeQueryService
+from app.recipes.presentation.http.dependencies import get_recipe_query_service
 from app.shared.config.settings import get_settings
 from app.shared.presentation.request_rate_limiter import RequestRateLimiter
 
@@ -43,8 +47,12 @@ def get_recipe_extractor() -> RecipeExtractor:
     return GeminiRecipeExtractor(settings.gemini_api_key, settings.gemini_model)
 
 
-def get_import_catalog(ingredients: IngredientQueryService = Depends(get_ingredient_query_service)) -> ImportCatalog:
-    return IngredientsModuleCatalog(ingredients)
+def get_import_catalog(
+    ingredients: IngredientQueryService = Depends(get_ingredient_query_service),
+    equipment: EquipmentQueryService = Depends(get_equipment_query_service),
+    recipes: RecipeQueryService = Depends(get_recipe_query_service),
+) -> ImportCatalog:
+    return ModulesImportCatalog(ingredients, equipment, recipes)
 
 
 @lru_cache

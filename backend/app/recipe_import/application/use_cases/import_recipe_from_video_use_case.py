@@ -22,7 +22,17 @@ from app.recipe_import.application.dto.recipe_draft_dto import (
     WhatWasReadDTO,
 )
 from app.recipe_import.domain.extracted_recipe import ExtractedIngredient, ExtractedStep
-from app.recipe_import.domain.services.ports import CatalogIngredient, CatalogUnit, ImportCatalog, RecipeExtractor, VideoTextSource
+from app.recipe_import.domain.services.ports import (
+    CatalogCategory,
+    CatalogDifficulty,
+    CatalogEquipment,
+    CatalogIngredient,
+    CatalogUnit,
+    ExtractionCatalog,
+    ImportCatalog,
+    RecipeExtractor,
+    VideoTextSource,
+)
 from app.recipe_import.domain.source_url import parse_source_url
 from app.recipe_import.domain.video_text import NotARecipeError, NotEnoughTextError
 from app.shared.domain.text_folding import fold, is_same_name
@@ -44,10 +54,17 @@ class ImportRecipeFromVideoUseCase:
 
         ingredients = await self._catalog.ingredients()
         units = await self._catalog.units()
+        equipment = await self._catalog.equipment()
+        categories = await self._catalog.categories()
+        difficulties = await self._catalog.difficulties()
         extracted = await self._extractor.extract(
             text,
-            ingredient_names=[ingredient.name.text for ingredient in ingredients],
-            unit_abbreviations=[unit.abbreviation for unit in units],
+            ExtractionCatalog(
+                ingredients=[item.name.text for item in ingredients],
+                units=[unit.abbreviation for unit in units],
+                equipment=[item.name.text for item in equipment],
+                categories=[item.name.text for item in categories],
+            ),
         )
         if not extracted.is_recipe or not (extracted.ingredients or extracted.steps):
             raise NotARecipeError()
@@ -63,6 +80,9 @@ class ImportRecipeFromVideoUseCase:
             read=WhatWasReadDTO(title=bool(text.title), description=bool(text.description), transcript=bool(text.transcript)),
             ingredients=[_ingredient(line, ingredients, units) for line in _grouped(extracted.ingredients, lambda line: line.section)],
             steps=[_step(step) for step in _grouped(extracted.steps, lambda step: step.section)],
+            equipment=_match_equipment(extracted.equipment, equipment),
+            category=_match_category(extracted.category, categories),
+            difficulty=_middle_difficulty(difficulties),
         )
 
 
@@ -113,3 +133,37 @@ def _match_unit(abbreviation: str | None, units: list[CatalogUnit]) -> DraftCata
 
 def _step(step: ExtractedStep) -> DraftStepDTO:
     return DraftStepDTO(instructions=step.instructions, title=step.title, timer_minutes=step.timer_minutes, section=step.section)
+
+
+def _find(wanted: str | None, items: list, name_of=lambda item: item.name):
+    """The catalog item called `wanted` (or one of its synonyms) in any language; None if the model made it up."""
+    if not wanted:
+        return None
+    return next((item for item in items if any(is_same_name(name, wanted) for name in name_of(item).as_dict().values())), None)
+
+
+def _match_equipment(names: list[str], catalog: list[CatalogEquipment]) -> list[DraftCatalogItemDTO]:
+    """Only tools that really are in the catalog, each once, in the order the model gave them.
+
+    A recipe can only list catalog equipment, so a tool the model invented (or that is not in the
+    catalog) is left out rather than guessed at.
+    """
+    matched: dict[str, DraftCatalogItemDTO] = {}
+    for name in names:
+        item = _find(name, catalog)
+        if item is not None:
+            matched.setdefault(item.id, DraftCatalogItemDTO(id=item.id, name=item.name))
+    return list(matched.values())
+
+
+def _match_category(name: str | None, catalog: list[CatalogCategory]) -> DraftCatalogItemDTO | None:
+    item = _find(name, catalog)
+    return DraftCatalogItemDTO(id=item.id, name=item.name) if item else None
+
+
+def _middle_difficulty(catalog: list[CatalogDifficulty]) -> DraftCatalogItemDTO | None:
+    """The middle level ("intermediate" in the seeded catalog): the text of a video cannot tell how hard a recipe is."""
+    if not catalog:
+        return None
+    item = sorted(catalog, key=lambda difficulty: difficulty.level_order)[len(catalog) // 2]
+    return DraftCatalogItemDTO(id=item.id, name=item.name)

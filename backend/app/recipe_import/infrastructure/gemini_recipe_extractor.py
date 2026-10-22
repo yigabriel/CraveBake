@@ -18,7 +18,7 @@ from typing import Any
 import httpx2
 
 from app.recipe_import.domain.extracted_recipe import ExtractedRecipe
-from app.recipe_import.domain.services.ports import RecipeExtractor
+from app.recipe_import.domain.services.ports import ExtractionCatalog, RecipeExtractor
 from app.recipe_import.domain.video_text import ImportUnavailableError, VideoText
 from app.recipe_import.infrastructure.extraction_schema import SCHEMA, SYSTEM_PROMPT, parse_recipe, user_message
 
@@ -44,10 +44,10 @@ class GeminiRecipeExtractor(RecipeExtractor):
         self._model = model
         self._client = client
 
-    async def extract(self, text: VideoText, ingredient_names: list[str], unit_abbreviations: list[str]) -> ExtractedRecipe:
+    async def extract(self, text: VideoText, catalog: ExtractionCatalog) -> ExtractedRecipe:
         body = {
             "model": self._model,
-            "input": f"{SYSTEM_PROMPT}\n\n{user_message(text, ingredient_names, unit_abbreviations)}",
+            "input": f"{SYSTEM_PROMPT}\n\n{user_message(text, catalog)}",
             "response_format": {"type": "text", "mime_type": "application/json", "schema": GEMINI_SCHEMA},
         }
         try:

@@ -94,6 +94,8 @@ function draftFromImport(imported: RecipeDraft): Draft {
       description: imported.description,
       // The source stays attached to the recipe, and an imported recipe starts private.
       video_url: imported.source_url,
+      category_id: imported.category?.id ?? null,
+      difficulty_id: imported.difficulty?.id ?? null,
       prep_time_minutes: imported.prep_time_minutes,
       servings: imported.servings,
       is_public: false,
@@ -111,7 +113,7 @@ function draftFromImport(imported: RecipeDraft): Draft {
       }),
       newKey,
     ),
-    equipment: [],
+    equipment: imported.equipment.map((item) => ({ key: newKey(), equipment_id: item.id, name: item.name, notes: "" })),
     steps: withHeadings(
       inStorageOrder(imported.steps, (step) => step.section),
       (step) => step.section,
@@ -815,7 +817,7 @@ export function RecipeEditorPage() {
   const setSection = (next: Section) => setParams({ section: next }, { replace: true });
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   // Set when the draft came from a video link: what was read, to show next to the review.
-  const [imported, setImported] = useState<Pick<RecipeDraft, "platform" | "author" | "read"> | null>(null);
+  const [imported, setImported] = useState<Pick<RecipeDraft, "platform" | "author" | "read" | "category" | "difficulty" | "equipment"> | null>(null);
   const [errors, setErrors] = useState<Errors>({});
 
   const recipe = useQuery({ queryKey: ["recipe", id, "original"], queryFn: () => recipesApi.get(id!, "original"), enabled: editing });
@@ -987,7 +989,14 @@ export function RecipeEditorPage() {
         <ImportFromVideoCard
           onImported={(result) => {
             setDraft(draftFromImport(result));
-            setImported({ platform: result.platform, author: result.author, read: result.read });
+            setImported({
+              platform: result.platform,
+              author: result.author,
+              read: result.read,
+              category: result.category,
+              difficulty: result.difficulty,
+              equipment: result.equipment,
+            });
             setErrors({});
           }}
         />
@@ -997,6 +1006,7 @@ export function RecipeEditorPage() {
           platform={imported.platform}
           author={imported.author}
           read={imported.read}
+          picked={{ category: imported.category?.name ?? null, difficulty: imported.difficulty?.name ?? null, equipment: imported.equipment.length }}
           unmatched={rowsOf(draft.ingredients).filter((row) => !row.ingredient_id).length}
         />
       )}

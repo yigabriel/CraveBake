@@ -216,6 +216,11 @@ export interface RecipeDraft {
   read: { title: boolean; description: boolean; transcript: boolean };
   ingredients: DraftIngredient[];
   steps: DraftStep[];
+  /** Catalog equipment the text uses or implies; empty when it names none. */
+  equipment: DraftCatalogItem[];
+  category: DraftCatalogItem | null;
+  /** Always the middle level: a video's text cannot say how hard a recipe is. */
+  difficulty: DraftCatalogItem | null;
 }
 
 export interface RecipeDetail extends RecipeCommon {

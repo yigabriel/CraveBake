@@ -32,6 +32,35 @@ class CatalogIngredient:
 
 
 @dataclass(frozen=True)
+class CatalogEquipment:
+    id: str
+    name: LocalizedText
+
+
+@dataclass(frozen=True)
+class CatalogCategory:
+    id: str
+    name: LocalizedText
+
+
+@dataclass(frozen=True)
+class CatalogDifficulty:
+    id: str
+    name: LocalizedText
+    level_order: int
+
+
+@dataclass(frozen=True)
+class ExtractionCatalog:
+    """The names the model may choose from, as plain text (in the catalog's own order)."""
+
+    ingredients: list[str]
+    units: list[str]
+    equipment: list[str]
+    categories: list[str]
+
+
+@dataclass(frozen=True)
 class CatalogUnit:
     id: str
     name: LocalizedText
@@ -47,10 +76,17 @@ class ImportCatalog(ABC):
     @abstractmethod
     async def units(self) -> list[CatalogUnit]: ...
 
+    @abstractmethod
+    async def equipment(self) -> list[CatalogEquipment]: ...
+
+    @abstractmethod
+    async def categories(self) -> list[CatalogCategory]: ...
+
+    @abstractmethod
+    async def difficulties(self) -> list[CatalogDifficulty]: ...
+
 
 class RecipeExtractor(ABC):
     @abstractmethod
-    async def extract(
-        self, text: VideoText, ingredient_names: list[str], unit_abbreviations: list[str]
-    ) -> ExtractedRecipe:
-        """Reads the text. `ingredient_names` and `unit_abbreviations` are what it may match against."""
+    async def extract(self, text: VideoText, catalog: ExtractionCatalog) -> ExtractedRecipe:
+        """Reads the text. `catalog` holds the names it may choose from."""

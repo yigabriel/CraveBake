@@ -468,6 +468,8 @@ export const en: typeof es = {
       title: "Imported from {{platform}} · {{author}}",
       read: "We read: ",
       fields: { title: "title", description: "description", transcript: "captions" },
+      picked_one: "We picked: category {{category}}, difficulty {{difficulty}} and {{count}} tool (from what the video says). Check it in the other tabs.",
+      picked_other: "We picked: category {{category}}, difficulty {{difficulty}} and {{count}} tools (from what the video says). Check it in the other tabs.",
       noCaptions: "That video has no captions of its own, so the recipe comes only from its title and description. Check that nothing is missing.",
       unmatched_one: "{{count}} ingredient is not in the catalog: pick it or create it in the Ingredients tab.",
       unmatched_other: "{{count}} ingredients are not in the catalog: pick them or create them in the Ingredients tab.",

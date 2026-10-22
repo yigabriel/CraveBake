@@ -29,6 +29,10 @@ class EquipmentQueryService:
         parsed = list({parsed for raw in ids if (parsed := EquipmentId.try_from_string(raw)) is not None})
         return [equipment_to_dto(item) for item in await self._equipment_repository.get_many_by_ids(parsed)]
 
+    async def list_catalog_equipment(self, limit: int = 200) -> list[EquipmentDTO]:
+        """The shared equipment catalog, in name order (capped: callers match free text against it)."""
+        return [equipment_to_dto(item) for item in await self._equipment_repository.search(None, None, limit, 0)]
+
     async def list_user_equipment_ids(self, user_id: str) -> list[str]:
         """Ids of the equipment the user has in their kitchen."""
         return [str(item.equipment_id) for item in await self._user_equipment_repository.list_by_user(user_id)]

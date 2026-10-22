@@ -53,3 +53,6 @@ class RecipeDraftResponse(BaseModel):
     read: WhatWasReadResponse
     ingredients: list[DraftIngredientResponse]
     steps: list[DraftStepResponse]
+    equipment: list[DraftCatalogItemResponse] = Field(description="Catalog equipment the text uses or implies; empty when it names none")
+    category: DraftCatalogItemResponse | None = Field(description="The recipe category that fits, from the catalog")
+    difficulty: DraftCatalogItemResponse | None = Field(description="Always the middle difficulty: a video's text cannot say how hard a recipe is")

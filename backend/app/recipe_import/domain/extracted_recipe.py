@@ -12,6 +12,7 @@ from decimal import Decimal
 
 MAX_INGREDIENTS = 80
 MAX_STEPS = 60
+MAX_EQUIPMENT = 30
 
 
 @dataclass(frozen=True)
@@ -41,3 +42,5 @@ class ExtractedRecipe:
     prep_time_minutes: int | None = None
     ingredients: list[ExtractedIngredient] = field(default_factory=list)
     steps: list[ExtractedStep] = field(default_factory=list)
+    equipment: list[str] = field(default_factory=list)  # names from the equipment catalog
+    category: str | None = None  # a name from the recipe-category catalog

@@ -17,7 +17,7 @@ import logging
 import anthropic
 
 from app.recipe_import.domain.extracted_recipe import ExtractedRecipe
-from app.recipe_import.domain.services.ports import RecipeExtractor
+from app.recipe_import.domain.services.ports import ExtractionCatalog, RecipeExtractor
 from app.recipe_import.domain.video_text import ImportUnavailableError, VideoText
 from app.recipe_import.infrastructure.extraction_schema import SCHEMA, SYSTEM_PROMPT, parse_recipe, user_message
 
@@ -33,13 +33,13 @@ class ClaudeRecipeExtractor(RecipeExtractor):
         self._client = client or anthropic.AsyncAnthropic(api_key=api_key, timeout=60.0)
         self._model = model
 
-    async def extract(self, text: VideoText, ingredient_names: list[str], unit_abbreviations: list[str]) -> ExtractedRecipe:
+    async def extract(self, text: VideoText, catalog: ExtractionCatalog) -> ExtractedRecipe:
         try:
             response = await self._client.messages.create(
                 model=self._model,
                 max_tokens=MAX_TOKENS,
                 system=SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": user_message(text, ingredient_names, unit_abbreviations)}],
+                messages=[{"role": "user", "content": user_message(text, catalog)}],
                 output_config={"effort": "low", "format": {"type": "json_schema", "schema": SCHEMA}},
             )
         except anthropic.APIStatusError as error:

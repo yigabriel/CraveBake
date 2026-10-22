@@ -56,3 +56,6 @@ class RecipeDraftDTO:
     read: WhatWasReadDTO
     ingredients: list[DraftIngredientDTO] = field(default_factory=list)
     steps: list[DraftStepDTO] = field(default_factory=list)
+    equipment: list[DraftCatalogItemDTO] = field(default_factory=list)  # only catalog items: a recipe can only list those
+    category: DraftCatalogItemDTO | None = None
+    difficulty: DraftCatalogItemDTO | None = None  # always the middle level: a caption cannot say how hard a recipe is

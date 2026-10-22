@@ -269,6 +269,7 @@ def get_recipe_query_service(
     assembler: RecipeAssembler = Depends(get_recipe_assembler),
     category_repository: RecipeCategoryRepository = Depends(get_recipe_category_repository),
     tag_repository: RecipeTagRepository = Depends(get_recipe_tag_repository),
+    difficulty_repository: DifficultyRepository = Depends(get_difficulty_repository),
 ) -> RecipeQueryService:
     """Provider other modules' composition roots use to reach the recipes Open Host Service."""
-    return RecipeQueryService(recipe_repository, assembler, category_repository, tag_repository)
+    return RecipeQueryService(recipe_repository, assembler, category_repository, tag_repository, difficulty_repository)

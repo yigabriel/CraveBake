@@ -12,15 +12,17 @@ from __future__ import annotations
 from app.recipes.application.dto.recipe_dto import (
     IngredientOverlapQueryDTO,
     RankedRecipesDTO,
+    DifficultyDTO,
     RecipeCategoryDTO,
     RecipeCompositionDTO,
     RecipeDetailDTO,
     RecipeSummaryDTO,
     RecipeTagDTO,
 )
-from app.recipes.application.mappers.recipe_assembler import RecipeAssembler, category_to_dto, tag_to_dto
+from app.recipes.application.mappers.recipe_assembler import RecipeAssembler, category_to_dto, difficulty_to_dto, tag_to_dto
 from app.recipes.domain.entities.recipe import Recipe
 from app.recipes.domain.repositories.recipe_catalog_repositories import (
+    DifficultyRepository,
     RecipeCategoryRepository,
     RecipeTagRepository,
 )
@@ -37,7 +39,9 @@ class RecipeQueryService:
         assembler: RecipeAssembler,
         category_repository: RecipeCategoryRepository,
         tag_repository: RecipeTagRepository,
+        difficulty_repository: DifficultyRepository | None = None,
     ) -> None:
+        self._difficulty_repository = difficulty_repository
         self._recipe_repository = recipe_repository
         self._assembler = assembler
         self._category_repository = category_repository
@@ -122,6 +126,11 @@ class RecipeQueryService:
 
     async def list_categories(self) -> list[RecipeCategoryDTO]:
         return [category_to_dto(category) for category in await self._category_repository.list_all()]
+
+    async def list_difficulties(self) -> list[DifficultyDTO]:
+        if self._difficulty_repository is None:
+            return []
+        return [difficulty_to_dto(item) for item in await self._difficulty_repository.list_all()]
 
     async def list_tags(self) -> list[RecipeTagDTO]:
         return [tag_to_dto(tag) for tag in await self._tag_repository.list_all()]
