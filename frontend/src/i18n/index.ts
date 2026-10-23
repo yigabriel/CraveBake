@@ -25,6 +25,14 @@ void i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
 });
 
-i18n.on("languageChanged", (language) => document.documentElement.setAttribute("lang", language));
+// The page's language and its description (what search engines and link previews show) follow the UI.
+function followLanguage(language: string) {
+  document.documentElement.setAttribute("lang", language);
+  const description = i18n.t("meta.description");
+  for (const selector of ['meta[name="description"]', 'meta[property="og:description"]'])
+    document.querySelector(selector)?.setAttribute("content", description);
+}
+i18n.on("languageChanged", followLanguage);
+followLanguage(i18n.language); // init already chose the language before this listener existed
 
 export default i18n;

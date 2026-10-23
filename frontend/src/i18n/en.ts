@@ -210,7 +210,6 @@ export const en: typeof es = {
     subtitle_other: "{{count}} recipes in your kitchen",
     createRecipe: "Create recipe",
     tabs: { all: "All", original: "My recipes", personalized: "My versions", saved: "Saved" },
-    stats: { total: "In total", original: "Original recipes", personalized: "Versions", saved: "Favorites" },
     kinds: { saved: "Saved" },
     searchPlaceholder: "Search by title…",
     allCategories: "All categories",
@@ -473,6 +472,9 @@ export const en: typeof es = {
       noCaptions: "That video has no captions of its own, so the recipe comes only from its title and description. Check that nothing is missing.",
       unmatched_one: "{{count}} ingredient is not in the catalog: pick it or create it in the Ingredients tab.",
       unmatched_other: "{{count}} ingredients are not in the catalog: pick them or create them in the Ingredients tab.",
+      cover: "We will use the video's cover as the recipe's cover. It is the creator's image: if you make the recipe public, consider replacing it with your own photo.",
+      coverAlt: "Video cover",
+      dropCover: "Don't use it",
       review: "A program understood this: check the ingredients, quantities and steps before saving. It stays private and keeps the video link.",
     },
     errors: {
@@ -482,7 +484,19 @@ export const en: typeof es = {
       limited: "You imported several videos in a row. Wait a few minutes and try again.",
       unavailable: "Importing from videos is not available right now. You can write the recipe yourself.",
       failed: "We couldn't import that video. Try again or write the recipe yourself.",
+      cover: "The recipe was saved, but we couldn't add the video's cover. You can upload one in Photos.",
     },
+  },
+  notFound: {
+    documentTitle: "Page not found · Crave Bake",
+    lead: "Someone ate",
+    accent: "this page",
+    text: "What you are looking for does not exist, moved, or got eaten before you arrived. The oven is still on: head home and bake something else.",
+    home: "Go home",
+    back: "Go back",
+  },
+  meta: {
+    description: "Your baking recipe book: save and personalize recipes, convert grams to cups, import recipes from Reels and TikTok, and bake step by step.",
   },
   upload: {
     choose: "Choose photo",

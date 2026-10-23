@@ -14,6 +14,7 @@ from urllib.parse import quote, urlsplit
 import httpx2
 
 from app.media.domain.services.image_storage import ImageStorage, SignedUpload
+from app.media.domain.services.image_uploader import ImageUploader
 from app.media.domain.services.stored_images import StoredImage, StoredImages
 from app.media.domain.upload_policy import ImageStorageUnavailableError
 
@@ -22,7 +23,7 @@ logger = logging.getLogger(__name__)
 LIST_PAGE = 100
 
 
-class SupabaseImageStorage(ImageStorage, StoredImages):
+class SupabaseImageStorage(ImageStorage, ImageUploader, StoredImages):
     def __init__(self, project_url: str, secret_key: str, bucket: str, client: httpx2.AsyncClient | None = None) -> None:
         # Only scheme + host matter: the dashboard also shows the project URL as .../rest/v1/.
         project = urlsplit(project_url)
@@ -48,6 +49,24 @@ class SupabaseImageStorage(ImageStorage, StoredImages):
             upload_url=f"{self._storage_url}{response.json()['url']}",
             public_url=f"{self._storage_url}/object/public/{object_ref}",
         )
+
+    async def upload(self, path: str, data: bytes, content_type: str) -> str:
+        """Server-side upload with the secret key (the browser path uses a signed URL instead)."""
+        object_ref = f"{quote(self._bucket)}/{quote(path)}"
+        headers = {**self._headers, "Content-Type": content_type, "x-upsert": "false"}
+        try:
+            if self._client is not None:
+                response = await self._client.post(f"{self._storage_url}/object/{object_ref}", headers=headers, content=data)
+            else:
+                async with httpx2.AsyncClient(timeout=30) as client:
+                    response = await client.post(f"{self._storage_url}/object/{object_ref}", headers=headers, content=data)
+        except httpx2.HTTPError:
+            logger.exception("Supabase Storage unreachable")
+            raise ImageStorageUnavailableError()
+        if response.status_code >= 400:
+            logger.error("Supabase Storage refused an upload (%s): %s", response.status_code, response.text[:300])
+            raise ImageStorageUnavailableError()
+        return f"{self._storage_url}/object/public/{object_ref}"
 
     # --- StoredImages: used by the clean-up sweep, never by a request ---------------------
 

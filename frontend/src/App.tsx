@@ -4,6 +4,7 @@ import { useAuth } from "./auth/AuthContext";
 import { AppShell } from "./components/AppShell";
 import { LogoMark } from "./components/Logo";
 import { LoginPage, RegisterPage } from "./pages/AuthPages";
+import { NotFoundPage } from "./pages/NotFoundPage";
 import { ConverterPage } from "./pages/ConverterPage";
 import { CookPage } from "./pages/CookPage";
 import { DeckPage, DiscoverResultsPage, DiscoverStartPage } from "./pages/DiscoverPages";
@@ -79,8 +80,9 @@ export function App() {
         <Route path="profile/pantry" element={<PantryPage />} />
         <Route path="profile/kitchen" element={<KitchenPage />} />
         <Route path="profile/history" element={<HistoryPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
+      {/* Signed in or not, an address that matches no page says so (it used to bounce to the home page). */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

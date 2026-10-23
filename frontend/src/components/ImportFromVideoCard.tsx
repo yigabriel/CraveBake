@@ -74,6 +74,8 @@ export function ImportReport({
   read,
   picked,
   unmatched,
+  cover,
+  onDropCover,
 }: {
   platform: RecipeDraft["platform"];
   author: string | null;
@@ -81,6 +83,9 @@ export function ImportReport({
   /** What was chosen from the catalogs, so the person knows to check it. */
   picked: { category: string | null; difficulty: string | null; equipment: number };
   unmatched: number;
+  /** The video's cover frame that will become the recipe's cover, if any. */
+  cover: string | null;
+  onDropCover: () => void;
 }) {
   const { t } = useTranslation();
   const seen = (label: string, ok: boolean) => (
@@ -106,6 +111,15 @@ export function ImportReport({
       </p>
       {!read.transcript && <p className="text-label-sm font-normal text-on-surface-variant">{t("import.report.noCaptions")}</p>}
       {unmatched > 0 && <p className="text-label-sm font-semibold text-primary">{t("import.report.unmatched", { count: unmatched })}</p>}
+      {cover && (
+        <div className="flex items-center gap-sm rounded-lg bg-white/60 p-xs">
+          <img src={cover} alt={t("import.report.coverAlt")} className="h-16 w-16 shrink-0 rounded object-cover" />
+          <p className="flex-1 text-label-sm font-normal">{t("import.report.cover")}</p>
+          <Button variant="ghost" icon="hide_image" className="shrink-0 px-sm py-xs" onClick={onDropCover}>
+            {t("import.report.dropCover")}
+          </Button>
+        </div>
+      )}
       <p className="text-label-sm font-normal text-on-surface-variant">{t("import.report.review")}</p>
     </Card>
     </div>

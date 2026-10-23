@@ -221,6 +221,8 @@ export interface RecipeDraft {
   category: DraftCatalogItem | null;
   /** Always the middle level: a video's text cannot say how hard a recipe is. */
   difficulty: DraftCatalogItem | null;
+  /** Our copy of the video's cover frame (the creator's image); added as the first cover once the recipe exists. */
+  cover_url: string | null;
 }
 
 export interface RecipeDetail extends RecipeCommon {

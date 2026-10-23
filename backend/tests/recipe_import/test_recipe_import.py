@@ -42,6 +42,7 @@ from app.recipe_import.infrastructure.extraction_schema import SCHEMA, parse_rec
 from app.recipe_import.infrastructure.gemini_recipe_extractor import GEMINI_SCHEMA, GeminiRecipeExtractor, _text_of
 from app.recipe_import.infrastructure.supadata_video_text_source import SupadataVideoTextSource
 from app.recipe_import.presentation.http.dependencies import (
+    get_cover_store,
     get_import_catalog,
     get_import_rate_limiter,
     get_recipe_extractor,
@@ -445,6 +446,26 @@ class TestSupadataRateLimit:
 
         assert len(calls) == 3  # the first try and two retries, then it stops: credits and time are not unlimited
 
+    async def test_a_slow_first_answer_is_tried_once_more(self):
+        # Supadata reads a video from the platform the first time it is asked: that request can time out.
+        calls = []
+
+        def handler(request):
+            calls.append(request.url.path)
+            if calls.count("/v1/metadata") == 1 and request.url.path.endswith("/metadata"):
+                raise httpx2.ReadTimeout("slow first read")
+            return answer()(request)
+
+        text = await supadata(handler).fetch(SOURCE)
+        assert text.description == LONG_TEXT and calls == ["/v1/metadata", "/v1/metadata", "/v1/transcript"]
+
+    async def test_timing_out_twice_is_unavailable(self):
+        def handler(request):
+            raise httpx2.ReadTimeout("down")
+
+        with pytest.raises(ImportUnavailableError):
+            await supadata(handler).fetch(SOURCE)
+
     async def test_a_huge_retry_after_is_capped(self):
         time_ = FakeTime()
 
@@ -731,6 +752,7 @@ class TestEndpoint:
         app.dependency_overrides[get_recipe_extractor] = lambda: FakeExtractor(recipe)
         app.dependency_overrides[get_import_catalog] = FakeCatalog
         app.dependency_overrides[get_import_rate_limiter] = lambda: limiter
+        app.dependency_overrides[get_cover_store] = lambda: None  # never the real storage from a test
         with TestClient(app) as client:
             yield client, source
         app.dependency_overrides.clear()

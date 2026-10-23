@@ -207,7 +207,6 @@ export const es = {
     subtitle_other: "{{count}} recetas en tu obrador",
     createRecipe: "Crear receta",
     tabs: { all: "Todo", original: "Mis recetas", personalized: "Mis versiones", saved: "Guardadas" },
-    stats: { total: "En total", original: "Recetas originales", personalized: "Versiones", saved: "En favoritos" },
     kinds: { saved: "Guardada" },
     searchPlaceholder: "Buscar por título…",
     allCategories: "Todas las categorías",
@@ -470,6 +469,9 @@ export const es = {
       noCaptions: "Ese video no tiene subtítulos propios, así que la receta sale solo de su título y descripción. Revisa que no falte nada.",
       unmatched_one: "{{count}} ingrediente no está en el catálogo: elígelo o créalo en la pestaña Ingredientes.",
       unmatched_other: "{{count}} ingredientes no están en el catálogo: elígelos o créalos en la pestaña Ingredientes.",
+      cover: "Usaremos la portada del video como portada de la receta. Es una imagen del creador: si publicas la receta, considera reemplazarla por una foto tuya.",
+      coverAlt: "Portada del video",
+      dropCover: "No usarla",
       review: "Esto lo entendió un programa: revisa ingredientes, cantidades y pasos antes de guardar. Queda privada y con el enlace del video.",
     },
     errors: {
@@ -479,7 +481,19 @@ export const es = {
       limited: "Importaste varios videos seguidos. Espera unos minutos e inténtalo de nuevo.",
       unavailable: "La importación desde videos no está disponible ahora. Puedes escribir la receta tú.",
       failed: "No pudimos importar ese video. Inténtalo otra vez o escribe la receta tú.",
+      cover: "La receta se guardó, pero no pudimos agregarle la portada del video. Puedes subir una en Fotos.",
     },
+  },
+  notFound: {
+    documentTitle: "Página no encontrada · Crave Bake",
+    lead: "Alguien se comió",
+    accent: "esta página",
+    text: "Lo que buscas no existe, cambió de lugar o se lo comieron antes de que llegaras. El horno sigue encendido: vuelve al inicio y hornea otra cosa.",
+    home: "Ir al inicio",
+    back: "Volver atrás",
+  },
+  meta: {
+    description: "Tu recetario de repostería: guarda y personaliza recetas, convierte gramos a tazas, importa recetas de Reels y TikTok y hornea paso a paso.",
   },
   upload: {
     choose: "Elegir foto",

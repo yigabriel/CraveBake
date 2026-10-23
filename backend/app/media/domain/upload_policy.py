@@ -32,6 +32,11 @@ class UnsupportedImageTypeError(ValidationError):
         super().__init__(f"'{content_type}' images are not accepted. Allowed: {allowed}")
 
 
+class ImageTooLargeError(ValidationError):
+    def __init__(self) -> None:
+        super().__init__(f"Images can be at most {MAX_BYTES // (1024 * 1024)} MB")
+
+
 class ImageStorageUnavailableError(ServiceUnavailableError):
     def __init__(self) -> None:
         super().__init__("Image uploads are not available right now")

@@ -11,11 +11,14 @@ from app.equipment.presentation.http.dependencies import get_equipment_query_ser
 from app.ingredients.application.public.ingredient_query_service import IngredientQueryService
 from app.ingredients.presentation.http.dependencies import get_ingredient_query_service
 from app.recipe_import.application.use_cases.import_recipe_from_video_use_case import ImportRecipeFromVideoUseCase
-from app.recipe_import.domain.services.ports import ImportCatalog, RecipeExtractor, VideoTextSource
+from app.media.application.public.media_service import MediaService
+from app.media.presentation.http.dependencies import get_media_service
+from app.recipe_import.domain.services.ports import CoverImageStore, ImportCatalog, RecipeExtractor, VideoTextSource
 from app.recipe_import.domain.video_text import ImportUnavailableError
 from app.recipe_import.infrastructure.claude_recipe_extractor import ClaudeRecipeExtractor
 from app.recipe_import.infrastructure.gemini_recipe_extractor import GeminiRecipeExtractor
 from app.recipe_import.infrastructure.modules_import_catalog import ModulesImportCatalog
+from app.recipe_import.infrastructure.thumbnail_cover_store import ThumbnailCoverStore
 from app.recipe_import.infrastructure.supadata_video_text_source import SupadataVideoTextSource
 from app.recipes.application.public.recipe_query_service import RecipeQueryService
 from app.recipes.presentation.http.dependencies import get_recipe_query_service
@@ -55,6 +58,11 @@ def get_import_catalog(
     return ModulesImportCatalog(ingredients, equipment, recipes)
 
 
+def get_cover_store(media: MediaService | None = Depends(get_media_service)) -> CoverImageStore | None:
+    """No storage configured: imports simply come without a cover."""
+    return ThumbnailCoverStore(media) if media is not None else None
+
+
 @lru_cache
 def get_import_rate_limiter() -> RequestRateLimiter:
     settings = get_settings()
@@ -65,5 +73,6 @@ def get_import_recipe_use_case(
     source: VideoTextSource = Depends(get_video_text_source),
     extractor: RecipeExtractor = Depends(get_recipe_extractor),
     catalog: ImportCatalog = Depends(get_import_catalog),
+    covers: CoverImageStore | None = Depends(get_cover_store),
 ) -> ImportRecipeFromVideoUseCase:
-    return ImportRecipeFromVideoUseCase(source, extractor, catalog)
+    return ImportRecipeFromVideoUseCase(source, extractor, catalog, covers)

@@ -159,3 +159,42 @@
     animation: none;
   }
 }
+
+/* 404: the bitten cookie rocks a little and keeps dropping crumbs. */
+@keyframes wobble {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+.animate-wobble {
+  animation: wobble 3.2s ease-in-out infinite;
+}
+@keyframes crumb-fall {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--drift), 1.1em) scale(1);
+  }
+}
+.crumb {
+  animation: crumb-fall 2.8s ease-in infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-wobble,
+  .crumb {
+    animation: none;
+  }
+  .crumb {
+    display: none;
+  }
+}

@@ -86,6 +86,14 @@ class ImportCatalog(ABC):
     async def difficulties(self) -> list[CatalogDifficulty]: ...
 
 
+class CoverImageStore(ABC):
+    """Keeps a copy of the video's cover frame in our storage (the platform's link expires)."""
+
+    @abstractmethod
+    async def store(self, image_url: str, owner_user_id: str) -> str | None:
+        """The public URL of the copy; None if it could not be copied (the import goes on without a cover)."""
+
+
 class RecipeExtractor(ABC):
     @abstractmethod
     async def extract(self, text: VideoText, catalog: ExtractionCatalog) -> ExtractedRecipe:

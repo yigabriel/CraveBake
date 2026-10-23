@@ -10,7 +10,6 @@ import { cardFromPortfolio, FavoriteButton, RecipeCard } from "../components/Rec
 import { useToast } from "../components/Toast";
 import {
   Button,
-  Card,
   CardGridSkeleton,
   Chip,
   EmptyState,
@@ -127,12 +126,6 @@ export function PortfolioPage() {
     { key: "personalized", label: t("portfolio.tabs.personalized"), count: summary.data?.personalized_count },
     { key: "saved", label: t("portfolio.tabs.saved"), count: summary.data?.saved_count },
   ];
-  const stats = [
-    { icon: "inventory_2", label: t("portfolio.stats.total"), value: summary.data?.total },
-    { icon: "menu_book", label: t("portfolio.stats.original"), value: summary.data?.original_count },
-    { icon: "fork_right", label: t("portfolio.stats.personalized"), value: summary.data?.personalized_count },
-    { icon: "bookmark", label: t("portfolio.stats.saved"), value: summary.data?.saved_count },
-  ];
   const filtered = !!q || !!categoryId || tagIds.length > 0;
   const toggleTag = (id: string) => setTagIds((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]));
 
@@ -147,20 +140,6 @@ export function PortfolioPage() {
           </Link>
         }
       />
-
-      <div className="mb-md hidden grid-cols-4 gap-gutter lg:grid">
-        {stats.map((stat) => (
-          <Card key={stat.label} className="flex items-center gap-sm p-md">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary-container">
-              <Icon name={stat.icon} className="text-primary" />
-            </span>
-            <div>
-              <p className="text-display-sm">{stat.value ?? "–"}</p>
-              <p className="text-label-md text-on-surface-variant">{stat.label}</p>
-            </div>
-          </Card>
-        ))}
-      </div>
 
       <div role="tablist" className="-mx-margin-mobile mb-sm flex gap-xs overflow-x-auto border-b border-outline-variant/50 px-margin-mobile lg:mx-0 lg:px-0">
         {tabs.map((item) => (

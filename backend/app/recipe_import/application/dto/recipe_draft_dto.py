@@ -10,6 +10,7 @@ from app.shared.domain.value_objects.localized_text import LocalizedText
 @dataclass(frozen=True)
 class ImportRecipeDTO:
     url: str
+    user_id: str = ""  # who imports: the cover copy goes to their folder
 
 
 @dataclass(frozen=True)
@@ -59,3 +60,4 @@ class RecipeDraftDTO:
     equipment: list[DraftCatalogItemDTO] = field(default_factory=list)  # only catalog items: a recipe can only list those
     category: DraftCatalogItemDTO | None = None
     difficulty: DraftCatalogItemDTO | None = None  # always the middle level: a caption cannot say how hard a recipe is
+    cover_url: str | None = None  # our copy of the video's cover frame, to add as the first cover once saved

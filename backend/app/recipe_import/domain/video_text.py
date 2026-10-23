@@ -44,14 +44,28 @@ class VideoText:
     description: str | None = None
     transcript: str | None = None
     author: str | None = None  # @username or display name, to credit the source
+    thumbnail_url: str | None = None  # the platform's cover frame (a signed link that expires)
 
     @classmethod
-    def clean(cls, title: str | None, description: str | None, transcript: str | None, author: str | None) -> "VideoText":
+    def clean(
+        cls,
+        title: str | None,
+        description: str | None,
+        transcript: str | None,
+        author: str | None,
+        thumbnail_url: str | None = None,
+    ) -> "VideoText":
         def tidy(text: str | None, limit: int) -> str | None:
             text = (text or "").strip()
             return text[:limit] or None
 
-        return cls(tidy(title, MAX_TITLE), tidy(description, MAX_DESCRIPTION), tidy(transcript, MAX_TRANSCRIPT), tidy(author, 100))
+        return cls(
+            tidy(title, MAX_TITLE),
+            tidy(description, MAX_DESCRIPTION),
+            tidy(transcript, MAX_TRANSCRIPT),
+            tidy(author, 100),
+            tidy(thumbnail_url, 2000),
+        )
 
     @property
     def readable_characters(self) -> int:

@@ -9,6 +9,9 @@ They are made one after the other, at least `min_interval` seconds apart, across
 the process: the free plan allows 1 request per second and answers 429 beyond it. A 429 is retried
 (honouring `Retry-After`) before giving up.
 
+The first request for a video can be slow (Supadata reads it from the platform then, and keeps it
+afterwards): the timeout is generous, and a timed-out request is tried once more.
+
 Supadata answers 206 when the video has no captions: that is normal, not an error — the recipe is
 then read from the title and description alone.
 """
@@ -30,6 +33,7 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://api.supadata.ai/v1"
 MAX_RETRIES = 2
 MAX_WAIT_SECONDS = 5.0
+TIMEOUT_SECONDS = 60.0
 
 
 class SupadataVideoTextSource(VideoTextSource):
@@ -68,6 +72,7 @@ class SupadataVideoTextSource(VideoTextSource):
             description=(info or {}).get("description"),
             transcript=captions,
             author=author.get("displayName") or (f"@{author['username']}" if author.get("username") else None),
+            thumbnail_url=((info or {}).get("media") or {}).get("thumbnailUrl"),
         )
 
     def _metadata(self, response: httpx2.Response) -> dict | None:
@@ -96,13 +101,21 @@ class SupadataVideoTextSource(VideoTextSource):
 
     async def _get(self, path: str, params: dict) -> httpx2.Response:
         """One request, spaced from the previous one; a 429 is waited out and retried."""
+        timed_out = False
         for attempt in range(MAX_RETRIES + 1):
             await self._wait_for_slot()
-            response = await self._send(path, params)
+            try:
+                response = await self._send(path, params)
+            except httpx2.TimeoutException:
+                if timed_out:  # twice: give up (the caller turns it into "unavailable")
+                    raise
+                timed_out = True
+                logger.warning("Supadata %s timed out; trying once more", path)
+                continue
             if response.status_code != 429 or attempt == MAX_RETRIES:
                 return response
             await self._sleep(self._retry_delay(response))
-        return response  # unreachable: the loop returns on its last attempt
+        raise httpx2.TimeoutException("Supadata kept timing out")
 
     async def _wait_for_slot(self) -> None:
         # Reserve the slot before sleeping, so imports that arrive together queue up instead of colliding.
@@ -122,5 +135,5 @@ class SupadataVideoTextSource(VideoTextSource):
     async def _send(self, path: str, params: dict) -> httpx2.Response:
         if self._client is not None:
             return await self._client.get(f"{BASE_URL}{path}", params=params, headers=self._headers)
-        async with httpx2.AsyncClient(timeout=30) as client:
+        async with httpx2.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
             return await client.get(f"{BASE_URL}{path}", params=params, headers=self._headers)

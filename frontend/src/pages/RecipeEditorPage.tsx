@@ -817,7 +817,9 @@ export function RecipeEditorPage() {
   const setSection = (next: Section) => setParams({ section: next }, { replace: true });
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   // Set when the draft came from a video link: what was read, to show next to the review.
-  const [imported, setImported] = useState<Pick<RecipeDraft, "platform" | "author" | "read" | "category" | "difficulty" | "equipment"> | null>(null);
+  const [imported, setImported] = useState<
+    Pick<RecipeDraft, "platform" | "author" | "read" | "category" | "difficulty" | "equipment" | "cover_url"> | null
+  >(null);
   const [errors, setErrors] = useState<Errors>({});
 
   const recipe = useQuery({ queryKey: ["recipe", id, "original"], queryFn: () => recipesApi.get(id!, "original"), enabled: editing });
@@ -844,15 +846,26 @@ export function RecipeEditorPage() {
   };
 
   const create = useMutation({
-    mutationFn: () =>
-      recipesApi.create({
+    mutationFn: async () => {
+      const detail = await recipesApi.create({
         ...draft.basics,
         title: draft.basics.title.trim(),
         ingredients: ingredientInputs(draft.ingredients),
         equipment: equipmentInputs(draft.equipment),
         tag_ids: draft.tagIds,
         steps: stepInputs(keepSteps(draft.steps, (step) => !!step.instructions.trim())),
-      }),
+      });
+      // An imported recipe takes the video's cover frame as its first cover (photos need the recipe to exist).
+      if (!imported?.cover_url) return detail;
+      try {
+        await recipesApi.addPhoto(detail.id, { photo_type: "cover", photo_url: imported.cover_url });
+        return await recipesApi.get(detail.id, "original");
+      } catch {
+        // The recipe is saved either way: a missing cover is added by hand in the Photos tab.
+        toast(t("import.errors.cover"), "error");
+        return detail;
+      }
+    },
     onSuccess: (detail) => {
       afterSave(detail);
       toast(t("editor.created"));
@@ -996,6 +1009,7 @@ export function RecipeEditorPage() {
               category: result.category,
               difficulty: result.difficulty,
               equipment: result.equipment,
+              cover_url: result.cover_url,
             });
             setErrors({});
           }}
@@ -1008,6 +1022,8 @@ export function RecipeEditorPage() {
           read={imported.read}
           picked={{ category: imported.category?.name ?? null, difficulty: imported.difficulty?.name ?? null, equipment: imported.equipment.length }}
           unmatched={rowsOf(draft.ingredients).filter((row) => !row.ingredient_id).length}
+          cover={imported.cover_url}
+          onDropCover={() => setImported({ ...imported, cover_url: null })}
         />
       )}
       <nav className="-mx-margin-mobile mb-md flex gap-xs overflow-x-auto px-margin-mobile pb-xs lg:mx-0 lg:px-0">

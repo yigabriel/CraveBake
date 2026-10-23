@@ -28,5 +28,5 @@ async def import_recipe_from_video(
 ) -> RecipeDraftResponse:
     parse_source_url(request.url)  # a link that is not ours to import is a 400 that costs nothing
     limiter.hit(current_user.id)  # every import costs provider credits
-    draft = await use_case.execute(ImportRecipeDTO(url=request.url))
+    draft = await use_case.execute(ImportRecipeDTO(url=request.url, user_id=current_user.id))
     return RecipeDraftResponse.model_validate(draft, from_attributes=True, context=language_context(current_user))

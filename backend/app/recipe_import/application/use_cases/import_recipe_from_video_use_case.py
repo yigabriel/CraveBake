@@ -28,6 +28,7 @@ from app.recipe_import.domain.services.ports import (
     CatalogEquipment,
     CatalogIngredient,
     CatalogUnit,
+    CoverImageStore,
     ExtractionCatalog,
     ImportCatalog,
     RecipeExtractor,
@@ -41,10 +42,17 @@ T = TypeVar("T")
 
 
 class ImportRecipeFromVideoUseCase:
-    def __init__(self, source: VideoTextSource, extractor: RecipeExtractor, catalog: ImportCatalog) -> None:
+    def __init__(
+        self,
+        source: VideoTextSource,
+        extractor: RecipeExtractor,
+        catalog: ImportCatalog,
+        covers: CoverImageStore | None = None,
+    ) -> None:
         self._source = source
         self._extractor = extractor
         self._catalog = catalog
+        self._covers = covers
 
     async def execute(self, dto: ImportRecipeDTO) -> RecipeDraftDTO:
         source = parse_source_url(dto.url)
@@ -69,6 +77,11 @@ class ImportRecipeFromVideoUseCase:
         if not extracted.is_recipe or not (extracted.ingredients or extracted.steps):
             raise NotARecipeError()
 
+        # Only once it is a recipe: no copy is made for a video that will not become one.
+        cover_url = None
+        if self._covers is not None and text.thumbnail_url and dto.user_id:
+            cover_url = await self._covers.store(text.thumbnail_url, dto.user_id)
+
         return RecipeDraftDTO(
             title=extracted.title or text.title or "",
             description=extracted.description,
@@ -83,6 +96,7 @@ class ImportRecipeFromVideoUseCase:
             equipment=_match_equipment(extracted.equipment, equipment),
             category=_match_category(extracted.category, categories),
             difficulty=_middle_difficulty(difficulties),
+            cover_url=cover_url,
         )
 
 
