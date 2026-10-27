@@ -14,6 +14,7 @@ from app.translation.application.dto.translation_dto import SuggestTranslationsD
 from app.translation.application.use_cases.suggest_translations_use_case import SuggestTranslationsUseCase
 from app.translation.domain.exceptions import TranslationUnavailableError
 from app.translation.domain.services.text_translator import TextTranslator
+from app.translation.infrastructure.azure_translator import AzureTranslator
 from app.translation.infrastructure.google_cloud_translator import GoogleCloudTranslator
 from app.shared.presentation.request_rate_limiter import RequestRateLimiter
 from app.translation.presentation.http.dependencies import get_translation_rate_limiter, get_translator
@@ -83,6 +84,67 @@ class TestGoogleAdapter:
     async def test_unexpected_answers_become_unavailable(self, body):
         with pytest.raises(TranslationUnavailableError):
             await _google(lambda request: httpx2.Response(200, json=body)).translate("a", "es", "en")
+
+
+def _azure(handler):
+    return AzureTranslator("test-key", "brazilsouth", client=httpx2.AsyncClient(transport=httpx2.MockTransport(handler)))
+
+
+class TestAzureAdapter:
+
+    async def test_sends_key_and_region_in_headers_and_reads_the_translation(self):
+        seen = {}
+
+        def handler(request):
+            seen["request"] = request
+            return httpx2.Response(200, json=[{"translations": [{"text": "Pistachio", "to": "en"}]}])
+
+        assert await _azure(handler).translate("Pistacho", "es", "en") == "Pistachio"
+        request = seen["request"]
+        assert request.headers.get("ocp-apim-subscription-key") == "test-key"
+        assert request.headers.get("ocp-apim-subscription-region") == "brazilsouth"
+        assert "test-key" not in str(request.url)  # never in the URL: it would reach access logs
+        assert request.url.path == "/translate"
+        assert dict(request.url.params) == {"api-version": "3.0", "from": "es", "to": "en", "textType": "plain"}
+        assert request.read().replace(b" ", b"") == b'[{"Text":"Pistacho"}]'
+
+    @pytest.mark.parametrize("status", [400, 401, 403, 429, 500])
+    async def test_azure_refusals_become_unavailable(self, status):
+        with pytest.raises(TranslationUnavailableError):
+            await _azure(lambda request: httpx2.Response(status, json={"error": {"code": 401000}})).translate("a", "es", "en")
+
+    async def test_network_errors_become_unavailable(self):
+        def handler(request):
+            raise httpx2.ConnectError("down")
+
+        with pytest.raises(TranslationUnavailableError):
+            await _azure(handler).translate("a", "es", "en")
+
+    @pytest.mark.parametrize("body", [{}, [], [{}], [{"translations": []}]])
+    async def test_unexpected_answers_become_unavailable(self, body):
+        with pytest.raises(TranslationUnavailableError):
+            await _azure(lambda request: httpx2.Response(200, json=body)).translate("a", "es", "en")
+
+
+class TestTranslatorWiring:
+
+    @pytest.fixture
+    def settings(self, monkeypatch):
+        from app.shared.config.settings import get_settings
+        settings = get_settings().model_copy()
+        monkeypatch.setattr("app.translation.presentation.http.dependencies.get_settings", lambda: settings)
+        return settings
+
+    def test_azure_is_the_default_and_needs_key_and_region(self, settings):
+        settings.translation_provider, settings.azure_translator_key, settings.azure_translator_region = "azure", "k", None
+        with pytest.raises(TranslationUnavailableError):
+            get_translator()
+        settings.azure_translator_region = "brazilsouth"
+        assert isinstance(get_translator(), AzureTranslator)
+
+    def test_google_is_a_switch_away(self, settings):
+        settings.translation_provider, settings.google_translate_api_key = "google", "k"
+        assert isinstance(get_translator(), GoogleCloudTranslator)
 
 
 class TestRateLimiter:
