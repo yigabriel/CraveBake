@@ -17,22 +17,20 @@ from datetime import timedelta
 
 from app.media.application.use_cases.clean_orphaned_images_use_case import CleanOrphanedImagesUseCase
 from app.media.domain.upload_policy import ImageStorageUnavailableError
+from app.media.infrastructure.configured_storage import configured_image_storage
 from app.media.infrastructure.sql_image_references import SqlImageReferences
-from app.media.infrastructure.supabase_image_storage import SupabaseImageStorage
-from app.shared.config.settings import get_settings
 
 
 async def run(apply: bool, min_age_hours: float, force: bool) -> int:
-    settings = get_settings()
-    if not settings.supabase_url or not settings.supabase_service_key:
-        print("SUPABASE_URL and SUPABASE_SERVICE_KEY are not set: nothing to clean.")
+    storage = configured_image_storage()
+    if storage is None:
+        print("Image storage is not configured (SUPABASE_URL / SUPABASE_SERVICE_KEY): nothing to clean.")
         return 1
     # Imported here: it opens the database engine, which --help does not need.
     from app.shared.database.session import AsyncSessionFactory, engine
 
     engine.echo = False  # the API logs every SQL statement in debug; a report should not
 
-    storage = SupabaseImageStorage(settings.supabase_url, settings.supabase_service_key, settings.supabase_storage_bucket)
     try:
         async with AsyncSessionFactory() as session:
             report = await CleanOrphanedImagesUseCase(storage, SqlImageReferences(session)).execute(

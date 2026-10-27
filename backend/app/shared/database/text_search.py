@@ -39,11 +39,6 @@ def _escape_like(text: str) -> str:
     return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
-def equals_folded(column: Any, text: str):
-    """WHERE clause: `column` equals `text`, ignoring case and accents."""
-    return folded(column) == fold(text)
-
-
 def matches_name(column: Any, text: str):
     """WHERE clause: `text` is the name in `column` or one of its " / "-separated synonyms.
 
